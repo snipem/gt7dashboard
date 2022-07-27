@@ -1,7 +1,7 @@
 # gt7telemetry
 Python script to access/dump GT7 telemetry data.
 
-Needs to be run from the terminal, and works best with a terminal of at least 120 x 50 characters. The output is in a separate buffer, but you can comment out lines 9-22 to just write to your current terminal (might want to clear the terminal first).
+Needs to be run from the terminal, and works best with a terminal of at least 100 x 45 characters. The output is in a separate buffer, but you can comment out lines 9-22 to just write to your current terminal (might want to clear the terminal first).
 
 This work is based purely on the shoulders of others. Python script originally from https://github.com/lmirel/mfc/blob/master/clients/gt7racedata.py
 
