@@ -15,14 +15,17 @@ ReceivePort = 33740
 
 # ctrl-c handler
 def handler(signum, frame):
-    print(f'{pref}?1049l')	# revert buffer
-    exit(1)
+	sys.stdout.write(f'{pref}?1049l')	# revert buffer
+	sys.stdout.write(f'{pref}?25h')		# restore cursor
+	sys.stdout.flush()
+	exit(1)
 
 # handle ctrl-c
 signal.signal(signal.SIGINT, handler)
 
-# alt buffer
-print(f'{pref}?1049h')
+sys.stdout.write(f'{pref}?1049h')	# alt buffer
+sys.stdout.write(f'{pref}?25l')		# hide cursor
+sys.stdout.flush()
 
 # get ip address from command line
 if len(sys.argv) == 2:
@@ -60,9 +63,6 @@ def send_hb(s):
 	#print('send heartbeat')
 
 # generic print function
-def printData(row,label,value,column=1):
-	print('{}{};{}H{:<10}:{:>10}'.format(pref,row,column,label,value))
-
 def printAt(str, row=1, column=1, bold=0, underline=0, reverse=0):
 	sys.stdout.write('{}{};{}H'.format(pref, row, column))
 	if reverse:
@@ -74,7 +74,6 @@ def printAt(str, row=1, column=1, bold=0, underline=0, reverse=0):
 	if not bold and not underline and not reverse:
 		sys.stdout.write('{}0m'.format(pref))
 	sys.stdout.write(str)
-	#print('{}{};{}H;{}m{}'.format(pref, row, column, bold, str), end='')
 
 def secondsToLaptime(seconds):
 	remaining = seconds
@@ -84,84 +83,80 @@ def secondsToLaptime(seconds):
 
 
 
-printAt('GT7 Telemetry Dumper 0.2 (ctrl-c to quit)', 1, 1, reverse=1)
-printAt('Tick Counter:', 1, 51)
-
-
 # start by sending heartbeat
 send_hb(s)
 
-printAt('Current Track Data', 3, 1, underline=1, bold=1)
-printAt('Time on track: 12:34:56', 3, 41)
-printAt('Laps: 123/456', 5, 1)
-printAt('Position: 12/34', 5, 21)
-printAt('Best Lap Time: 12:34.567', 7, 1)
-printAt('Last Lap Time: 12:34.567', 8, 1)
+printAt('GT7 Telemetry Dumper 0.3 (ctrl-c to quit)', 1, 1, bold=1)
+printAt('Packet ID:', 1, 73)
 
-printAt('Current Car Data', 10, 1, underline=1, bold=1)
-printAt('Car ID: 1234', 10, 41)
-printAt('Throttle: 123%', 12, 1)
-printAt('RPM: 123456 rpm', 12, 21)
-printAt('Speed: 1234.5 kph', 12, 41)
-printAt('Brake:    123%', 13, 1)
-printAt('Gear: 1 (2)', 13, 21)
-printAt('Boost:  12.34 kPa', 13, 41)
+printAt('{:<92}'.format('Current Track Data'), 3, 1, reverse=1, bold=1)
+printAt('Time on track:', 3, 41, reverse=1)
+printAt('Laps:    /', 5, 1)
+printAt('Position:   /', 5, 21)
+printAt('Best Lap Time:', 7, 1)
+printAt('Last Lap Time:', 8, 1)
 
-printAt('Clutch: 1.234 / 1.234', 15, 1)
-printAt('RPM After Clutch: 123456 rpm', 15, 31)
+printAt('{:<92}'.format('Current Car Data'), 10, 1, reverse=1, bold=1)
+printAt('Car ID:', 10, 41, reverse=1)
+printAt('Throttle:    %', 12, 1)
+printAt('RPM:        rpm', 12, 21)
+printAt('Speed:        kph', 12, 41)
+printAt('Brake:       %', 13, 1)
+printAt('Gear:   ( )', 13, 21)
+printAt('Boost:        kPa', 13, 41)
 
-printAt('Oil Temperature: 123.4 °C', 17, 1)
-printAt('Water Temperature: 123.4 °C', 17, 31)
-printAt('Oil Pressure:    12.34 bar', 18, 1)
-printAt('Body Height:', 18, 31)
+printAt('Clutch:       /', 15, 1)
+printAt('RPM After Clutch:        rpm', 15, 31)
+
+printAt('Oil Temperature:       °C', 17, 1)
+printAt('Water Temperature:       °C', 17, 31)
+printAt('Oil Pressure:          bar', 18, 1)
+printAt('Body/Ride Height:        mm', 18, 31)
 
 printAt('Tyre Data', 20, 1, underline=1)
-printAt('FL:  123.4 °C', 21, 1)
-printAt('FR:  123.4 °C', 21, 21)
-printAt('ø:1234.5/1234.5 cm', 21, 41)
-printAt('     123.4 kph', 22, 1)
-printAt('     123.4 kph', 22, 21)
-printAt('RL:  123.4 °C', 25, 1)
-printAt('RR:  123.4 °C', 25, 21)
-printAt('ø:1234.5/1234.5 cm', 25, 41)
-printAt('     123.4 kph', 26, 1)
-printAt('     123.4 kph', 26, 21)
+printAt('FL:        °C', 21, 1)
+printAt('FR:        °C', 21, 21)
+printAt('ø:      /       cm', 21, 41)
+printAt('           kph', 22, 1)
+printAt('           kph', 22, 21)
+printAt('RL:        °C', 25, 1)
+printAt('RR:        °C', 25, 21)
+printAt('ø:      /       cm', 25, 41)
+printAt('           kph', 26, 1)
+printAt('           kph', 26, 21)
 
 printAt('Gearing', 29, 1, underline=1)
-printAt('1st:xx.xxxx', 30, 1)
-printAt('2nd:xx.xxxx', 31, 1)
-printAt('3rd:xx.xxxx', 32, 1)
-printAt('4th:xx.xxxx', 33, 1)
-printAt('5th:xx.xxxx', 34, 1)
-printAt('6th:xx.xxxx', 35, 1)
-printAt('7th:xx.xxxx', 36, 1)
-printAt('8th:xx.xxxx', 37, 1)
-printAt('???:xx.xxxx', 39, 1)
+printAt('1st:', 30, 1)
+printAt('2nd:', 31, 1)
+printAt('3rd:', 32, 1)
+printAt('4th:', 33, 1)
+printAt('5th:', 34, 1)
+printAt('6th:', 35, 1)
+printAt('7th:', 36, 1)
+printAt('8th:', 37, 1)
+printAt('???:', 39, 1)
 
 printAt('Positioning (m)', 29, 21, underline=1)
-printAt('X:xxxx.xxxx', 30, 21)
-printAt('Y:xxxx.xxxx', 31, 21)
-printAt('Z:xxxx.xxxx', 32, 21)
+printAt('X:', 30, 21)
+printAt('Y:', 31, 21)
+printAt('Z:', 32, 21)
 
 printAt('Velocity (m/s)', 29, 41, underline=1)
-printAt('X:xxxx.xxxx', 30, 41)
-printAt('Y:xxxx.xxxx', 31, 41)
-printAt('Z:xxxx.xxxx', 32, 41)
+printAt('X:', 30, 41)
+printAt('Y:', 31, 41)
+printAt('Z:', 32, 41)
 
 printAt('Rotation', 34, 21, underline=1)
-printAt('P:xxxx.xxxx', 35, 21)
-printAt('Y:xxxx.xxxx', 36, 21)
-printAt('R:xxxx.xxxx', 37, 21)
+printAt('P:', 35, 21)
+printAt('Y:', 36, 21)
+printAt('R:', 37, 21)
 
 printAt('Angular (r/s)', 34, 41, underline=1)
-printAt('X:xxxx.xxxx', 35, 41)
-printAt('Y:xxxx.xxxx', 36, 41)
-printAt('Z:xxxx.xxxx', 37, 41)
+printAt('X:', 35, 41)
+printAt('Y:', 36, 41)
+printAt('Z:', 37, 41)
 
-printAt('N/S:xx.xxxx', 39, 21)
-
-#print('{}1;1HGT7 Telemetry Dumper 0.2 (ctrl-c to quit)'.format(pref))
-#print('{}40;1HCtrl+C to exit the program'.format(pref))
+printAt('N/S:', 39, 21)
 
 sys.stdout.flush()
 
@@ -180,7 +175,7 @@ while True:
 			if sgear > 14:
 				sgear = '–'
 
-			printAt('{:>8}'.format(str(datetime.timedelta(seconds=round(struct.unpack('i', ddata[0x80:0x80+4])[0] / 1000)))), 3, 56)	# time of day on track
+			printAt('{:>8}'.format(str(datetime.timedelta(seconds=round(struct.unpack('i', ddata[0x80:0x80+4])[0] / 1000)))), 3, 56, reverse=1)	# time of day on track
 
 			printAt('{:3.0f}'.format(struct.unpack('h', ddata[0x74:0x74+2])[0]), 5, 7)						# current lap
 			printAt('{:3.0f}'.format(struct.unpack('h', ddata[0x76:0x76+2])[0]), 5, 11)						# total laps
@@ -191,7 +186,7 @@ while True:
 			printAt('{:>9}'.format(secondsToLaptime(struct.unpack('i', ddata[0x78:0x78+4])[0] / 1000)), 7, 16)		# best lap time
 			printAt('{:>9}'.format(secondsToLaptime(struct.unpack('i', ddata[0x7C:0x7C+4])[0] / 1000)), 8, 16)		# last lap time
 
-			printAt('{:5.0f}'.format(struct.unpack('i', ddata[0x124:0x124+4])[0]), 10, 48)					# car id
+			printAt('{:5.0f}'.format(struct.unpack('i', ddata[0x124:0x124+4])[0]), 10, 48, reverse=1)		# car id
 
 			printAt('{:3.0f}'.format(struct.unpack('B', ddata[0x91:0x91+1])[0] / 2.55), 12, 11)				# throttle
 			printAt('{:7.0f}'.format(struct.unpack('f', ddata[0x3C:0x3C+4])[0]), 12, 25)					# rpm
@@ -210,7 +205,7 @@ while True:
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x58:0x58+4])[0]), 17, 49)					# water temp
 
 			printAt('{:6.2f}'.format(struct.unpack('f', ddata[0x54:0x54+4])[0]), 18, 17)					# oil pressure
-			printAt('{:10.6f}'.format(struct.unpack('f', ddata[0x38:0x38+4])[0]), 18, 45)					# body height
+			printAt('{:6.0f}'.format(1000 * struct.unpack('f', ddata[0x38:0x38+4])[0]), 18, 49)				# ride height
 
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x60:0x60+4])[0]), 21, 5)						# tyre temp FL
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x64:0x64+4])[0]), 21, 25)					# tyre temp FR
@@ -263,31 +258,31 @@ while True:
 
 			printAt('{:7.4f}'.format(struct.unpack('f', ddata[0x28:0x28+4])[0]), 39, 25)					# rot ???
 
-			printAt('HUD RPM Min {:5.0f} rpm'.format(struct.unpack('h', ddata[0x88:0x88+2])[0]), 5, 71)		# rpm min
-			printAt('HUD RPM Max {:5.0f} rpm'.format(struct.unpack('h', ddata[0x8A:0x8A+2])[0]), 6, 71)		# rpm max
-			printAt('Est. Speed  {:5.0f} kph'.format(struct.unpack('h', ddata[0x8C:0x8C+2])[0]), 7, 71)		# estimated speed
+			printAt('Rev Limiter {:5.0f} rpm'.format(struct.unpack('h', ddata[0x88:0x88+2])[0]), 12, 71)		# rpm rev limiter
+			printAt('Unknown RPM {:5.0f} rpm'.format(struct.unpack('h', ddata[0x8A:0x8A+2])[0]), 13, 71)		# rpm for what?
+			printAt('Est. Speed  {:5.0f} kph'.format(struct.unpack('h', ddata[0x8C:0x8C+2])[0]), 14, 71)		# estimated speed
 
-			printAt('0x48 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x48:0x48+4])[0]), 19, 71)			# 0x48 = ???
-			printAt('0x8E BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[2:]), 21, 71)	# various flags (see https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketG7S0.cs)
-			printAt('0x8F BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x8F:0x8F+1])[0])[2:]), 22, 71)	# various flags (see https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketG7S0.cs)
-			printAt('0x93 BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x93:0x93+1])[0])[2:]), 23, 71)	# 0x93 = ???
+			printAt('0x48 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x48:0x48+4])[0]), 21, 71)			# 0x48 = ???
+			printAt('0x8E BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[2:]), 23, 71)	# various flags (see https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketG7S0.cs)
+			printAt('0x8F BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x8F:0x8F+1])[0])[2:]), 24, 71)	# various flags (see https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketG7S0.cs)
+			printAt('0x93 BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x93:0x93+1])[0])[2:]), 25, 71)	# 0x93 = ???
 
-			printAt('0x94 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x94:0x94+4])[0]), 25, 71)			# 0x94 = ???
-			printAt('0x98 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x98:0x98+4])[0]), 26, 71)			# 0x98 = ???
-			printAt('0x9C FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x9C:0x9C+4])[0]), 27, 71)			# 0x9C = ???
-			printAt('0xA0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xA0:0xA0+4])[0]), 28, 71)			# 0xA0 = ???
+			printAt('0x94 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x94:0x94+4])[0]), 27, 71)			# 0x94 = ???
+			printAt('0x98 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x98:0x98+4])[0]), 28, 71)			# 0x98 = ???
+			printAt('0x9C FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x9C:0x9C+4])[0]), 29, 71)			# 0x9C = ???
+			printAt('0xA0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xA0:0xA0+4])[0]), 30, 71)			# 0xA0 = ???
 
-			printAt('0xD4 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xD4:0xD4+4])[0]), 30, 71)			# 0xD4 = ???
-			printAt('0xD8 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xD8:0xD8+4])[0]), 31, 71)			# 0xD8 = ???
-			printAt('0xDC FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xDC:0xDC+4])[0]), 32, 71)			# 0xDC = ???
-			printAt('0xE0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xE0:0xE0+4])[0]), 33, 71)			# 0xE0 = ???
+			printAt('0xD4 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xD4:0xD4+4])[0]), 32, 71)			# 0xD4 = ???
+			printAt('0xD8 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xD8:0xD8+4])[0]), 33, 71)			# 0xD8 = ???
+			printAt('0xDC FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xDC:0xDC+4])[0]), 34, 71)			# 0xDC = ???
+			printAt('0xE0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xE0:0xE0+4])[0]), 35, 71)			# 0xE0 = ???
 
-			printAt('0xE4 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xE4:0xE4+4])[0]), 34, 71)			# 0xE4 = ???
-			printAt('0xE8 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xE8:0xE8+4])[0]), 35, 71)			# 0xE8 = ???
-			printAt('0xEC FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xEC:0xEC+4])[0]), 36, 71)			# 0xEC = ???
-			printAt('0xF0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xF0:0xF0+4])[0]), 37, 71)			# 0xF0 = ???
+			printAt('0xE4 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xE4:0xE4+4])[0]), 36, 71)			# 0xE4 = ???
+			printAt('0xE8 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xE8:0xE8+4])[0]), 37, 71)			# 0xE8 = ???
+			printAt('0xEC FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xEC:0xEC+4])[0]), 38, 71)			# 0xEC = ???
+			printAt('0xF0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xF0:0xF0+4])[0]), 39, 71)			# 0xF0 = ???
 
-			printAt('{:>10}'.format(struct.unpack('i', ddata[0x70:0x70+4])[0]), 1, 64)						# tick counter
+			printAt('{:>10}'.format(struct.unpack('i', ddata[0x70:0x70+4])[0]), 1, 83)						# packet id
 
 		if pknt > 100:
 			send_hb(s)
