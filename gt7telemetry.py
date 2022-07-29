@@ -32,7 +32,7 @@ sys.stdout.flush()
 if len(sys.argv) == 2:
     ip = sys.argv[1]
 else:
-    print('Run like : python3 gt7racedata.py <playstation-ip>')
+    print('Run like : python3 gt7telemetry.py <playstation-ip>')
     exit(1)
 
 # Create a UDP socket and bind it
@@ -87,7 +87,7 @@ def secondsToLaptime(seconds):
 # start by sending heartbeat
 send_hb(s)
 
-printAt('GT7 Telemetry Dumper 0.4 (ctrl-c to quit)', 1, 1, bold=1)
+printAt('GT7 Telemetry Display 0.5 (ctrl-c to quit)', 1, 1, bold=1)
 printAt('Packet ID:', 1, 73)
 
 printAt('{:<92}'.format('Current Track Data'), 3, 1, reverse=1, bold=1)
@@ -95,7 +95,7 @@ printAt('Time on track:', 3, 41, reverse=1)
 printAt('Laps:    /', 5, 1)
 printAt('Position:   /', 5, 21)
 printAt('Best Lap Time:', 7, 1)
-printAt('Current Lap Time:', 7, 31)
+printAt('Current Lap Time: ', 7, 31)
 printAt('Last Lap Time:', 8, 1)
 
 printAt('{:<92}'.format('Current Car Data'), 10, 1, reverse=1, bold=1)
@@ -106,6 +106,9 @@ printAt('Speed:        kph', 12, 41)
 printAt('Brake:       %', 13, 1)
 printAt('Gear:   ( )', 13, 21)
 printAt('Boost:        kPa', 13, 41)
+printAt('Rev Warning       rpm', 12, 71)
+printAt('Rev Limiter       rpm', 13, 71)
+printAt('Est. Speed        kph', 14, 71)
 
 printAt('Clutch:       /', 15, 1)
 printAt('RPM After Clutch:        rpm', 15, 31)
@@ -216,11 +219,15 @@ while True:
 			printAt('{:3.0f}'.format(struct.unpack('B', ddata[0x91:0x91+1])[0] / 2.55), 12, 11)				# throttle
 			printAt('{:7.0f}'.format(struct.unpack('f', ddata[0x3C:0x3C+4])[0]), 12, 25)					# rpm
 			printAt('{:7.1f}'.format(3.6 * struct.unpack('f', ddata[0x4C:0x4C+4])[0]), 12, 47)				# speed kph
+			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x88:0x88+2])[0]), 12, 83)					# rpm rev warning
 
 			printAt('{:3.0f}'.format(struct.unpack('B', ddata[0x92:0x92+1])[0] / 2.55), 13, 11)				# brake
 			printAt('{}'.format(cgear), 13, 27)																# actual gear
 			printAt('{}'.format(sgear), 13, 30)																# suggested gear
 			printAt('{:7.2f}'.format(struct.unpack('f', ddata[0x50:0x50+4])[0] - 1), 13, 47)				# boost
+			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x8A:0x8A+2])[0]), 13, 83)					# rpm rev limiter
+
+			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x8C:0x8C+2])[0]), 14, 83)					# estimated top speed
 
 			printAt('{:5.3f}'.format(struct.unpack('f', ddata[0xF4:0xF4+4])[0]), 15, 9)						# clutch
 			printAt('{:5.3f}'.format(struct.unpack('f', ddata[0xF8:0xF8+4])[0]), 15, 17)					# clutch engaged
@@ -237,8 +244,8 @@ while True:
 			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xB4:0xB4+4])[0]), 21, 43)				# tyre diameter FR
 			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xB8:0xB8+4])[0]), 21, 50)				# tyre diameter FL
 
-			printAt('{:6.1f}'.format(3.6 * struct.unpack('f', ddata[0xB4:0xB4+4])[0] * struct.unpack('f', ddata[0xA4:0xA4+4])[0]), 22, 5)						# tyre speed FL
-			printAt('{:6.1f}'.format(3.6 * struct.unpack('f', ddata[0xB8:0xB8+4])[0] * struct.unpack('f', ddata[0xA8:0xA8+4])[0]), 22, 25)						# tyre speed FR
+			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xB4:0xB4+4])[0] * struct.unpack('f', ddata[0xA4:0xA4+4])[0])), 22, 5)						# tyre speed FL
+			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xB8:0xB8+4])[0] * struct.unpack('f', ddata[0xA8:0xA8+4])[0])), 22, 25)						# tyre speed FR
 
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xC4:0xC4+4])[0]), 23, 5)						# suspension FL
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xC8:0xC8+4])[0]), 23, 25)					# suspension FR
@@ -248,8 +255,8 @@ while True:
 			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xBC:0xBC+4])[0]), 25, 43)				# tyre diameter RR
 			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xC0:0xC0+4])[0]), 25, 50)				# tyre diameter RL
 
-			printAt('{:6.1f}'.format(3.6 * struct.unpack('f', ddata[0xBC:0xBC+4])[0] * struct.unpack('f', ddata[0xAC:0xAC+4])[0]), 26, 5)						# tyre speed RL
-			printAt('{:6.1f}'.format(3.6 * struct.unpack('f', ddata[0xC0:0xC0+4])[0] * struct.unpack('f', ddata[0xB0:0xB0+4])[0]), 26, 25)						# tyre speed RR
+			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xBC:0xBC+4])[0] * struct.unpack('f', ddata[0xAC:0xAC+4])[0])), 26, 5)						# tyre speed RL
+			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xC0:0xC0+4])[0] * struct.unpack('f', ddata[0xB0:0xB0+4])[0])), 26, 25)						# tyre speed RR
 
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xCC:0xCC+4])[0]), 27, 5)						# suspension RL
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xD0:0xD0+4])[0]), 27, 25)					# suspension RR
@@ -282,10 +289,6 @@ while True:
 			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x34:0x34+4])[0]), 37, 43)					# angular velocity Z
 
 			printAt('{:7.4f}'.format(struct.unpack('f', ddata[0x28:0x28+4])[0]), 39, 25)					# rot ???
-
-			printAt('Rev Limiter {:5.0f} rpm'.format(struct.unpack('h', ddata[0x88:0x88+2])[0]), 12, 71)		# rpm rev limiter
-			printAt('Unknown RPM {:5.0f} rpm'.format(struct.unpack('h', ddata[0x8A:0x8A+2])[0]), 13, 71)		# rpm for what?
-			printAt('Est. Speed  {:5.0f} kph'.format(struct.unpack('h', ddata[0x8C:0x8C+2])[0]), 14, 71)		# estimated speed
 
 			printAt('0x48 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x48:0x48+4])[0]), 21, 71)			# 0x48 = ???
 			printAt('0x8E BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[2:]), 23, 71)	# various flags (see https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketG7S0.cs)
