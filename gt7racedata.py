@@ -1,5 +1,6 @@
 import signal
-import datetime
+from datetime import datetime as dt
+from datetime import timedelta as td
 import socket
 import sys
 import struct
@@ -86,7 +87,7 @@ def secondsToLaptime(seconds):
 # start by sending heartbeat
 send_hb(s)
 
-printAt('GT7 Telemetry Dumper 0.3 (ctrl-c to quit)', 1, 1, bold=1)
+printAt('GT7 Telemetry Dumper 0.4 (ctrl-c to quit)', 1, 1, bold=1)
 printAt('Packet ID:', 1, 73)
 
 printAt('{:<92}'.format('Current Track Data'), 3, 1, reverse=1, bold=1)
@@ -94,6 +95,7 @@ printAt('Time on track:', 3, 41, reverse=1)
 printAt('Laps:    /', 5, 1)
 printAt('Position:   /', 5, 21)
 printAt('Best Lap Time:', 7, 1)
+printAt('Current Lap Time:', 7, 31)
 printAt('Last Lap Time:', 8, 1)
 
 printAt('{:<92}'.format('Current Car Data'), 10, 1, reverse=1, bold=1)
@@ -160,14 +162,31 @@ printAt('N/S:', 39, 21)
 
 sys.stdout.flush()
 
+prevlap = -1
+pktid = 0
 pknt = 0
 while True:
 	try:
 		data, address = s.recvfrom(4096)
 		pknt = pknt + 1
 		ddata = salsa20_dec(data)
-		if len(ddata) > 0:
+		if len(ddata) > 0 and struct.unpack('i', ddata[0x70:0x70+4])[0] > pktid:
+			pktid = struct.unpack('i', ddata[0x70:0x70+4])[0]
 
+			bstlap = struct.unpack('i', ddata[0x78:0x78+4])[0]
+			lstlap = struct.unpack('i', ddata[0x7C:0x7C+4])[0]
+			curlap = struct.unpack('h', ddata[0x74:0x74+2])[0]
+			if curlap > 0:
+				dt_now = dt.now()
+				if curlap != prevlap:
+					prevlap = curlap
+					dt_start = dt_now
+				curLapTime = dt_now - dt_start
+				printAt('{:>9}'.format(secondsToLaptime(curLapTime.total_seconds())), 7, 49)
+			else:
+				curLapTime = 0
+				printAt('{:>9}'.format(''), 7, 49)
+					
 			cgear = struct.unpack('B', ddata[0x90:0x90+1])[0] & 0b00001111
 			sgear = struct.unpack('B', ddata[0x90:0x90+1])[0] >> 4
 			if cgear < 1:
@@ -175,16 +194,22 @@ while True:
 			if sgear > 14:
 				sgear = '–'
 
-			printAt('{:>8}'.format(str(datetime.timedelta(seconds=round(struct.unpack('i', ddata[0x80:0x80+4])[0] / 1000)))), 3, 56, reverse=1)	# time of day on track
+			printAt('{:>8}'.format(str(td(seconds=round(struct.unpack('i', ddata[0x80:0x80+4])[0] / 1000)))), 3, 56, reverse=1)	# time of day on track
 
-			printAt('{:3.0f}'.format(struct.unpack('h', ddata[0x74:0x74+2])[0]), 5, 7)						# current lap
+			printAt('{:3.0f}'.format(curlap), 5, 7)															# current lap
 			printAt('{:3.0f}'.format(struct.unpack('h', ddata[0x76:0x76+2])[0]), 5, 11)						# total laps
 
 			printAt('{:2.0f}'.format(struct.unpack('h', ddata[0x84:0x84+2])[0]), 5, 31)						# current position
 			printAt('{:2.0f}'.format(struct.unpack('h', ddata[0x86:0x86+2])[0]), 5, 34)						# total positions
 
-			printAt('{:>9}'.format(secondsToLaptime(struct.unpack('i', ddata[0x78:0x78+4])[0] / 1000)), 7, 16)		# best lap time
-			printAt('{:>9}'.format(secondsToLaptime(struct.unpack('i', ddata[0x7C:0x7C+4])[0] / 1000)), 8, 16)		# last lap time
+			if bstlap != -1:
+				printAt('{:>9}'.format(secondsToLaptime(bstlap / 1000)), 7, 16)		# best lap time
+			else:
+				printAt('{:>9}'.format(''), 7, 16)
+			if lstlap != -1:
+				printAt('{:>9}'.format(secondsToLaptime(lstlap / 1000)), 8, 16)		# last lap time
+			else:
+				printAt('{:>9}'.format(''), 8, 16)
 
 			printAt('{:5.0f}'.format(struct.unpack('i', ddata[0x124:0x124+4])[0]), 10, 48, reverse=1)		# car id
 
@@ -282,7 +307,7 @@ while True:
 			printAt('0xEC FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xEC:0xEC+4])[0]), 38, 71)			# 0xEC = ???
 			printAt('0xF0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xF0:0xF0+4])[0]), 39, 71)			# 0xF0 = ???
 
-			printAt('{:>10}'.format(struct.unpack('i', ddata[0x70:0x70+4])[0]), 1, 83)						# packet id
+			printAt('{:>10}'.format(pktid), 1, 83)						# packet id
 
 		if pknt > 100:
 			send_hb(s)
