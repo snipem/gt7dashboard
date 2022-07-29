@@ -9,4 +9,4 @@ Thanks to the help of the people of GTPlanet, specifically the thread https://ww
 
 If anyone can gain anything from this, feel free to do so!!
 
-![Screenshot of output](https://user-images.githubusercontent.com/3602224/181587047-231c2f4b-f175-4fe4-8852-ff6fd240f76d.png)
+![Screenshot of output](https://user-images.githubusercontent.com/3602224/181832176-ffc263f7-160c-46a3-bbde-a3a290dd4dab.png)
