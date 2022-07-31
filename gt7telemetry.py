@@ -87,16 +87,33 @@ def raceLog(lstlap, curlap):
 	# Open a file with access mode 'a'
 	file_object = open('race.log', 'a')
 # Append 'hello' at the end of file
-	file_object.write('%s, %d\n' % ('{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap))
+	global lapFullThrottleTicks
+	global lapFullBrakeTicks
+	global lapFullNoThrottleNoBrakeTicks
+	file_object.write('\n %s, %d, full: %d, brake: %d, no input: %d' % ('{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap, lapFullThrottleTicks, lapFullBrakeTicks, lapFullNoThrottleNoBrakeTicks))
+	lapFullThrottleTicks = 0
+	lapFullBrakeTicks = 0
+	lapFullNoThrottleNoBrakeTicks = 0
 
 minBodyHeight = 9999999
 maxSpeed = 0
+
+lapFullThrottleTicks = 0
+lapFullBrakeTicks = 0
+lapFullNoThrottleNoBrakeTicks = 0
+
 def trackData(ddata):
 	currentBodyHeight = 1000 * struct.unpack('f', ddata[0x38:0x38+4])[0]
 	currentSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C+4])[0]
 
+	currentThrottle = struct.unpack('B', ddata[0x91:0x91+1])[0] / 2.55
+	currentBrake = struct.unpack('B', ddata[0x92:0x92+1])[0] / 2.55
+
 	global minBodyHeight
 	global maxSpeed
+	global lapFullThrottleTicks
+	global lapFullBrakeTicks
+	global lapFullNoThrottleNoBrakeTicks
 
 	if currentBodyHeight < minBodyHeight:
 		minBodyHeight = currentBodyHeight
@@ -104,11 +121,25 @@ def trackData(ddata):
 	if currentSpeed > maxSpeed:
 		maxSpeed = currentSpeed
 
-	printAt('MaxSpeed/Sess.:            kph', 17, 61)
-	printAt('MinBodyHeight/Sess.:       mm', 18, 61)
+	if currentThrottle == 100:
+		lapFullThrottleTicks += 1
 
-	printAt('{:6.0f}'.format(maxSpeed), 17, 81, bold=1)				# ride height
-	printAt('{:6.0f}'.format(minBodyHeight), 18, 81, bold=1)				# ride height
+	if currentBrake == 100:
+		lapFullBrakeTicks += 1
+
+	if currentBrake == 0 and currentThrottle == 0:
+		lapFullNoThrottleNoBrakeTicks += 1
+
+	printAt('{:<92}'.format('Tuning Data'), 41, 1, reverse=1, bold=1)
+	printAt('MaxSpeed/Sess.:            kph', 43, 1)
+	printAt('MinBodyHeight/Sess.:       mm', 44,  1)
+
+	printAt('{:6.0f}'.format(maxSpeed), 43, 21)				# ride height
+	printAt('{:6.0f}'.format(minBodyHeight), 44, 21)				# ride height
+
+	printAt('{:6.0f}'.format(lapFullThrottleTicks), 45, 21)				# ride height
+	printAt('{:6.0f}'.format(lapFullBrakeTicks), 46, 21)				# ride height
+	printAt('{:6.0f}'.format(lapFullNoThrottleNoBrakeTicks), 47, 21)				# ride height
 
 # start by sending heartbeat
 send_hb(s)
