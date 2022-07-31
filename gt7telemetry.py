@@ -83,6 +83,32 @@ def secondsToLaptime(seconds):
 	return '{:01.0f}:{:06.3f}'.format(minutes, remaining)
 
 
+def raceLog(lstlap, curlap):
+	# Open a file with access mode 'a'
+	file_object = open('race.log', 'a')
+# Append 'hello' at the end of file
+	file_object.write('%s, %d\n' % ('{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap))
+
+minBodyHeight = 9999999
+maxSpeed = 0
+def trackData(ddata):
+	currentBodyHeight = 1000 * struct.unpack('f', ddata[0x38:0x38+4])[0]
+	currentSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C+4])[0]
+
+	global minBodyHeight
+	global maxSpeed
+
+	if currentBodyHeight < minBodyHeight:
+		minBodyHeight = currentBodyHeight
+
+	if currentSpeed > maxSpeed:
+		maxSpeed = currentSpeed
+
+	printAt('MaxSpeed/Sess.:            kph', 17, 61)
+	printAt('MinBodyHeight/Sess.:       mm', 18, 61)
+
+	printAt('{:6.0f}'.format(maxSpeed), 17, 81, bold=1)				# ride height
+	printAt('{:6.0f}'.format(minBodyHeight), 18, 81, bold=1)				# ride height
 
 # start by sending heartbeat
 send_hb(s)
@@ -182,8 +208,10 @@ while True:
 			if curlap > 0:
 				dt_now = dt.now()
 				if curlap != prevlap:
+					# New lap
 					prevlap = curlap
 					dt_start = dt_now
+					raceLog(lstlap, curlap)
 				curLapTime = dt_now - dt_start
 				printAt('{:>9}'.format(secondsToLaptime(curLapTime.total_seconds())), 7, 49)
 			else:
@@ -196,6 +224,8 @@ while True:
 				cgear = 'R'
 			if sgear > 14:
 				sgear = '–'
+
+			trackData(ddata)
 
 			printAt('{:>8}'.format(str(td(seconds=round(struct.unpack('i', ddata[0x80:0x80+4])[0] / 1000)))), 3, 56, reverse=1)	# time of day on track
 
