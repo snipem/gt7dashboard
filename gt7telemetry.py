@@ -84,38 +84,38 @@ def secondsToLaptime(seconds):
 
 
 def raceLog(lstlap, curlap, bestlap):
-    # TODO add No Throttle per lap
-    # TODO Add heavy breaking and heavy steering
-    # TODO Add both throttle and braking pressee
-    file_object = open('race.log', 'a')
-    global currentLap
-    global laps
+	# TODO add No Throttle per lap
+	# TODO Add heavy breaking and heavy steering
+	# TODO Add both throttle and braking pressee
+	file_object = open('race.log', 'a')
+	global currentLap
+	global laps
 
-    if lstlap < 0:
-        return
+	if lstlap < 0:
+		return
 
-    currentLap.LapTime = lstlap
-    currentLap.Number = curlap - 1  # Is not counting the same way as the time table
-    file_object.write('\n %s, %2d, %4dT, %4dB, %4dN' % (
-    '{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap, currentLap.FullThrottleTicks, currentLap.FullBrakeTicks,
-    currentLap.NoThrottleNoBrakeTicks))
-    # Add lap and reset lap
-    laps.insert(0, currentLap)
-    currentLap = Lap()
+	currentLap.LapTime = lstlap
+	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
+	file_object.write('\n %s, %2d, %4dT, %4dB, %4dN' % (
+	'{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap, currentLap.FullThrottleTicks, currentLap.FullBrakeTicks,
+	currentLap.NoThrottleNoBrakeTicks))
+	# Add lap and reset lap
+	laps.insert(0, currentLap)
+	currentLap = Lap()
 
-    printAt(' #	Time        Delta     T+B   B    0', 43, 45, underline=1)
+	printAt(' #	Time        Delta     T+B   B    0', 43, 45, underline=1)
 
-    # Display lap times
-    for idx, lap in enumerate(laps):
-        lapColor = 39
+	# Display lap times
+	for idx, lap in enumerate(laps):
+		lapColor = 39
 
-        if lap.LapTime == bestlap:
-            lapColor = 35
+		if lap.LapTime == bestlap:
+			lapColor = 35
 
-        timeDiff = secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
-        printAt('\x1b[1;%dm%2d %1s %10s %4d %4d %4d' % (
-        lapColor, lap.Number, '{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)), timeDiff,
-        lap.ThrottleAndBrakesTicks, lap.FullBrakeTicks, lap.NoThrottleNoBrakeTicks), 44 + idx, 45)
+		timeDiff = secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
+		printAt('\x1b[1;%dm%2d %1s %10s %4d %4d %4d' % (
+		lapColor, lap.Number, '{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)), timeDiff,
+		lap.ThrottleAndBrakesTicks, lap.FullBrakeTicks, lap.NoThrottleNoBrakeTicks), 44 + idx, 45)
 
 
 minBodyHeight = 9999999
@@ -129,59 +129,55 @@ laps = []
 
 
 class Lap:
-    def __init__(self):
-        self.LapTicks = 0
-        self.Number = 0
-        self.ThrottleAndBrakesTicks = 0
-        self.NoThrottleNoBrakeTicks = 0
-        self.FullBrakeTicks = 0
-        self.FullThrottleTicks = 0
+	def __init__(self):
+		self.LapTicks = 0
+		self.Number = 0
+		self.ThrottleAndBrakesTicks = 0
+		self.NoThrottleNoBrakeTicks = 0
+		self.FullBrakeTicks = 0
+		self.FullThrottleTicks = 0
 
 
 currentLap = Lap()
 
 
 def trackData(ddata):
-    currentBodyHeight = 1000 * struct.unpack('f', ddata[0x38:0x38 + 4])[0]
-    currentSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C + 4])[0]
+	currentBodyHeight = 1000 * struct.unpack('f', ddata[0x38:0x38 + 4])[0]
+	currentSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C + 4])[0]
 
-    currentThrottle = struct.unpack('B', ddata[0x91:0x91 + 1])[0] / 2.55
-    currentBrake = struct.unpack('B', ddata[0x92:0x92 + 1])[0] / 2.55
+	currentThrottle = struct.unpack('B', ddata[0x91:0x91 + 1])[0] / 2.55
+	currentBrake = struct.unpack('B', ddata[0x92:0x92 + 1])[0] / 2.55
 
-    global minBodyHeight
-    global maxSpeed
-    global currentLap
+	global minBodyHeight
+	global maxSpeed
+	global currentLap
 
-    if currentBodyHeight < minBodyHeight:
-        minBodyHeight = currentBodyHeight
+	if currentBodyHeight < minBodyHeight:
+		minBodyHeight = currentBodyHeight
 
-    if currentSpeed > maxSpeed:
-        maxSpeed = currentSpeed
+	if currentSpeed > maxSpeed:
+		maxSpeed = currentSpeed
 
-    if currentThrottle == 100:
-        currentLap.FullThrottleTicks += 1
+	if currentThrottle == 100:
+		currentLap.FullThrottleTicks += 1
 
-    if currentBrake == 100:
-        currentLap.FullBrakeTicks += 1
+	if currentBrake == 100:
+		currentLap.FullBrakeTicks += 1
 
-    if currentBrake == 0 and currentThrottle == 0:
-        currentLap.NoThrottleNoBrakeTicks += 1
+	if currentBrake == 0 and currentThrottle == 0:
+		currentLap.NoThrottleNoBrakeTicks += 1
 
-    if currentBrake > 0 and currentThrottle > 0:
-        currentLap.ThrottleAndBrakesTicks += 1
+	if currentBrake > 0 and currentThrottle > 0:
+		currentLap.ThrottleAndBrakesTicks += 1
 
-    currentLap.LapTicks += 1
+	currentLap.LapTicks += 1
 
-    printAt('{:<92}'.format('Tuning Data'), 41, 1, reverse=1, bold=1)
-    printAt('MaxSpeed/Sess.:            kph', 43, 1)
-    printAt('MinBodyHeight/Sess.:       mm', 44, 1)
+	printAt('{:<92}'.format('Tuning Data'), 41, 1, reverse=1, bold=1)
+	printAt('MaxSpeed/Sess.:            kph', 43, 1)
+	printAt('MinBodyHeight/Sess.:       mm', 44, 1)
 
-    printAt('{:6.0f}'.format(maxSpeed), 43, 21)  # ride height
-    printAt('{:6.0f}'.format(minBodyHeight), 44, 21)  # ride height
-
-	printAt('{:6.0f}'.format(lapFullThrottleTicks), 45, 21)				# ride height
-	printAt('{:6.0f}'.format(lapFullBrakeTicks), 46, 21)				# ride height
-	printAt('{:6.0f}'.format(lapFullNoThrottleNoBrakeTicks), 47, 21)				# ride height
+	printAt('{:6.0f}'.format(maxSpeed), 43, 21)  # ride height
+	printAt('{:6.0f}'.format(minBodyHeight), 44, 21)  # ride height
 
 # start by sending heartbeat
 send_hb(s)
@@ -284,13 +280,13 @@ while True:
 					# New lap
 					prevlap = curlap
 					dt_start = dt_now
-					raceLog(lstlap, curlap)
+					raceLog(lstlap, curlap, bstlap)
 				curLapTime = dt_now - dt_start
 				printAt('{:>9}'.format(secondsToLaptime(curLapTime.total_seconds())), 7, 49)
 			else:
 				curLapTime = 0
 				printAt('{:>9}'.format(''), 7, 49)
-					
+
 			cgear = struct.unpack('B', ddata[0x90:0x90+1])[0] & 0b00001111
 			sgear = struct.unpack('B', ddata[0x90:0x90+1])[0] >> 4
 			if cgear < 1:
