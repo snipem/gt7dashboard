@@ -130,6 +130,7 @@ laps = []
 
 class Lap:
     def __init__(self):
+        self.LapTicks = 0
         self.Number = 0
         self.ThrottleAndBrakesTicks = 0
         self.NoThrottleNoBrakeTicks = 0
@@ -168,6 +169,8 @@ def trackData(ddata):
 
     if currentBrake > 0 and currentThrottle > 0:
         currentLap.ThrottleAndBrakesTicks += 1
+
+    currentLap.LapTicks += 1
 
     printAt('{:<92}'.format('Tuning Data'), 41, 1, reverse=1, bold=1)
     printAt('MaxSpeed/Sess.:            kph', 43, 1)
