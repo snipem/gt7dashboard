@@ -87,7 +87,7 @@ def secondsToLaptime(seconds):
 # start by sending heartbeat
 send_hb(s)
 
-printAt('GT7 Telemetry Display 0.5 (ctrl-c to quit)', 1, 1, bold=1)
+printAt('GT7 Telemetry Display 0.6 (ctrl-c to quit)', 1, 1, bold=1)
 printAt('Packet ID:', 1, 73)
 
 printAt('{:<92}'.format('Current Track Data'), 3, 1, reverse=1, bold=1)
@@ -108,6 +108,7 @@ printAt('Gear:   ( )', 13, 21)
 printAt('Boost:        kPa', 13, 41)
 printAt('Rev Warning       rpm', 12, 71)
 printAt('Rev Limiter       rpm', 13, 71)
+printAt('Fuel:        %', 14, 1)
 printAt('Est. Speed        kph', 14, 71)
 
 printAt('Clutch:       /', 15, 1)
@@ -227,6 +228,7 @@ while True:
 			printAt('{:7.2f}'.format(struct.unpack('f', ddata[0x50:0x50+4])[0] - 1), 13, 47)				# boost
 			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x8A:0x8A+2])[0]), 13, 83)					# rpm rev limiter
 
+			printAt('{:3.0f}'.format(struct.unpack('f', ddata[0x44:0x44+4])[0]), 14, 11)					# fuel
 			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x8C:0x8C+2])[0]), 14, 83)					# estimated top speed
 
 			printAt('{:5.3f}'.format(struct.unpack('f', ddata[0xF4:0xF4+4])[0]), 15, 9)						# clutch
