@@ -113,24 +113,20 @@ def raceLog(lstlap, curlap, bestlap):
 			lapColor = 35
 
 		timeDiff = secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
-		printAt('\x1b[1;%dm%2d %1s %10s %4d %4d %4d' % (
+		printAt('\x1b[1;%dm%2d %1s %10s %4.0f %4.0f %4.0f' % (
 		lapColor, lap.Number, '{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)), timeDiff,
-		lap.ThrottleAndBrakesTicks, lap.FullBrakeTicks, lap.NoThrottleNoBrakeTicks), 44 + idx, 45)
+		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000, lap.FullBrakeTicks/lap.LapTicks*1000, lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000), 44 + idx, 45)
 
 
 minBodyHeight = 9999999
 maxSpeed = 0
-
-lapFullThrottleTicks = 0
-lapFullBrakeTicks = 0
-lapFullNoThrottleNoBrakeTicks = 0
 
 laps = []
 
 
 class Lap:
 	def __init__(self):
-		self.LapTicks = 0
+		self.LapTicks = 1
 		self.Number = 0
 		self.ThrottleAndBrakesTicks = 0
 		self.NoThrottleNoBrakeTicks = 0
@@ -212,6 +208,7 @@ printAt('Oil Temperature:       °C', 17, 1)
 printAt('Water Temperature:       °C', 17, 31)
 printAt('Oil Pressure:          bar', 18, 1)
 printAt('Body/Ride Height:        mm', 18, 31)
+printAt('Fuel:      %', 17, 71)
 
 printAt('Tyre Data', 20, 1, underline=1)
 printAt('FL:        °C', 21, 1)
@@ -337,6 +334,8 @@ while True:
 
 			printAt('{:6.2f}'.format(struct.unpack('f', ddata[0x54:0x54+4])[0]), 18, 17)					# oil pressure
 			printAt('{:6.0f}'.format(1000 * struct.unpack('f', ddata[0x38:0x38+4])[0]), 18, 49)				# ride height
+
+			printAt('{:3.0f}'.format(struct.unpack('f', ddata[0x44:0x44+4])[0]), 17, 78)				# fuel
 
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x60:0x60+4])[0]), 21, 5)						# tyre temp FL
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x64:0x64+4])[0]), 21, 25)					# tyre temp FR
