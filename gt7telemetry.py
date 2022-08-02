@@ -114,7 +114,7 @@ def raceLog(lstlap, curlap, bestlap):
 	laps.insert(0, currentLap)
 	currentLap = Lap()
 
-	printAt(' #	Time        Delta    F    T+B   B    0', 43, 45, underline=1, alwaysvisible=True)
+	printAt(' #	Time        Delta    F    T+B   B    0', 43, 1, underline=1, alwaysvisible=True)
 
 	# Display lap times
 	for idx, lap in enumerate(laps):
@@ -128,15 +128,15 @@ def raceLog(lstlap, curlap, bestlap):
 		elif bestlap > 0:
 			timeDiff = '{:>9}'.format(secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000)))
 
-		printAt('\x1b[1;%dm%2d %1s %1s %4.0f %4.0f %4.0f %4.0f' % (
+		printAt('\x1b[1;%dm%2d %1s %1s %4.1f %4.1f %4.1f %4.1f' % (
 		lapColor,
 		lap.Number,
 		'{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)),
 		timeDiff,
-		lap.FullThrottleTicks/lap.LapTicks*1000,
-		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
-		lap.FullBrakeTicks/lap.LapTicks*1000,
-		lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000), 44 + idx, 45, alwaysvisible=True)
+		lap.FullThrottleTicks/lap.LapTicks*100,
+		lap.ThrottleAndBrakesTicks/lap.LapTicks*100,
+		lap.FullBrakeTicks/lap.LapTicks*100,
+		lap.NoThrottleNoBrakeTicks/lap.LapTicks*100), 44 + idx, 1, alwaysvisible=True)
 
 
 minBodyHeight = 9999999
@@ -165,7 +165,7 @@ def trackData(ddata):
 		printAt('PAUSE', 41, 20, alwaysvisible=True)
 		return
 	else:
-		printAt('     ', 41, 20, alwaysvisible=True)
+		printAt('     ', 41, 20, alwaysvisible=True, reverse=True)
 
 	currentBodyHeight = 1000 * struct.unpack('f', ddata[0x38:0x38 + 4])[0]
 	currentSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C + 4])[0]
@@ -197,12 +197,12 @@ def trackData(ddata):
 
 	currentLap.LapTicks += 1
 
-	printAt('{:<92}'.format('Tuning Data'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
-	printAt('MaxSpeed/Sess.:            kph', 43, 1, alwaysvisible=True)
-	printAt('MinBodyHeight/Sess.:       mm', 44, 1, alwaysvisible=True)
+	printAt('{:<92}'.format('Getting Faster'), 41, 65, reverse=1, bold=1, alwaysvisible=True)
+	printAt('MaxSpeed/Sess.:            kph', 43, 65, alwaysvisible=True)
+	printAt('MinBodyHeight/Sess.:       mm', 44, 65, alwaysvisible=True)
 
-	printAt('{:6.0f}'.format(maxSpeed), 43, 21, alwaysvisible=True)  # ride height
-	printAt('{:6.0f}'.format(minBodyHeight), 44, 21, alwaysvisible=True)  # ride height
+	printAt('{:6.0f}'.format(maxSpeed), 43, 85, alwaysvisible=True)
+	printAt('{:6.0f}'.format(minBodyHeight), 44, 85, alwaysvisible=True)
 
 # start by sending heartbeat
 send_hb(s)
