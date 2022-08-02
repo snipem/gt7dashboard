@@ -1,7 +1,7 @@
 # gt7telemetry
 Python script to display GT7 telemetry data.
 
-**Needs to be run from the terminal**, and works best with a terminal of at least 92 x 42 characters. The output is in a separate buffer, but you can comment out lines 9-28 to just write to your current terminal (might want to clear the terminal first).
+**Needs to be run from the terminal**, and works best with a terminal of at least 92 x 42 characters. The output is in a separate buffer, but you can comment out lines 10-29 to just write to your current terminal (might want to clear the terminal first).
 
 Run like this (substitute with your own console's LAN IP address):
 
@@ -13,7 +13,7 @@ Thanks to the help of the people of GTPlanet, specifically the thread https://ww
 
 If anyone can gain anything from this, feel free to do so!!
 
-![Screenshot of output](https://user-images.githubusercontent.com/3602224/181832176-ffc263f7-160c-46a3-bbde-a3a290dd4dab.png)
+![Screenshot of output](https://user-images.githubusercontent.com/3602224/182450262-56992d54-409d-4fb7-bfec-35b04dc7f6aa.png)
 
 ## Requirements
 You will need python 3.x installed, and you need to install the salsa20 module via pip:
