@@ -119,14 +119,14 @@ def raceLog(lstlap, curlap, bestlap):
 	# Display lap times
 	for idx, lap in enumerate(laps):
 		lapColor = 39
+		timeDiff = '{:>9}'.format("")
 
-		if lap.LapTime == bestlap:
+		if bestlap == lap.LapTime:
 			lapColor = 35
-
-		if bestlap > 0:
+		elif lap.LapTime < bestlap: # LapTime cannot be smaller than bestlap, bestlap is always the smallest. This can only mean that lap.LapTime is from an earlier race on a different track
+			timeDiff = '{:^9}'.format("-")
+		elif bestlap > 0:
 			timeDiff = '{:>9}'.format(secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000)))
-		else:
-			timeDiff = '{:>9}'.format("")
 
 		printAt('\x1b[1;%dm%2d %1s %1s %4.0f %4.0f %4.0f %4.0f' % (
 		lapColor,
