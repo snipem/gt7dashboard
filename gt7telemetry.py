@@ -114,7 +114,7 @@ def raceLog(lstlap, curlap, bestlap):
 	laps.insert(0, currentLap)
 	currentLap = Lap()
 
-	printAt(' #	Time        Delta   F  T+B   B    0', 43, 45, underline=1, alwaysvisible=True)
+	printAt(' #	Time        Delta    F    T+B   B    0', 43, 45, underline=1, alwaysvisible=True)
 
 	# Display lap times
 	for idx, lap in enumerate(laps):
@@ -159,6 +159,14 @@ currentLap = Lap()
 
 
 def trackData(ddata):
+	isPaused = bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[-2] == '1'
+
+	if isPaused:
+		printAt('PAUSE', 41, 20, alwaysvisible=True)
+		return
+	else:
+		printAt('     ', 41, 20, alwaysvisible=True)
+
 	currentBodyHeight = 1000 * struct.unpack('f', ddata[0x38:0x38 + 4])[0]
 	currentSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C + 4])[0]
 
