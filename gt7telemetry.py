@@ -63,8 +63,17 @@ def send_hb(s):
 	s.sendto(send_data.encode('utf-8'), (ip, SendPort))
 	#print('send heartbeat')
 
-# generic print function
-def printAt(str, row=1, column=1, bold=0, underline=0, reverse=0):
+import os
+showlimited = os.environ.get("GT7_LIMITED")
+# generic print function, added with alawaysvisible flag to remain upstream compatability
+def printAt(str, row=1, column=1, bold=0, underline=0, reverse=0, alwaysvisible=False):
+	global showlimited
+	if showlimited and not alwaysvisible:
+		return
+	elif showlimited:
+		# Put everything up
+		row=row-40
+
 	sys.stdout.write('{}{};{}H'.format(pref, row, column))
 	if reverse:
 		sys.stdout.write('{}7m'.format(pref))
@@ -97,13 +106,15 @@ def raceLog(lstlap, curlap, bestlap):
 	currentLap.LapTime = lstlap
 	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
 	file_object.write('\n %s, %2d, %4dT, %4dB, %4dN' % (
-	'{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap, currentLap.FullThrottleTicks, currentLap.FullBrakeTicks,
+	'{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap,
+	currentLap.FullThrottleTicks,
+	currentLap.FullBrakeTicks,
 	currentLap.NoThrottleNoBrakeTicks))
 	# Add lap and reset lap
 	laps.insert(0, currentLap)
 	currentLap = Lap()
 
-	printAt(' #	Time        Delta     T+B   B    0', 43, 45, underline=1)
+	printAt(' #	Time        Delta   F  T+B   B    0', 43, 45, underline=1, alwaysvisible=True)
 
 	# Display lap times
 	for idx, lap in enumerate(laps):
@@ -113,9 +124,12 @@ def raceLog(lstlap, curlap, bestlap):
 			lapColor = 35
 
 		timeDiff = secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
-		printAt('\x1b[1;%dm%2d %1s %10s %4.0f %4.0f %4.0f' % (
+		printAt('\x1b[1;%dm%2d %1s %10s %4.0f %4.0f %4.0f %4.0f' % (
 		lapColor, lap.Number, '{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)), timeDiff,
-		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000, lap.FullBrakeTicks/lap.LapTicks*1000, lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000), 44 + idx, 45)
+		lap.FullThrottleTicks/lap.LapTicks*1000,
+		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
+		lap.FullBrakeTicks/lap.LapTicks*1000,
+		lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000), 44 + idx, 45, alwaysvisible=True)
 
 
 minBodyHeight = 9999999
@@ -168,12 +182,12 @@ def trackData(ddata):
 
 	currentLap.LapTicks += 1
 
-	printAt('{:<92}'.format('Tuning Data'), 41, 1, reverse=1, bold=1)
-	printAt('MaxSpeed/Sess.:            kph', 43, 1)
-	printAt('MinBodyHeight/Sess.:       mm', 44, 1)
+	printAt('{:<92}'.format('Tuning Data'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
+	printAt('MaxSpeed/Sess.:            kph', 43, 1, alwaysvisible=True)
+	printAt('MinBodyHeight/Sess.:       mm', 44, 1, alwaysvisible=True)
 
-	printAt('{:6.0f}'.format(maxSpeed), 43, 21)  # ride height
-	printAt('{:6.0f}'.format(minBodyHeight), 44, 21)  # ride height
+	printAt('{:6.0f}'.format(maxSpeed), 43, 21, alwaysvisible=True)  # ride height
+	printAt('{:6.0f}'.format(minBodyHeight), 44, 21, alwaysvisible=True)  # ride height
 
 # start by sending heartbeat
 send_hb(s)
