@@ -87,7 +87,7 @@ def secondsToLaptime(seconds):
 # start by sending heartbeat
 send_hb(s)
 
-printAt('GT7 Telemetry Display 0.61 (ctrl-c to quit)', 1, 1, bold=1)
+printAt('GT7 Telemetry Display 0.7 (ctrl-c to quit)', 1, 1, bold=1)
 printAt('Packet ID:', 1, 73)
 
 printAt('{:<92}'.format('Current Track Data'), 3, 1, reverse=1, bold=1)
@@ -125,11 +125,13 @@ printAt('FR:        °C', 21, 21)
 printAt('ø:      /       cm', 21, 41)
 printAt('           kph', 22, 1)
 printAt('           kph', 22, 21)
+printAt('Δ:      /       ', 22, 41)
 printAt('RL:        °C', 25, 1)
 printAt('RR:        °C', 25, 21)
 printAt('ø:      /       cm', 25, 41)
 printAt('           kph', 26, 1)
 printAt('           kph', 26, 21)
+printAt('Δ:      /       ', 26, 41)
 
 printAt('Gearing', 29, 1, underline=1)
 printAt('1st:', 30, 1)
@@ -212,6 +214,30 @@ while True:
 			boost = struct.unpack('f', ddata[0x50:0x50+4])[0] - 1
 			hasTurbo = True if boost > -1 else False
 
+
+			tyreDiamFL = struct.unpack('f', ddata[0xB4:0xB4+4])[0]
+			tyreDiamFR = struct.unpack('f', ddata[0xB8:0xB8+4])[0]
+			tyreDiamRL = struct.unpack('f', ddata[0xBC:0xBC+4])[0]
+			tyreDiamRR = struct.unpack('f', ddata[0xC0:0xC0+4])[0]
+
+			tyreSpeedFL = abs(3.6 * tyreDiamFL * struct.unpack('f', ddata[0xA4:0xA4+4])[0])
+			tyreSpeedFR = abs(3.6 * tyreDiamFR * struct.unpack('f', ddata[0xA8:0xA8+4])[0])
+			tyreSpeedRL = abs(3.6 * tyreDiamRL * struct.unpack('f', ddata[0xAC:0xAC+4])[0])
+			tyreSpeedRR = abs(3.6 * tyreDiamRR * struct.unpack('f', ddata[0xB0:0xB0+4])[0])
+
+			carSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C+4])[0]
+
+			if carSpeed > 0:
+				tyreSlipRatioFL = '{:6.2f}'.format(tyreSpeedFL / carSpeed)
+				tyreSlipRatioFR = '{:6.2f}'.format(tyreSpeedFR / carSpeed)
+				tyreSlipRatioRL = '{:6.2f}'.format(tyreSpeedRL / carSpeed)
+				tyreSlipRatioRR = '{:6.2f}'.format(tyreSpeedRR / carSpeed)
+			else:
+				tyreSlipRatioFL = '  –  '
+				tyreSlipRatioFR = '  –  '
+				tyreSlipRatioRL = '  -  '
+				tyreSlipRatioRR = '  –  '
+
 			printAt('{:>8}'.format(str(td(seconds=round(struct.unpack('i', ddata[0x80:0x80+4])[0] / 1000)))), 3, 56, reverse=1)	# time of day on track
 
 			printAt('{:3.0f}'.format(curlap), 5, 7)															# current lap
@@ -233,7 +259,7 @@ while True:
 
 			printAt('{:3.0f}'.format(struct.unpack('B', ddata[0x91:0x91+1])[0] / 2.55), 12, 11)				# throttle
 			printAt('{:7.0f}'.format(struct.unpack('f', ddata[0x3C:0x3C+4])[0]), 12, 25)					# rpm
-			printAt('{:7.1f}'.format(3.6 * struct.unpack('f', ddata[0x4C:0x4C+4])[0]), 12, 47)				# speed kph
+			printAt('{:7.1f}'.format(carSpeed), 12, 47)														# speed kph
 			printAt('{:5.0f}'.format(struct.unpack('H', ddata[0x88:0x88+2])[0]), 12, 83)					# rpm rev warning
 
 			printAt('{:3.0f}'.format(struct.unpack('B', ddata[0x92:0x92+1])[0] / 2.55), 13, 11)				# brake
@@ -261,22 +287,26 @@ while True:
 
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x60:0x60+4])[0]), 21, 5)						# tyre temp FL
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x64:0x64+4])[0]), 21, 25)					# tyre temp FR
-			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xB4:0xB4+4])[0]), 21, 43)				# tyre diameter FR
-			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xB8:0xB8+4])[0]), 21, 50)				# tyre diameter FL
+			printAt('{:6.1f}'.format(200 * tyreDiamFL), 21, 43)												# tyre diameter FL
+			printAt('{:6.1f}'.format(200 * tyreDiamFR), 21, 50)												# tyre diameter FR
 
-			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xB4:0xB4+4])[0] * struct.unpack('f', ddata[0xA4:0xA4+4])[0])), 22, 5)						# tyre speed FL
-			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xB8:0xB8+4])[0] * struct.unpack('f', ddata[0xA8:0xA8+4])[0])), 22, 25)						# tyre speed FR
+			printAt('{:6.1f}'.format(tyreSpeedFL), 22, 5)													# tyre speed FL
+			printAt('{:6.1f}'.format(tyreSpeedFR), 22, 25)													# tyre speed FR
+			printAt(tyreSlipRatioFL, 22, 43)																# tyre slip ratio FL
+			printAt(tyreSlipRatioFR, 22, 50)																# tyre slip ratio FR
 
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xC4:0xC4+4])[0]), 23, 5)						# suspension FL
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xC8:0xC8+4])[0]), 23, 25)					# suspension FR
 
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x68:0x68+4])[0]), 25, 5)						# tyre temp RL
 			printAt('{:6.1f}'.format(struct.unpack('f', ddata[0x6C:0x6C+4])[0]), 25, 25)					# tyre temp RR
-			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xBC:0xBC+4])[0]), 25, 43)				# tyre diameter RR
-			printAt('{:6.1f}'.format(200 * struct.unpack('f', ddata[0xC0:0xC0+4])[0]), 25, 50)				# tyre diameter RL
+			printAt('{:6.1f}'.format(200 * tyreDiamRL), 25, 43)												# tyre diameter RL
+			printAt('{:6.1f}'.format(200 * tyreDiamRR), 25, 50)												# tyre diameter RR
 
-			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xBC:0xBC+4])[0] * struct.unpack('f', ddata[0xAC:0xAC+4])[0])), 26, 5)						# tyre speed RL
-			printAt('{:6.1f}'.format(abs(3.6 * struct.unpack('f', ddata[0xC0:0xC0+4])[0] * struct.unpack('f', ddata[0xB0:0xB0+4])[0])), 26, 25)						# tyre speed RR
+			printAt('{:6.1f}'.format(tyreSpeedRL), 26, 5)													# tyre speed RL
+			printAt('{:6.1f}'.format(tyreSpeedRR), 26, 25)													# tyre speed RR
+			printAt(tyreSlipRatioRL, 26, 43)																# tyre slip ratio RL
+			printAt(tyreSlipRatioRR, 26, 50)																# tyre slip ratio RR
 
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xCC:0xCC+4])[0]), 27, 5)						# suspension RL
 			printAt('{:6.3f}'.format(struct.unpack('f', ddata[0xD0:0xD0+4])[0]), 27, 25)					# suspension RR
@@ -292,13 +322,13 @@ while True:
 
 			printAt('{:7.3f}'.format(struct.unpack('f', ddata[0x100:0x100+4])[0]), 39, 5)					# ??? gear
 
-			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x04:0x04+4])[0]), 30, 23)					# pos X
-			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x08:0x08+4])[0]), 31, 23)					# pos Y
-			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x0C:0x0C+4])[0]), 32, 23)					# pos Z
+			printAt('{:11.4f}'.format(struct.unpack('f', ddata[0x04:0x04+4])[0]), 30, 23)					# pos X
+			printAt('{:11.4f}'.format(struct.unpack('f', ddata[0x08:0x08+4])[0]), 31, 23)					# pos Y
+			printAt('{:11.4f}'.format(struct.unpack('f', ddata[0x0C:0x0C+4])[0]), 32, 23)					# pos Z
 
-			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x10:0x10+4])[0]), 30, 43)					# velocity X
-			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x14:0x14+4])[0]), 31, 43)					# velocity Y
-			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x18:0x18+4])[0]), 32, 43)					# velocity Z
+			printAt('{:11.4f}'.format(struct.unpack('f', ddata[0x10:0x10+4])[0]), 30, 43)					# velocity X
+			printAt('{:11.4f}'.format(struct.unpack('f', ddata[0x14:0x14+4])[0]), 31, 43)					# velocity Y
+			printAt('{:11.4f}'.format(struct.unpack('f', ddata[0x18:0x18+4])[0]), 32, 43)					# velocity Z
 
 			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x1C:0x1C+4])[0]), 35, 23)					# rot Pitch
 			printAt('{:9.4f}'.format(struct.unpack('f', ddata[0x20:0x20+4])[0]), 36, 23)					# rot Yaw
