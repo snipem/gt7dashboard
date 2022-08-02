@@ -178,7 +178,7 @@ def trackData(ddata):
 # start by sending heartbeat
 send_hb(s)
 
-printAt('GT7 Telemetry Display 0.5 (ctrl-c to quit)', 1, 1, bold=1)
+printAt('GT7 Telemetry Display 0.61 (ctrl-c to quit)', 1, 1, bold=1)
 printAt('Packet ID:', 1, 73)
 
 printAt('{:<92}'.format('Current Track Data'), 3, 1, reverse=1, bold=1)
@@ -199,6 +199,7 @@ printAt('Gear:   ( )', 13, 21)
 printAt('Boost:        kPa', 13, 41)
 printAt('Rev Warning       rpm', 12, 71)
 printAt('Rev Limiter       rpm', 13, 71)
+printAt('Max:', 14, 21)
 printAt('Est. Speed        kph', 14, 71)
 
 printAt('Clutch:       /', 15, 1)
@@ -293,6 +294,20 @@ while True:
 
 			trackData(ddata)
 
+			fuelCapacity = struct.unpack('f', ddata[0x48:0x48+4])[0]
+			isEV = False if fuelCapacity > 0 else True
+			if isEV:
+				printAt('Charge:', 14, 1)
+				printAt('{:3.0f} kWh'.format(struct.unpack('f', ddata[0x44:0x44+4])[0]), 14, 11)		# charge remaining
+				printAt('??? kWh'.format(struct.unpack('f', ddata[0x48:0x48+4])[0]), 14, 29)			# max battery capacity
+			else:
+				printAt('Fuel:  ', 14, 1)
+				printAt('{:3.0f} lit'.format(struct.unpack('f', ddata[0x44:0x44+4])[0]), 14, 11)		# fuel
+				printAt('{:3.0f} lit'.format(struct.unpack('f', ddata[0x48:0x48+4])[0]), 14, 29)		# max fuel
+
+			boost = struct.unpack('f', ddata[0x50:0x50+4])[0] - 1
+			hasTurbo = True if boost > -1 else False
+
 			printAt('{:>8}'.format(str(td(seconds=round(struct.unpack('i', ddata[0x80:0x80+4])[0] / 1000)))), 3, 56, reverse=1)	# time of day on track
 
 			printAt('{:3.0f}'.format(curlap), 5, 7)															# current lap
@@ -315,13 +330,18 @@ while True:
 			printAt('{:3.0f}'.format(struct.unpack('B', ddata[0x91:0x91+1])[0] / 2.55), 12, 11)				# throttle
 			printAt('{:7.0f}'.format(struct.unpack('f', ddata[0x3C:0x3C+4])[0]), 12, 25)					# rpm
 			printAt('{:7.1f}'.format(3.6 * struct.unpack('f', ddata[0x4C:0x4C+4])[0]), 12, 47)				# speed kph
-			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x88:0x88+2])[0]), 12, 83)					# rpm rev warning
+			printAt('{:5.0f}'.format(struct.unpack('H', ddata[0x88:0x88+2])[0]), 12, 83)					# rpm rev warning
 
 			printAt('{:3.0f}'.format(struct.unpack('B', ddata[0x92:0x92+1])[0] / 2.55), 13, 11)				# brake
 			printAt('{}'.format(cgear), 13, 27)																# actual gear
 			printAt('{}'.format(sgear), 13, 30)																# suggested gear
-			printAt('{:7.2f}'.format(struct.unpack('f', ddata[0x50:0x50+4])[0] - 1), 13, 47)				# boost
-			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x8A:0x8A+2])[0]), 13, 83)					# rpm rev limiter
+
+			if hasTurbo:
+				printAt('{:7.2f}'.format(struct.unpack('f', ddata[0x50:0x50+4])[0] - 1), 13, 47)			# boost
+			else:
+				printAt('{:>7}'.format('–'), 13, 47)														# no turbo
+
+			printAt('{:5.0f}'.format(struct.unpack('H', ddata[0x8A:0x8A+2])[0]), 13, 83)					# rpm rev limiter
 
 			printAt('{:5.0f}'.format(struct.unpack('h', ddata[0x8C:0x8C+2])[0]), 14, 83)					# estimated top speed
 
@@ -388,7 +408,6 @@ while True:
 
 			printAt('{:7.4f}'.format(struct.unpack('f', ddata[0x28:0x28+4])[0]), 39, 25)					# rot ???
 
-			printAt('0x48 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0x48:0x48+4])[0]), 21, 71)			# 0x48 = ???
 			printAt('0x8E BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[2:]), 23, 71)	# various flags (see https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketG7S0.cs)
 			printAt('0x8F BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x8F:0x8F+1])[0])[2:]), 24, 71)	# various flags (see https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketG7S0.cs)
 			printAt('0x93 BITS  =  {:0>8}'.format(bin(struct.unpack('B', ddata[0x93:0x93+1])[0])[2:]), 25, 71)	# 0x93 = ???
