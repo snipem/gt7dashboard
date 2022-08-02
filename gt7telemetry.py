@@ -72,7 +72,7 @@ def printAt(str, row=1, column=1, bold=0, underline=0, reverse=0, alwaysvisible=
 		return
 	elif showlimited:
 		# Put everything up
-		row=row-40
+		row = row-40
 
 	sys.stdout.write('{}{};{}H'.format(pref, row, column))
 	if reverse:
@@ -123,9 +123,16 @@ def raceLog(lstlap, curlap, bestlap):
 		if lap.LapTime == bestlap:
 			lapColor = 35
 
-		timeDiff = secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
-		printAt('\x1b[1;%dm%2d %1s %10s %4.0f %4.0f %4.0f %4.0f' % (
-		lapColor, lap.Number, '{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)), timeDiff,
+		if bestlap > 0:
+			timeDiff = '{:>9}'.format(secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000)))
+		else:
+			timeDiff = '{:>9}'.format("")
+
+		printAt('\x1b[1;%dm%2d %1s %1s %4.0f %4.0f %4.0f %4.0f' % (
+		lapColor,
+		lap.Number,
+		'{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)),
+		timeDiff,
 		lap.FullThrottleTicks/lap.LapTicks*1000,
 		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
 		lap.FullBrakeTicks/lap.LapTicks*1000,
