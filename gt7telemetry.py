@@ -92,6 +92,7 @@ def secondsToLaptime(seconds):
 	return '{:01.0f}:{:06.3f}'.format(minutes, remaining)
 
 
+from draw import show_race_data, get_best_lap
 def raceLog(lstlap, curlap, bestlap):
 	# TODO add No Throttle per lap
 	# TODO Add heavy breaking and heavy steering
@@ -112,6 +113,7 @@ def raceLog(lstlap, curlap, bestlap):
 	currentLap.NoThrottleNoBrakeTicks))
 	# Add lap and reset lap
 	laps.insert(0, currentLap)
+	show_race_data([currentLap, get_best_lap(laps)])
 	currentLap = Lap()
 
 	printAt(' #  Time        Delta    F    T+B   B    0   Heat   S', 43, 1, underline=1, alwaysvisible=True)
@@ -148,18 +150,7 @@ maxSpeed = 0
 laps = []
 
 
-class Lap:
-	def __init__(self):
-		self.LapTicks = 1
-		self.Number = 0
-		self.ThrottleAndBrakesTicks = 0
-		self.NoThrottleNoBrakeTicks = 0
-		self.FullBrakeTicks = 0
-		self.FullThrottleTicks = 0
-		self.TiresOverheatedTicks = 0
-		self.TiresSpinningTicks = 0
-
-
+from gt7lap import Lap
 currentLap = Lap()
 
 
@@ -228,6 +219,10 @@ def trackData(ddata):
 	global deltaRL
 	global deltaRR
 	global carSpeed
+
+	currentLap.DataBraking.append(currentBrake)
+	currentLap.DataThrottle.append(currentThrottle)
+	currentLap.DataSpeed.append(carSpeed)
 
 	if carSpeed > 0:
 		deltaFL = tyreSpeedFL / carSpeed
@@ -359,8 +354,6 @@ while True:
 				cgear = 'R'
 			if sgear > 14:
 				sgear = '–'
-
-			trackData(ddata)
 
 			fuelCapacity = struct.unpack('f', ddata[0x48:0x48+4])[0]
 			isEV = False if fuelCapacity > 0 else True
@@ -522,6 +515,8 @@ while True:
 			printAt('0xF0 FLOAT {:11.5f}'.format(struct.unpack('f', ddata[0xF0:0xF0+4])[0]), 39, 71)			# 0xF0 = ???
 
 			printAt('{:>10}'.format(pktid), 1, 83)						# packet id
+
+			trackData(ddata)
 
 		if pknt > 100:
 			send_hb(s)
