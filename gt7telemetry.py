@@ -114,7 +114,7 @@ def raceLog(lstlap, curlap, bestlap):
 	laps.insert(0, currentLap)
 	currentLap = Lap()
 
-	printAt(' #  Time        Delta    F    T+B   B    0   Heat', 43, 1, underline=1, alwaysvisible=True)
+	printAt(' #  Time        Delta    F    T+B   B    0   Heat   S', 43, 1, underline=1, alwaysvisible=True)
 
 	# Display lap times
 	for idx, lap in enumerate(laps):
@@ -128,7 +128,7 @@ def raceLog(lstlap, curlap, bestlap):
 		elif bestlap > 0:
 			timeDiff = '{:>9}'.format(secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000)))
 
-		printAt('\x1b[1;%dm%2d %1s %1s %4d %4d %4d %4d %4d' % (
+		printAt('\x1b[1;%dm%2d %1s %1s %4d %4d %4d %4d %4d %4d' % (
 		lapColor,
 		lap.Number,
 		'{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)),
@@ -137,7 +137,8 @@ def raceLog(lstlap, curlap, bestlap):
 		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
 		lap.FullBrakeTicks/lap.LapTicks*1000,
 		lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000,
-		lap.TiresOverheatedTicks/lap.LapTicks*1000
+		lap.TiresOverheatedTicks/lap.LapTicks*1000,
+		lap.TiresSpinningTicks/lap.LapTicks*1000
 		), 44 + idx, 1, alwaysvisible=True)
 
 
@@ -156,12 +157,29 @@ class Lap:
 		self.FullBrakeTicks = 0
 		self.FullThrottleTicks = 0
 		self.TiresOverheatedTicks = 0
+		self.TiresSpinningTicks = 0
 
 
 currentLap = Lap()
 
 
 def trackData(ddata):
+
+	global minBodyHeight
+	global maxSpeed
+	global currentLap
+
+	printAt('{:<100}'.format('Getting Faster'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
+	printAt('MaxSpeed/Sess.:            kph', 43, 65, alwaysvisible=True)
+	printAt('MinBodyHeight/Sess.:       mm', 44, 65, alwaysvisible=True)
+	printAt('Heat Tires Quota/Lap:      ', 45, 65, alwaysvisible=True)
+	printAt('Tires Spinning Quota/Lap:  ', 46, 65, alwaysvisible=True)
+
+	printAt('{:6.0f}'.format(maxSpeed), 43, 85, alwaysvisible=True)
+	printAt('{:6.0f}'.format(minBodyHeight), 44, 85, alwaysvisible=True)
+	printAt('{:6.0f}'.format(currentLap.TiresOverheatedTicks/currentLap.LapTicks*1000), 45, 85, alwaysvisible=True)
+	printAt('{:6.0f}'.format(currentLap.TiresSpinningTicks/currentLap.LapTicks*1000), 46, 85, alwaysvisible=True)
+
 	isPaused = bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[-2] == '1'
 
 	if isPaused:
@@ -175,10 +193,6 @@ def trackData(ddata):
 
 	currentThrottle = struct.unpack('B', ddata[0x91:0x91 + 1])[0] / 2.55
 	currentBrake = struct.unpack('B', ddata[0x92:0x92 + 1])[0] / 2.55
-
-	global minBodyHeight
-	global maxSpeed
-	global currentLap
 
 	if currentBodyHeight < minBodyHeight:
 		minBodyHeight = currentBodyHeight
@@ -209,17 +223,24 @@ def trackData(ddata):
 	if fl_tire_temp > 100 or fr_tire_temp > 100 or rl_tire_temp > 100 or rr_tire_temp > 100:
 		currentLap.TiresOverheatedTicks += 1
 
+	global deltaFL
+	global deltaFR
+	global deltaRL
+	global deltaRR
+	global carSpeed
+
+	if carSpeed > 0:
+		deltaFL = tyreSpeedFL / carSpeed
+		deltaFR = tyreSpeedFR / carSpeed
+		deltaRL = tyreSpeedRL / carSpeed
+		deltaRR = tyreSpeedRR / carSpeed
+
+		if deltaFL > 1.1 or deltaFR > 1.1 or deltaRL > 1.1 or deltaRR > 1.1:
+			currentLap.TiresSpinningTicks += 1
+
 	# if not currentLap.LapTicks % 10 == 0:
 	# 	return
 
-	printAt('{:<100}'.format('Getting Faster'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
-	printAt('MaxSpeed/Sess.:            kph', 43, 65, alwaysvisible=True)
-	printAt('MinBodyHeight/Sess.:       mm', 44, 65, alwaysvisible=True)
-	printAt('Heat Tires Quota/Lap:      ', 45, 65, alwaysvisible=True)
-
-	printAt('{:6.0f}'.format(maxSpeed), 43, 85, alwaysvisible=True)
-	printAt('{:6.0f}'.format(minBodyHeight), 44, 85, alwaysvisible=True)
-	printAt('{:6.0f}'.format(currentLap.TiresOverheatedTicks/currentLap.LapTicks*1000), 45, 85, alwaysvisible=True)
 
 # start by sending heartbeat
 send_hb(s)
