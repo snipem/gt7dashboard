@@ -1,5 +1,9 @@
 class Lap:
     def __init__(self):
+        self.PositionsX = []
+        self.PositionsY = []
+        self.PositionsZ = []
+        self.Title = ""
         self.LapTicks = 1
         self.LapTime = 0
         self.Number = 0

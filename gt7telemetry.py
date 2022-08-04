@@ -92,7 +92,7 @@ def secondsToLaptime(seconds):
 	return '{:01.0f}:{:06.3f}'.format(minutes, remaining)
 
 
-from draw import show_race_data, get_best_lap
+from gt7plot import plot_session_analysis, get_best_lap
 def raceLog(lstlap, curlap, bestlap):
 	# TODO add No Throttle per lap
 	# TODO Add heavy breaking and heavy steering
@@ -105,15 +105,16 @@ def raceLog(lstlap, curlap, bestlap):
 		return
 
 	currentLap.LapTime = lstlap
+	currentLap.Title = secondsToLaptime(lstlap / 1000)
 	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
 	file_object.write('\n %s, %2d, %4dT, %4dB, %4dN' % (
-	'{:>9}'.format(secondsToLaptime(lstlap / 1000)), curlap,
+	'{:>9}'.format(currentLap.Title), curlap,
 	currentLap.FullThrottleTicks,
 	currentLap.FullBrakeTicks,
 	currentLap.NoThrottleNoBrakeTicks))
 	# Add lap and reset lap
 	laps.insert(0, currentLap)
-	show_race_data([currentLap, get_best_lap(laps)])
+	plot_session_analysis(laps)
 	currentLap = Lap()
 
 	printAt(' #  Time        Delta    F    T+B   B    0   Heat   S', 43, 1, underline=1, alwaysvisible=True)
@@ -174,10 +175,7 @@ def trackData(ddata):
 	isPaused = bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[-2] == '1'
 
 	if isPaused:
-		# printAt('PAUSE', 41, 20, alwaysvisible=True)
 		return
-	# else:
-	# 	# printAt('     ', 41, 20, alwaysvisible=True, reverse=True)
 
 	currentBodyHeight = 1000 * struct.unpack('f', ddata[0x38:0x38 + 4])[0]
 	currentSpeed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C + 4])[0]
@@ -235,6 +233,15 @@ def trackData(ddata):
 
 	# if not currentLap.LapTicks % 10 == 0:
 	# 	return
+
+	## Log Position
+	x = struct.unpack('f', ddata[0x04:0x04+4])[0]
+	y = struct.unpack('f', ddata[0x08:0x08+4])[0]
+	z = struct.unpack('f', ddata[0x0C:0x0C+4])[0]
+
+	currentLap.PositionsX.append(x)
+	currentLap.PositionsY.append(y)
+	currentLap.PositionsZ.append(z)
 
 
 # start by sending heartbeat
