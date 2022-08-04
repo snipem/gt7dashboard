@@ -114,7 +114,8 @@ def raceLog(lstlap, curlap, bestlap):
 	currentLap.NoThrottleNoBrakeTicks))
 	# Add lap and reset lap
 	laps.insert(0, currentLap)
-	plot_session_analysis(laps)
+	# plot_session_analysis(laps) # TODO maybe plot this to a second file
+	plot_session_analysis([get_best_lap(laps), currentLap])
 	currentLap = Lap()
 
 	printAt(' #  Time        Delta    F    T+B   B    0   Heat   S', 43, 1, underline=1, alwaysvisible=True)
@@ -230,6 +231,8 @@ def trackData(ddata):
 
 		if deltaFL > 1.1 or deltaFR > 1.1 or deltaRL > 1.1 or deltaRR > 1.1:
 			currentLap.TiresSpinningTicks += 1
+
+		currentLap.DataTires.append(deltaFL+deltaFR+deltaRL+deltaRR)
 
 	# if not currentLap.LapTicks % 10 == 0:
 	# 	return
@@ -354,6 +357,8 @@ while True:
 			else:
 				curLapTime = 0
 				printAt('{:>9}'.format(''), 7, 49)
+				# Reset lap
+				currentLap = Lap()
 
 			cgear = struct.unpack('B', ddata[0x90:0x90+1])[0] & 0b00001111
 			sgear = struct.unpack('B', ddata[0x90:0x90+1])[0] >> 4

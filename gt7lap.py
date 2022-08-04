@@ -1,5 +1,6 @@
 class Lap:
     def __init__(self):
+        self.DataTires = []
         self.PositionsX = []
         self.PositionsY = []
         self.PositionsZ = []
