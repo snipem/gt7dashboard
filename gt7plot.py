@@ -2,7 +2,8 @@ import itertools
 from typing import List
 
 from bokeh.layouts import layout
-from bokeh.plotting import figure, show, column
+from bokeh.plotting import figure, show
+from bokeh.plotting.figure import Figure
 
 import pickle
 
@@ -22,11 +23,23 @@ def get_brake_points(lap):
 
 	return x, y
 
+def get_throttle_velocity_diagram(lap: Lap, title: str, color: str) -> Figure:
+	TOOLTIPS = [
+		("index", "$index"),
+		("value", "$y"),
+	]
+	f = figure(title="Speed/Throttle - "+title, x_axis_label="Ticks", y_axis_label="Value", width=1500, height=500, tooltips=TOOLTIPS)
+	f.line(list(range(len(lap.DataThrottle))), lap.DataThrottle, legend_label=lap.Title, line_width=1, color=color, line_alpha=0.5)
+	f.line(list(range(len(lap.DataSpeed))), lap.DataSpeed, legend_label=lap.Title, line_width=1, color=color)
+	return f
+
 def plot_session_analysis(laps: List[Lap]):
 
 	with open('data/new.pickle', 'wb') as f:
 		pickle.dump(laps, f)
 
+	# output_file("dark_minimal.html")
+	# curdoc().theme = 'dark_minimal'
 
 	TOOLTIPS = [
 		("index", "$index"),
@@ -39,10 +52,10 @@ def plot_session_analysis(laps: List[Lap]):
 		("desc", "@desc"),
 	]
 
-	s1 = figure(title="Braking", x_axis_label="Ticks", y_axis_label="Value", width=1200, height=250, y_range=(0, 100), tooltips=TOOLTIPS)
-	s2 = figure(title="Throttle", x_axis_label="Ticks", y_axis_label="Value", width=s1.width, height=250, x_range=s1.x_range, y_range=(0, 100), tooltips=TOOLTIPS)
-	s3 = figure(title="Speed", x_axis_label="Ticks", y_axis_label="Value", width=s1.width, height=500, x_range=s1.x_range, tooltips=TOOLTIPS)
-	s_tire_slip = figure(title="Tire Slip", x_axis_label="Ticks", y_axis_label="Value", width=s1.width, height=200, x_range=s1.x_range, tooltips=TOOLTIPS)
+	braking_diagram = figure(title="Braking", x_axis_label="Ticks", y_axis_label="Value", width=1200, height=250, y_range=(0, 100), tooltips=TOOLTIPS)
+	throttle_diagram = figure(title="Throttle", x_axis_label="Ticks", y_axis_label="Value", width=braking_diagram.width, height=250, x_range=braking_diagram.x_range, y_range=(0, 100), tooltips=TOOLTIPS)
+	speed_diagram = figure(title="Speed", x_axis_label="Ticks", y_axis_label="Value", width=braking_diagram.width, height=500, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
+	s_tire_slip = figure(title="Tire Slip", x_axis_label="Ticks", y_axis_label="Value", width=braking_diagram.width, height=200, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
 	s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500, tooltips=RACE_LINE_TOOLTIPS)
 
 	# Limit plotted laps by available colors
@@ -52,9 +65,9 @@ def plot_session_analysis(laps: List[Lap]):
 
 		brake_points_x, brake_points_y = get_brake_points(lap)
 
-		s1.line(list(range(len(lap.DataBraking))),lap.DataBraking, legend_label=lap.Title, line_width=1, color=colors[idx])
-		s2.line(list(range(len(lap.DataThrottle))), lap.DataThrottle, legend_label=lap.Title, line_width=1, color=colors[idx])
-		s3.line(list(range(len(lap.DataSpeed))), lap.DataSpeed, legend_label=lap.Title, line_width=1, color=colors[idx])
+		braking_diagram.line(list(range(len(lap.DataBraking))),lap.DataBraking, legend_label=lap.Title, line_width=1, color=colors[idx])
+		throttle_diagram.line(list(range(len(lap.DataThrottle))), lap.DataThrottle, legend_label=lap.Title, line_width=1, color=colors[idx])
+		speed_diagram.line(list(range(len(lap.DataSpeed))), lap.DataSpeed, legend_label=lap.Title, line_width=1, color=colors[idx])
 		s_tire_slip.line(list(range(len(lap.DataTires))), lap.DataTires, legend_label=lap.Title, line_width=1, color=colors[idx])
 		s_race_line.line(lap.PositionsZ, lap.PositionsX, legend_label=lap.Title, line_width=1, color=colors[idx])
 
@@ -63,22 +76,28 @@ def plot_session_analysis(laps: List[Lap]):
 
 	# show the results
 
-	s1.legend.click_policy="hide"
-	s2.legend.click_policy="hide"
-	s3.legend.click_policy="hide"
+	braking_diagram.legend.click_policy="hide"
+	throttle_diagram.legend.click_policy="hide"
+	speed_diagram.legend.click_policy="hide"
 	s_tire_slip.legend.click_policy="hide"
 	s_race_line.legend.click_policy="hide"
 
-	s1.axis.visible = False
-	s2.axis.visible = False
-	s3.axis.visible = False
+	braking_diagram.axis.visible = False
+	throttle_diagram.axis.visible = False
+	speed_diagram.axis.visible = False
 	s_race_line.axis.visible = False
 
+	current_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(laps[0], "Last Lap", "blue")
+	best_lap = get_best_lap(laps)
+	best_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(best_lap, "Best Lap", "magenta")
+
 	show(layout(children=[
-		[s3, s_race_line],
+		[speed_diagram, s_race_line],
+		[current_lap_throttle_velocity_diagram],
+		[best_lap_throttle_velocity_diagram],
 		[s_tire_slip],
-		[s2],
-		[s1],
+		#[throttle_diagram],
+		[braking_diagram],
 	]))
 
 if __name__ == "__main__":
