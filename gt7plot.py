@@ -23,17 +23,42 @@ def get_brake_points(lap):
 
 	return x, y
 
-def get_throttle_velocity_diagram(lap: Lap, title: str, color: str) -> Figure:
+def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, color: str) -> Figure:
+	x_axis = get_x_axis_depending_on_mode(lap, distance_mode)
 	TOOLTIPS = [
 		("index", "$index"),
 		("value", "$y"),
 	]
 	f = figure(title="Speed/Throttle - "+title, x_axis_label="Ticks", y_axis_label="Value", width=1500, height=500, tooltips=TOOLTIPS)
-	f.line(list(range(len(lap.DataThrottle))), lap.DataThrottle, legend_label=lap.Title, line_width=1, color=color, line_alpha=0.5)
-	f.line(list(range(len(lap.DataSpeed))), lap.DataSpeed, legend_label=lap.Title, line_width=1, color=color)
+	f.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=color, line_alpha=0.5)
+	f.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=color)
 	return f
 
-def plot_session_analysis(laps: List[Lap]):
+
+def get_x_axis_for_distance(lap: Lap) -> List:
+	x_axis = [0]
+	tick_time = 16.668 # https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13806131
+	for i, s in enumerate(lap.DataSpeed):
+		# distance traveled + Speed in km/h / 3.6 / 1000 = mm / ms * tick_time
+		if i == 0:
+			continue
+
+		x_axis.append(x_axis[i-1] + (lap.DataSpeed[i] / 3.6 / 1000) * tick_time)
+
+	return x_axis
+
+
+def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
+	if distance_mode:
+		# Calculate distance for x axis
+		return get_x_axis_for_distance(lap)
+	else:
+		# Use ticks as length, which is the length of any given data list
+		return list(range(len(lap.DataSpeed)))
+	pass
+
+
+def plot_session_analysis(laps: List[Lap], distance_mode=True):
 
 	with open('data/new.pickle', 'wb') as f:
 		pickle.dump(laps, f)
@@ -43,6 +68,7 @@ def plot_session_analysis(laps: List[Lap]):
 
 	TOOLTIPS = [
 		("index", "$index"),
+		("distance", "$x"),
 		("value", "$y"),
 		("desc", "@desc"),
 	]
@@ -59,16 +85,18 @@ def plot_session_analysis(laps: List[Lap]):
 	s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500, tooltips=RACE_LINE_TOOLTIPS)
 
 	# Limit plotted laps by available colors
-	colors = ["magenta", "blue", "green", "red", "black", "grey", "purple"]
+	colors = ["blue", "magenta", "green", "red", "black", "grey", "purple"]
 
 	for idx, lap in enumerate(laps[:len(colors)]):
 
 		brake_points_x, brake_points_y = get_brake_points(lap)
 
-		braking_diagram.line(list(range(len(lap.DataBraking))),lap.DataBraking, legend_label=lap.Title, line_width=1, color=colors[idx])
-		throttle_diagram.line(list(range(len(lap.DataThrottle))), lap.DataThrottle, legend_label=lap.Title, line_width=1, color=colors[idx])
-		speed_diagram.line(list(range(len(lap.DataSpeed))), lap.DataSpeed, legend_label=lap.Title, line_width=1, color=colors[idx])
-		s_tire_slip.line(list(range(len(lap.DataTires))), lap.DataTires, legend_label=lap.Title, line_width=1, color=colors[idx])
+		x_axis = get_x_axis_depending_on_mode(lap, distance_mode)
+
+		braking_diagram.line(x_axis,lap.DataBraking, legend_label=lap.Title, line_width=1, color=colors[idx])
+		throttle_diagram.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=colors[idx])
+		speed_diagram.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=colors[idx])
+		s_tire_slip.line(x_axis, lap.DataTires, legend_label=lap.Title, line_width=1, color=colors[idx])
 		s_race_line.line(lap.PositionsZ, lap.PositionsX, legend_label=lap.Title, line_width=1, color=colors[idx])
 
 		for i, _ in enumerate(brake_points_x):
@@ -87,9 +115,9 @@ def plot_session_analysis(laps: List[Lap]):
 	speed_diagram.axis.visible = False
 	s_race_line.axis.visible = False
 
-	current_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(laps[0], "Last Lap", "blue")
+	current_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(laps[0], distance_mode, "Last Lap", "blue")
 	best_lap = get_best_lap(laps)
-	best_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(best_lap, "Best Lap", "magenta")
+	best_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(best_lap, distance_mode, "Best Lap", "magenta")
 
 	show(layout(children=[
 		[speed_diagram, s_race_line],

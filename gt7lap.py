@@ -17,3 +17,4 @@ class Lap:
         self.DataThrottle = []
         self.DataBraking = []
         self.DataSpeed = []
+        self.FuelAtStart = 0

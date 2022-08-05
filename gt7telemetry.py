@@ -115,7 +115,7 @@ def raceLog(lstlap, curlap, bestlap):
 	# Add lap and reset lap
 	laps.insert(0, currentLap)
 	# plot_session_analysis(laps) # TODO maybe plot this to a second file
-	plot_session_analysis([get_best_lap(laps), currentLap])
+	plot_session_analysis([currentLap,get_best_lap(laps)])
 	currentLap = Lap()
 
 	printAt(' #  Time        Delta    F    T+B   B    0   Heat   S', 43, 1, underline=1, alwaysvisible=True)
