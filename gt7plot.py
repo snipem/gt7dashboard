@@ -2,7 +2,7 @@ import itertools
 from typing import List
 
 from bokeh.layouts import layout
-from bokeh.plotting import figure, show
+from bokeh.plotting import figure, show, output_file
 from bokeh.plotting.figure import Figure
 
 import pickle
@@ -29,7 +29,7 @@ def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, col
 		("index", "$index"),
 		("value", "$y"),
 	]
-	f = figure(title="Speed/Throttle - "+title, x_axis_label="Ticks", y_axis_label="Value", width=1500, height=500, tooltips=TOOLTIPS)
+	f = figure(title="Speed/Throttle - "+title, x_axis_label="Distance", y_axis_label="Value", width=1500, height=500, tooltips=TOOLTIPS)
 	f.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=color, line_alpha=0.5)
 	f.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=color)
 	return f
@@ -63,8 +63,7 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 	with open('data/new.pickle', 'wb') as f:
 		pickle.dump(laps, f)
 
-	# output_file("dark_minimal.html")
-	# curdoc().theme = 'dark_minimal'
+	output_file(filename="analysis_latest.html")
 
 	TOOLTIPS = [
 		("index", "$index"),
@@ -78,10 +77,10 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 		("desc", "@desc"),
 	]
 
-	braking_diagram = figure(title="Braking", x_axis_label="Ticks", y_axis_label="Value", width=1200, height=250, y_range=(0, 100), tooltips=TOOLTIPS)
-	throttle_diagram = figure(title="Throttle", x_axis_label="Ticks", y_axis_label="Value", width=braking_diagram.width, height=250, x_range=braking_diagram.x_range, y_range=(0, 100), tooltips=TOOLTIPS)
-	speed_diagram = figure(title="Speed", x_axis_label="Ticks", y_axis_label="Value", width=braking_diagram.width, height=500, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
-	s_tire_slip = figure(title="Tire Slip", x_axis_label="Ticks", y_axis_label="Value", width=braking_diagram.width, height=200, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
+	braking_diagram = figure(title="Braking", x_axis_label="Distance", y_axis_label="Value", width=1200, height=250, y_range=(0, 100), tooltips=TOOLTIPS)
+	throttle_diagram = figure(title="Throttle", x_axis_label="Distance", y_axis_label="Value", width=braking_diagram.width, height=250, x_range=braking_diagram.x_range, y_range=(0, 100), tooltips=TOOLTIPS)
+	speed_diagram = figure(title="Speed", x_axis_label="Distance", y_axis_label="Value", width=braking_diagram.width, height=500, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
+	s_tire_slip = figure(title="Tire Slip", x_axis_label="Distance", y_axis_label="Value", width=braking_diagram.width, height=200, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
 	s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500, tooltips=RACE_LINE_TOOLTIPS)
 
 	# Limit plotted laps by available colors
