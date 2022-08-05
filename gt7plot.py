@@ -39,7 +39,7 @@ def get_x_axis_for_distance(lap: Lap) -> List:
 	x_axis = [0]
 	tick_time = 16.668 # https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13806131
 	for i, s in enumerate(lap.DataSpeed):
-		# distance traveled + Speed in km/h / 3.6 / 1000 = mm / ms * tick_time
+		# distance traveled + (Speed in km/h / 3.6 / 1000 = mm / ms) * tick_time
 		if i == 0:
 			continue
 
@@ -74,7 +74,7 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 
 	RACE_LINE_TOOLTIPS = [
 		("index", "$index"),
-		("desc", "@desc"),
+		("Breakpoint", "")
 	]
 
 	race_line_width = 500
@@ -99,7 +99,7 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 		braking_diagram.line(x_axis,lap.DataBraking, legend_label=lap.Title, line_width=1, color=colors[idx])
 		throttle_diagram.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=colors[idx])
 		speed_diagram.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=colors[idx])
-		s_tire_slip.line(x_axis, lap.DataTires, legend_label=lap.Title, line_width=1, color=colors[idx])
+		# s_tire_slip.line(x_axis, lap.DataTires, legend_label=lap.Title, line_width=1, color=colors[idx])
 		s_race_line.line(lap.PositionsZ, lap.PositionsX, legend_label=lap.Title, line_width=1, color=colors[idx])
 
 		for i, _ in enumerate(brake_points_x):
@@ -113,9 +113,9 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 	s_tire_slip.legend.click_policy="hide"
 	s_race_line.legend.click_policy="hide"
 
-	braking_diagram.axis.visible = False
-	throttle_diagram.axis.visible = False
-	speed_diagram.axis.visible = False
+	# braking_diagram.axis.visible = False
+	# throttle_diagram.axis.visible = False
+	# speed_diagram.axis.visible = False
 	s_race_line.axis.visible = False
 
 	current_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(laps[0], distance_mode, "Last Lap", "blue", total_width)
