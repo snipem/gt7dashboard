@@ -14,6 +14,11 @@ It adds the following things:
 
    ![image-20220805170136418](res/image-20220805170136418.png)
 
+## How to run
+
+1. `pip3 -r requirements.txt` to install Python dependencies (once)
+2. `python3 gt7telemetry.py <CONSOLE IP ADDRESS>`
+
 ## Get Telemetry of a Demonstration lap or Replay
 
 Replays and demonstrations will also output telemetry data. Start the replay or demonstration and enjoy the data.
