@@ -23,13 +23,13 @@ def get_brake_points(lap):
 
 	return x, y
 
-def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, color: str) -> Figure:
+def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, color: str, width: int) -> Figure:
 	x_axis = get_x_axis_depending_on_mode(lap, distance_mode)
 	TOOLTIPS = [
 		("index", "$index"),
 		("value", "$y"),
 	]
-	f = figure(title="Speed/Throttle - "+title, x_axis_label="Distance", y_axis_label="Value", width=1500, height=500, tooltips=TOOLTIPS)
+	f = figure(title="Speed/Throttle - "+title, x_axis_label="Distance", y_axis_label="Value", width=width, height=500, tooltips=TOOLTIPS)
 	f.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=color, line_alpha=0.5)
 	f.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=color)
 	return f
@@ -77,10 +77,14 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 		("desc", "@desc"),
 	]
 
-	braking_diagram = figure(title="Braking", x_axis_label="Distance", y_axis_label="Value", width=1200, height=250, y_range=(0, 100), tooltips=TOOLTIPS)
-	throttle_diagram = figure(title="Throttle", x_axis_label="Distance", y_axis_label="Value", width=braking_diagram.width, height=250, x_range=braking_diagram.x_range, y_range=(0, 100), tooltips=TOOLTIPS)
-	speed_diagram = figure(title="Speed", x_axis_label="Distance", y_axis_label="Value", width=braking_diagram.width, height=500, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
-	s_tire_slip = figure(title="Tire Slip", x_axis_label="Distance", y_axis_label="Value", width=braking_diagram.width, height=200, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
+	race_line_width = 500
+	speed_diagram_width = 1200
+	total_width = race_line_width + speed_diagram_width
+
+	braking_diagram = figure(title="Braking", x_axis_label="Distance", y_axis_label="Value", width=total_width, height=250, y_range=(0, 100), tooltips=TOOLTIPS)
+	throttle_diagram = figure(title="Throttle", x_axis_label="Distance", y_axis_label="Value", width=total_width, height=250, x_range=braking_diagram.x_range, y_range=(0, 100), tooltips=TOOLTIPS)
+	speed_diagram = figure(title="Speed", x_axis_label="Distance", y_axis_label="Value", width=speed_diagram_width, height=500, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
+	s_tire_slip = figure(title="Tire Slip", x_axis_label="Distance", y_axis_label="Value", width=total_width, height=200, x_range=braking_diagram.x_range, tooltips=TOOLTIPS)
 	s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500, tooltips=RACE_LINE_TOOLTIPS)
 
 	# Limit plotted laps by available colors
@@ -114,9 +118,9 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 	speed_diagram.axis.visible = False
 	s_race_line.axis.visible = False
 
-	current_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(laps[0], distance_mode, "Last Lap", "blue")
+	current_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(laps[0], distance_mode, "Last Lap", "blue", total_width)
 	best_lap = get_best_lap(laps)
-	best_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(best_lap, distance_mode, "Best Lap", "magenta")
+	best_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(best_lap, distance_mode, "Best Lap", "magenta", total_width)
 
 	show(layout(children=[
 		[speed_diagram, s_race_line],
