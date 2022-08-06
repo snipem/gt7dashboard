@@ -36,11 +36,12 @@ def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, col
 
 
 def get_x_axis_for_distance(lap: Lap) -> List:
-	x_axis = [0]
+	x_axis = []
 	tick_time = 16.668 # https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13806131
 	for i, s in enumerate(lap.DataSpeed):
 		# distance traveled + (Speed in km/h / 3.6 / 1000 = mm / ms) * tick_time
 		if i == 0:
+			x_axis.append(0)
 			continue
 
 		x_axis.append(x_axis[i-1] + (lap.DataSpeed[i] / 3.6 / 1000) * tick_time)
