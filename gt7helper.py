@@ -45,7 +45,7 @@ def mark_if_matches_highest_or_lowest(value: float, highest: List[int], lowest: 
 def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
 
     highest = [0,0,0,0,0]
-    lowest = [0,0,0,0,0]
+    lowest = [999999,999999,999999,999999,999999]
 
     # Display lap times
     table = []
@@ -72,10 +72,10 @@ def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
 
         for i, value in enumerate(listOfTicks):
             if listOfTicks[i] > highest[i]:
-                highest[i] = value
+                highest[i] = listOfTicks[i]
 
-            if listOfTicks[i] < lowest[i]:
-                lowest[i] = value
+            if listOfTicks[i] <= lowest[i]:
+                lowest[i] = listOfTicks[i]
 
 
         table.append([
