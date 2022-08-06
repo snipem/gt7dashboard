@@ -65,9 +65,13 @@ def send_hb(s):
 
 import os
 showlimited = os.environ.get("GT7_LIMITED")
+hideanalysis = os.environ.get("GT7_HIDE_ANALYSIS")
+hidetuning = os.environ.get("GT7_HIDE_TUNING")
+
 # generic print function, added with alawaysvisible flag to remain upstream compatability
 def printAt(str, row=1, column=1, bold=0, underline=0, reverse=0, alwaysvisible=False):
 	global showlimited
+
 	if showlimited and not alwaysvisible:
 		return
 	elif showlimited:
@@ -98,6 +102,7 @@ def trackLap(lstlap, curlap, bestlap):
 	file_object = open('session.csv', 'a')
 	global currentLap
 	global laps
+	global hideanalysis
 
 	if lstlap < 0:
 		return
@@ -120,7 +125,12 @@ def trackLap(lstlap, curlap, bestlap):
 	for i, line in enumerate(table.split("\n")):
 		printAt(line, 43 + i, 1, alwaysvisible=True)
 
-	plot_session_analysis([currentLap,get_best_lap(laps)])
+	open_in_browser = True
+
+	if hideanalysis:
+		open_in_browser = False
+
+	plot_session_analysis([currentLap,get_best_lap(laps)], open_in_browser=open_in_browser)
 
 	currentLap = Lap()
 
@@ -140,17 +150,19 @@ def trackTick(ddata):
 	global minBodyHeight
 	global maxSpeed
 	global currentLap
+	global hidetuning
 
-	printAt('{:<100}'.format('Getting Faster'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
-	printAt('MaxSpeed/Sess.:            kph', 43, 75, alwaysvisible=True)
-	printAt('MinBodyHeight/Sess.:       mm', 44, 75, alwaysvisible=True)
-	printAt('Heat Tires Quota/Lap:      ', 45, 75, alwaysvisible=True)
-	printAt('Tires Spinning Quota/Lap:  ', 46, 75, alwaysvisible=True)
+	if not hidetuning:
+		printAt('{:<100}'.format('Getting Faster'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
+		printAt('MaxSpeed/Sess.:            kph', 43, 75, alwaysvisible=True)
+		printAt('MinBodyHeight/Sess.:       mm', 44, 75, alwaysvisible=True)
+		printAt('Heat Tires Quota/Lap:      ', 45, 75, alwaysvisible=True)
+		printAt('Tires Spinning Quota/Lap:  ', 46, 75, alwaysvisible=True)
 
-	printAt('{:6.0f}'.format(maxSpeed), 43, 95, alwaysvisible=True)
-	printAt('{:6.0f}'.format(minBodyHeight), 44, 95, alwaysvisible=True)
-	printAt('{:6.0f}'.format(currentLap.TiresOverheatedTicks/currentLap.LapTicks*1000), 45, 95, alwaysvisible=True)
-	printAt('{:6.0f}'.format(currentLap.TiresSpinningTicks/currentLap.LapTicks*1000), 46, 95, alwaysvisible=True)
+		printAt('{:6.0f}'.format(maxSpeed), 43, 95, alwaysvisible=True)
+		printAt('{:6.0f}'.format(minBodyHeight), 44, 95, alwaysvisible=True)
+		printAt('{:6.0f}'.format(currentLap.TiresOverheatedTicks/currentLap.LapTicks*1000), 45, 95, alwaysvisible=True)
+		printAt('{:6.0f}'.format(currentLap.TiresSpinningTicks/currentLap.LapTicks*1000), 46, 95, alwaysvisible=True)
 
 	isPaused = bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[-2] == '1'
 

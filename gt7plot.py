@@ -2,7 +2,7 @@ import itertools
 from typing import List
 
 from bokeh.layouts import layout
-from bokeh.plotting import figure, show, output_file
+from bokeh.plotting import figure, show, output_file, save
 from bokeh.plotting.figure import Figure
 
 import pickle
@@ -58,7 +58,7 @@ def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
 	pass
 
 
-def plot_session_analysis(laps: List[Lap], distance_mode=True):
+def plot_session_analysis(laps: List[Lap], distance_mode=True, open_in_browser=True):
 
 	with open('data/new.pickle', 'wb') as f:
 		pickle.dump(laps, f)
@@ -131,7 +131,7 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 	best_lap = get_best_lap(laps)
 	best_lap_throttle_velocity_diagram = get_throttle_velocity_diagram(best_lap, distance_mode, "Best Lap", "magenta", total_width)
 
-	show(layout(children=[
+	l = layout(children=[
 		[speed_diagram, s_race_line],
 		[current_lap_throttle_velocity_diagram],
 		[best_lap_throttle_velocity_diagram],
@@ -142,7 +142,11 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True):
 		# [s_magic_numbers_2],
 		# [s_magic_numbers_3],
 		# [s_magic_numbers_4],
-	]))
+	])
+	if open_in_browser:
+		show(l)
+	else:
+		save(l)
 
 if __name__ == "__main__":
 	with open('data/magic_numbers.pickle', 'rb') as f:
