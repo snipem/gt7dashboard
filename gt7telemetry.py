@@ -5,6 +5,8 @@ import socket
 import sys
 import struct
 # pip3 install salsa20
+from threading import Thread
+
 from salsa20 import Salsa20_xor
 
 # ansi prefix
@@ -135,7 +137,9 @@ def trackLap(lstlap, curlap, bestlap):
 	# TODO Hack for race mode
 	if not hideanalysis:
 		# open_in_browser = False
-		plot_session_analysis([currentLap,get_best_lap(laps)])
+		analysis_laps = [currentLap, get_best_lap(laps)]
+		thread = Thread(target=plot_session_analysis, args=([analysis_laps]))
+		thread.start()
 
 	currentLap = Lap()
 	currentLap.FuelAtStart = remainingFuel
@@ -174,8 +178,8 @@ def trackTick(ddata):
 			printAt('Laps remaining:', 43, 45, alwaysvisible=True)
 			# printAt('Time remaining:', 43, 70, alwaysvisible=True)
 
-			printAt('{:1.0f}'.format(fuel_consumed_per_lap), 43, 35, alwaysvisible=True)
-			printAt('{:1.0f}'.format(fuel_laps_remaining), 43, 62, alwaysvisible=True)
+			printAt("%.1f" % fuel_consumed_per_lap, 43, 35, alwaysvisible=True)
+			printAt("%.1f" % fuel_laps_remaining, 43, 62, alwaysvisible=True)
 			# printAt('{:>9}'.format(secondsToLaptime(fuel_time_remaining / 1000)), 43, 87, alwaysvisible=True)
 
 	elif not hidetuning:
