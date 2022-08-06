@@ -41,6 +41,7 @@ def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
             secondsToLaptime(lap.LapTime / 1000),
             time_diff,
             lap.RemainingFuel,
+            lap.FuelConsumed,
             # Ticks
             lap.FullThrottleTicks/lap.LapTicks*1000,
             lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
@@ -51,7 +52,7 @@ def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
 
     return (tabulate(
         table,
-        headers=["#", "Time", "Diff", "Fuel", "fT", "T+B", "fB", "0T", "Spin"],
+        headers=["#", "Time", "Diff", "Fuel", "FuCo", "fT", "T+B", "fB", "0T", "Spin"],
         floatfmt=".0f"
     ))
 

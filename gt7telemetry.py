@@ -67,6 +67,7 @@ import os
 showlimited = os.environ.get("GT7_LIMITED")
 hideanalysis = os.environ.get("GT7_HIDE_ANALYSIS")
 hidetuning = os.environ.get("GT7_HIDE_TUNING")
+hidefuelmanagement = os.environ.get("GT7_HIDE_FUEL")
 
 # generic print function, added with alawaysvisible flag to remain upstream compatability
 def printAt(str, row=1, column=1, bold=0, underline=0, reverse=0, alwaysvisible=False):
@@ -97,7 +98,9 @@ def secondsToLaptime(seconds):
 
 
 from gt7plot import plot_session_analysis, get_best_lap
-from gt7helper import format_laps_to_table
+from gt7helper import format_laps_to_table, calculate_remaining_fuel
+
+
 def trackLap(lstlap, curlap, bestlap):
 	file_object = open('session.csv', 'a')
 	global currentLap
@@ -107,7 +110,9 @@ def trackLap(lstlap, curlap, bestlap):
 	if lstlap < 0:
 		return
 
-	currentLap.RemainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
+	remainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
+	currentLap.RemainingFuel = remainingFuel
+	currentLap.FuelConsumed = currentLap.FuelAtStart - currentLap.RemainingFuel
 	currentLap.LapTime = lstlap
 	currentLap.Title = secondsToLaptime(lstlap / 1000)
 	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
@@ -123,16 +128,17 @@ def trackLap(lstlap, curlap, bestlap):
 
 	table = format_laps_to_table(laps, bestlap)
 	for i, line in enumerate(table.split("\n")):
-		printAt(line, 43 + i, 1, alwaysvisible=True)
+		printAt(line, 45 + i, 1, alwaysvisible=True)
 
-	open_in_browser = True
+	# open_in_browser = True
 
-	if hideanalysis:
-		open_in_browser = False
-
-	plot_session_analysis([currentLap,get_best_lap(laps)], open_in_browser=open_in_browser)
+	# TODO Hack for race mode
+	if not hideanalysis:
+		# open_in_browser = False
+		plot_session_analysis([currentLap,get_best_lap(laps)])
 
 	currentLap = Lap()
+	currentLap.FuelAtStart = remainingFuel
 
 
 minBodyHeight = 9999999
@@ -151,9 +157,28 @@ def trackTick(ddata):
 	global maxSpeed
 	global currentLap
 	global hidetuning
+	global hidefuelmanagement
 
-	if not hidetuning:
-		printAt('{:<100}'.format('Getting Faster'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
+	printAt('{:<100}'.format('Getting Faster'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
+
+	if not hidefuelmanagement:
+
+		remainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
+		printAt('Remaining Fuel:', 43, 1, alwaysvisible=True)
+		printAt('{:1.0f}'.format(remainingFuel), 43, 17, alwaysvisible=True)
+
+		if len(laps) > 0:
+			fuel_consumed_per_lap, fuel_laps_remaining, fuel_time_remaining = calculate_remaining_fuel(laps[0].FuelAtStart, laps[0].RemainingFuel, laps[0].LapTime)
+			fuel_laps_remaining=fuel_laps_remaining-1 # Substract current lap
+			printAt('Fuel/Lap:', 43, 25, alwaysvisible=True)
+			printAt('Laps remaining:', 43, 45, alwaysvisible=True)
+			# printAt('Time remaining:', 43, 70, alwaysvisible=True)
+
+			printAt('{:1.0f}'.format(fuel_consumed_per_lap), 43, 35, alwaysvisible=True)
+			printAt('{:1.0f}'.format(fuel_laps_remaining), 43, 62, alwaysvisible=True)
+			# printAt('{:>9}'.format(secondsToLaptime(fuel_time_remaining / 1000)), 43, 87, alwaysvisible=True)
+
+	elif not hidetuning:
 		printAt('MaxSpeed/Sess.:            kph', 43, 75, alwaysvisible=True)
 		printAt('MinBodyHeight/Sess.:       mm', 44, 75, alwaysvisible=True)
 		printAt('Heat Tires Quota/Lap:      ', 45, 75, alwaysvisible=True)
