@@ -1,6 +1,6 @@
 import unittest
 
-from gt7helper import calculate_remaining_fuel, format_laps_to_table
+from gt7helper import calculate_remaining_fuel, format_laps_to_table, milliseconds_to_difftime
 from gt7lap import Lap
 
 
@@ -21,11 +21,10 @@ class GTHelper(unittest.TestCase):
         self.assertEqual(laps_remaining, -1)
         self.assertEqual(time_remaining, -1)
 
-
     def test_format_laps_to_table(self):
         lap1 = Lap()
         lap1.Number = 1
-        lap1.LapTime = 11000
+        lap1.LapTime = 11311000 / 1000
         lap1.RemainingFuel = 90
         lap1.FullThrottleTicks = 10000
         lap1.ThrottleAndBrakesTicks = 500
@@ -36,7 +35,7 @@ class GTHelper(unittest.TestCase):
 
         lap2 = Lap()
         lap2.Number = 2
-        lap2.LapTime = 10000
+        lap2.LapTime = 11110000 / 1000
         lap2.RemainingFuel = 44
         lap2.FullThrottleTicks = 100
         lap2.ThrottleAndBrakesTicks = 750
@@ -47,7 +46,7 @@ class GTHelper(unittest.TestCase):
 
         lap3 = Lap()
         lap3.Number = 3
-        lap3.LapTime = 14000
+        lap3.LapTime = 12114000 / 1000
         lap3.RemainingFuel = 34
         lap3.FullThrottleTicks = 100
         lap3.ThrottleAndBrakesTicks = 10
@@ -58,7 +57,13 @@ class GTHelper(unittest.TestCase):
 
         laps = [lap3, lap2, lap1]
 
-        result = format_laps_to_table(laps, 10000)
+        result = format_laps_to_table(laps, 11110000 / 1000)
         print("\n")
         print(result)
-        self.assertEqual(len(result.split("\n")), len(laps)+2) # +2 for header and last line
+        self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
+
+
+    def test_seconds_to_difftime(self):
+        self.assertEqual('+0:16:40', milliseconds_to_difftime(500))
+        self.assertEqual('', milliseconds_to_difftime(0))
+        self.assertEqual('-1:40.000', milliseconds_to_difftime(-102))

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Tuple, List
 
 from tabulate import tabulate
@@ -55,6 +56,23 @@ def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
     ))
 
 def secondsToLaptime(seconds):
+    remaining = seconds
     minutes = seconds // 60
     remaining = seconds % 60
     return '{:01.0f}:{:06.3f}'.format(minutes, remaining)
+
+def milliseconds_to_difftime(milliseconds: int):
+
+    if milliseconds > 0:
+        prefix = "+"
+    else:
+        prefix = "-"
+        milliseconds = milliseconds * -1
+
+
+    delta = str(timedelta(milliseconds=int(milliseconds)))
+
+    if milliseconds == 0:
+        return ""
+
+    return prefix + delta
