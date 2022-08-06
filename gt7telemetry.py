@@ -93,22 +93,24 @@ def secondsToLaptime(seconds):
 
 
 from gt7plot import plot_session_analysis, get_best_lap
-def raceLog(lstlap, curlap, bestlap):
+def trackLap(lstlap, curlap, bestlap):
 	# TODO add No Throttle per lap
 	# TODO Add heavy breaking and heavy steering
 	# TODO Add both throttle and braking pressee
-	file_object = open('race.log', 'a')
+	file_object = open('session.csv', 'a')
 	global currentLap
 	global laps
 
 	if lstlap < 0:
 		return
 
+	remainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
 	currentLap.LapTime = lstlap
 	currentLap.Title = secondsToLaptime(lstlap / 1000)
 	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
-	file_object.write('\n %s, %2d, %4dT, %4dB, %4dN' % (
+	file_object.write('\n %s, %2d, %1.f, %4d, %4d, %4d' % (
 	'{:>9}'.format(currentLap.Title), curlap,
+	remainingFuel,
 	currentLap.FullThrottleTicks,
 	currentLap.FullBrakeTicks,
 	currentLap.NoThrottleNoBrakeTicks))
@@ -118,7 +120,7 @@ def raceLog(lstlap, curlap, bestlap):
 	plot_session_analysis([currentLap,get_best_lap(laps)])
 	currentLap = Lap()
 
-	printAt(' #  Time        Delta    F    T+B   B    0   Heat   S', 43, 1, underline=1, alwaysvisible=True)
+	printAt(' #  Time        Delta  Fuel F    T+B   B    0   S', 43, 1, underline=1, alwaysvisible=True)
 
 	# Display lap times
 	for idx, lap in enumerate(laps):
@@ -132,16 +134,16 @@ def raceLog(lstlap, curlap, bestlap):
 		elif bestlap > 0:
 			timeDiff = '{:>9}'.format(secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000)))
 
-		printAt('\x1b[1;%dm%2d %1s %1s %4d %4d %4d %4d %4d %4d' % (
+		printAt('\x1b[1;%dm%2d %1s %1s %4.1f %4d %4d %4d %4d %4d' % (
 		lapColor,
 		lap.Number,
 		'{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)),
 		timeDiff,
+		remainingFuel,
 		lap.FullThrottleTicks/lap.LapTicks*1000,
 		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
 		lap.FullBrakeTicks/lap.LapTicks*1000,
 		lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000,
-		lap.TiresOverheatedTicks/lap.LapTicks*1000,
 		lap.TiresSpinningTicks/lap.LapTicks*1000
 		), 44 + idx, 1, alwaysvisible=True)
 
@@ -156,7 +158,7 @@ from gt7lap import Lap
 currentLap = Lap()
 
 
-def trackData(ddata):
+def trackTick(ddata):
 
 	global minBodyHeight
 	global maxSpeed
@@ -245,6 +247,12 @@ def trackData(ddata):
 	currentLap.PositionsX.append(x)
 	currentLap.PositionsY.append(y)
 	currentLap.PositionsZ.append(z)
+
+	# Store some magic numbers for analysis
+	# currentLap.Magic0x94.append(struct.unpack('f', ddata[0x94:0x94+4])[0])
+	# currentLap.Magic0x98.append(struct.unpack('f', ddata[0x98:0x98+4])[0])
+	# currentLap.Magic0x9C.append(struct.unpack('f', ddata[0x9C:0x9C+4])[0])
+	# currentLap.Magic0xA0.append(struct.unpack('f', ddata[0xA0:0xA0+4])[0])
 
 
 # start by sending heartbeat
@@ -351,7 +359,7 @@ while True:
 					# New lap
 					prevlap = curlap
 					dt_start = dt_now
-					raceLog(lstlap, curlap, bstlap)
+					trackLap(lstlap, curlap, bstlap)
 				curLapTime = dt_now - dt_start
 				printAt('{:>9}'.format(secondsToLaptime(curLapTime.total_seconds())), 7, 49)
 			else:
@@ -528,7 +536,7 @@ while True:
 
 			printAt('{:>10}'.format(pktid), 1, 83)						# packet id
 
-			trackData(ddata)
+			trackTick(ddata)
 
 		if pknt > 100:
 			send_hb(s)

@@ -18,3 +18,7 @@ class Lap:
         self.DataBraking = []
         self.DataSpeed = []
         self.FuelAtStart = 0
+        self.Magic0x94=[]
+        self.Magic0x98=[]
+        self.Magic0x9C=[]
+        self.Magic0xA0=[]
