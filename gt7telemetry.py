@@ -93,10 +93,8 @@ def secondsToLaptime(seconds):
 
 
 from gt7plot import plot_session_analysis, get_best_lap
+from gt7helper import format_laps_to_table
 def trackLap(lstlap, curlap, bestlap):
-	# TODO add No Throttle per lap
-	# TODO Add heavy breaking and heavy steering
-	# TODO Add both throttle and braking pressee
 	file_object = open('session.csv', 'a')
 	global currentLap
 	global laps
@@ -104,48 +102,27 @@ def trackLap(lstlap, curlap, bestlap):
 	if lstlap < 0:
 		return
 
-	remainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
+	currentLap.RemainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
 	currentLap.LapTime = lstlap
 	currentLap.Title = secondsToLaptime(lstlap / 1000)
 	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
 	file_object.write('\n %s, %2d, %1.f, %4d, %4d, %4d' % (
 	'{:>9}'.format(currentLap.Title), curlap,
-	remainingFuel,
+	currentLap.RemainingFuel,
 	currentLap.FullThrottleTicks,
 	currentLap.FullBrakeTicks,
 	currentLap.NoThrottleNoBrakeTicks))
 	# Add lap and reset lap
 	laps.insert(0, currentLap)
 	# plot_session_analysis(laps) # TODO maybe plot this to a second file
+
+	table = format_laps_to_table(laps, bestlap)
+	for i, line in enumerate(table.split("\n")):
+		printAt(line, 43 + i, 1, alwaysvisible=True)
+
 	plot_session_analysis([currentLap,get_best_lap(laps)])
+
 	currentLap = Lap()
-
-	printAt(' #  Time        Delta  Fuel F    T+B   B    0   S', 43, 1, underline=1, alwaysvisible=True)
-
-	# Display lap times
-	for idx, lap in enumerate(laps):
-		lapColor = 39
-		timeDiff = '{:>9}'.format("")
-
-		if bestlap == lap.LapTime:
-			lapColor = 35
-		elif lap.LapTime < bestlap: # LapTime cannot be smaller than bestlap, bestlap is always the smallest. This can only mean that lap.LapTime is from an earlier race on a different track
-			timeDiff = '{:^9}'.format("-")
-		elif bestlap > 0:
-			timeDiff = '{:>9}'.format(secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000)))
-
-		printAt('\x1b[1;%dm%2d %1s %1s %4.1f %4d %4d %4d %4d %4d' % (
-		lapColor,
-		lap.Number,
-		'{:>9}'.format(secondsToLaptime(lap.LapTime / 1000)),
-		timeDiff,
-		remainingFuel,
-		lap.FullThrottleTicks/lap.LapTicks*1000,
-		lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
-		lap.FullBrakeTicks/lap.LapTicks*1000,
-		lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000,
-		lap.TiresSpinningTicks/lap.LapTicks*1000
-		), 44 + idx, 1, alwaysvisible=True)
 
 
 minBodyHeight = 9999999
@@ -165,15 +142,15 @@ def trackTick(ddata):
 	global currentLap
 
 	printAt('{:<100}'.format('Getting Faster'), 41, 1, reverse=1, bold=1, alwaysvisible=True)
-	printAt('MaxSpeed/Sess.:            kph', 43, 65, alwaysvisible=True)
-	printAt('MinBodyHeight/Sess.:       mm', 44, 65, alwaysvisible=True)
-	printAt('Heat Tires Quota/Lap:      ', 45, 65, alwaysvisible=True)
-	printAt('Tires Spinning Quota/Lap:  ', 46, 65, alwaysvisible=True)
+	printAt('MaxSpeed/Sess.:            kph', 43, 75, alwaysvisible=True)
+	printAt('MinBodyHeight/Sess.:       mm', 44, 75, alwaysvisible=True)
+	printAt('Heat Tires Quota/Lap:      ', 45, 75, alwaysvisible=True)
+	printAt('Tires Spinning Quota/Lap:  ', 46, 75, alwaysvisible=True)
 
-	printAt('{:6.0f}'.format(maxSpeed), 43, 85, alwaysvisible=True)
-	printAt('{:6.0f}'.format(minBodyHeight), 44, 85, alwaysvisible=True)
-	printAt('{:6.0f}'.format(currentLap.TiresOverheatedTicks/currentLap.LapTicks*1000), 45, 85, alwaysvisible=True)
-	printAt('{:6.0f}'.format(currentLap.TiresSpinningTicks/currentLap.LapTicks*1000), 46, 85, alwaysvisible=True)
+	printAt('{:6.0f}'.format(maxSpeed), 43, 95, alwaysvisible=True)
+	printAt('{:6.0f}'.format(minBodyHeight), 44, 95, alwaysvisible=True)
+	printAt('{:6.0f}'.format(currentLap.TiresOverheatedTicks/currentLap.LapTicks*1000), 45, 95, alwaysvisible=True)
+	printAt('{:6.0f}'.format(currentLap.TiresSpinningTicks/currentLap.LapTicks*1000), 46, 95, alwaysvisible=True)
 
 	isPaused = bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[-2] == '1'
 
@@ -542,7 +519,7 @@ while True:
 			send_hb(s)
 			pknt = 0
 	except Exception as e:
-		printAt('Exception: {}'.format(e), 41, 1, reverse=1)
+		printAt('Exception: {}'.format(e), 41, 1, reverse=1, alwaysvisible=True)
 		send_hb(s)
 		pknt = 0
 		pass

@@ -1,6 +1,7 @@
 import unittest
 
-from gt7helper import calculate_remaining_fuel
+from gt7helper import calculate_remaining_fuel, format_laps_to_table
+from gt7lap import Lap
 
 
 class GTHelper(unittest.TestCase):
@@ -19,3 +20,45 @@ class GTHelper(unittest.TestCase):
         self.assertEqual(fuel_consumed_per_lap, 0)
         self.assertEqual(laps_remaining, -1)
         self.assertEqual(time_remaining, -1)
+
+
+    def test_format_laps_to_table(self):
+        lap1 = Lap()
+        lap1.Number = 1
+        lap1.LapTime = 11000
+        lap1.RemainingFuel = 90
+        lap1.FullThrottleTicks = 10000
+        lap1.ThrottleAndBrakesTicks = 500
+        lap1.FullBrakeTicks = 10000
+        lap1.NoThrottleNoBrakeTicks = 50
+        lap1.LapTicks = 33333
+        lap1.TiresSpinningTicks = 260
+
+        lap2 = Lap()
+        lap2.Number = 2
+        lap2.LapTime = 10000
+        lap2.RemainingFuel = 44
+        lap2.FullThrottleTicks = 100
+        lap2.ThrottleAndBrakesTicks = 750
+        lap2.FullBrakeTicks = 1000
+        lap2.NoThrottleNoBrakeTicks = 40
+        lap2.LapTicks = 33333
+        lap2.TiresSpinningTicks = 240
+
+        lap3 = Lap()
+        lap3.Number = 3
+        lap3.LapTime = 14000
+        lap3.RemainingFuel = 34
+        lap3.FullThrottleTicks = 100
+        lap3.ThrottleAndBrakesTicks = 10
+        lap3.FullBrakeTicks = 1000
+        lap3.NoThrottleNoBrakeTicks = 100
+        lap3.LapTicks = 33333
+        lap3.TiresSpinningTicks = 120
+
+        laps = [lap3, lap2, lap1]
+
+        result = format_laps_to_table(laps, 10000)
+        print("\n")
+        print(result)
+        self.assertEqual(len(result.split("\n")), len(laps)+2) # +2 for header and last line
