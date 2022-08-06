@@ -20,7 +20,33 @@ def calculate_remaining_fuel(fuel_start_lap: int, fuel_end_lap: int, lap_time: i
 
     return fuel_consumed_per_lap, laps_remaining, time_remaining
 
+
+def mark_if_matches_highest_or_lowest(value: float, highest: List[int], lowest: List[int], order: int, high_is_best=True) -> str:
+    green = 32
+    red = 31
+    reset = 0
+
+    high = green
+    low = red
+
+    if not high_is_best:
+        low = green
+        high = red
+
+    if value == highest[order]:
+        return "\x1b[1;%dm%0.f\x1b[1;%dm" % (high, value, reset)
+
+    if value == lowest[order]:
+        return "\x1b[1;%dm%0.f\x1b[1;%dm" % (low, value, reset)
+
+    return value
+
+
 def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
+
+    highest = [0,0,0,0,0]
+    lowest = [0,0,0,0,0]
+
     # Display lap times
     table = []
     for idx, lap in enumerate(laps):
@@ -34,6 +60,24 @@ def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
         elif bestlap > 0:
             time_diff = secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
 
+
+        ftTicks = lap.FullThrottleTicks/lap.LapTicks*1000
+        tbTicks = lap.ThrottleAndBrakesTicks/lap.LapTicks*1000
+        fbTicks = lap.FullBrakeTicks/lap.LapTicks*1000
+        ntTicks = lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000
+        tiTicks =lap.TiresSpinningTicks/lap.LapTicks*1000
+
+        listOfTicks = [ftTicks, tbTicks, fbTicks, ntTicks, tiTicks]
+
+
+        for i, value in enumerate(listOfTicks):
+            if listOfTicks[i] > highest[i]:
+                highest[i] = value
+
+            if listOfTicks[i] < lowest[i]:
+                lowest[i] = value
+
+
         table.append([
             # Number
             "\x1b[1;%dm%d" % (lap_color , lap.Number),
@@ -43,12 +87,26 @@ def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
             lap.RemainingFuel,
             lap.FuelConsumed,
             # Ticks
-            lap.FullThrottleTicks/lap.LapTicks*1000,
-            lap.ThrottleAndBrakesTicks/lap.LapTicks*1000,
-            lap.FullBrakeTicks/lap.LapTicks*1000,
-            lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000,
-            lap.TiresSpinningTicks/lap.LapTicks*1000
+            ftTicks,
+            tbTicks,
+            fbTicks,
+            ntTicks,
+            tiTicks
         ])
+
+    for i, entry in enumerate(table):
+        for k, val in enumerate(table[i]):
+            if k == 5:
+                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 0, high_is_best=True)
+            elif k == 6:
+                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 1, high_is_best=False)
+            elif k == 7:
+                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 2, high_is_best=True)
+            elif k == 8:
+                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 3, high_is_best=False)
+            elif k == 9:
+                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 4, high_is_best=False)
+
 
     return (tabulate(
         table,
