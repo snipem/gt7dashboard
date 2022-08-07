@@ -99,7 +99,7 @@ def secondsToLaptime(seconds):
 	return '{:01.0f}:{:06.3f}'.format(minutes, remaining)
 
 
-from gt7plot import plot_session_analysis, get_best_lap
+from gt7plot import plot_session_analysis, get_best_lap, get_median_lap
 from gt7helper import format_laps_to_table, calculate_remaining_fuel
 
 
@@ -137,7 +137,7 @@ def trackLap(lstlap, curlap, bestlap):
 	# TODO Hack for race mode
 	if not hideanalysis:
 		# open_in_browser = False
-		analysis_laps = [currentLap, get_best_lap(laps)]
+		analysis_laps = [currentLap, get_best_lap(laps), get_median_lap(laps)]
 		thread = Thread(target=plot_session_analysis, args=([analysis_laps]))
 		thread.start()
 
