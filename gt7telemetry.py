@@ -243,16 +243,19 @@ def trackTick(ddata):
 	currentLap.DataThrottle.append(currentThrottle)
 	currentLap.DataSpeed.append(carSpeed)
 
+	deltaDivisor = carSpeed
 	if carSpeed > 0:
-		deltaFL = tyreSpeedFL / carSpeed
-		deltaFR = tyreSpeedFR / carSpeed
-		deltaRL = tyreSpeedRL / carSpeed
-		deltaRR = tyreSpeedRR / carSpeed
+		deltaDivisor = 1
 
-		if deltaFL > 1.1 or deltaFR > 1.1 or deltaRL > 1.1 or deltaRR > 1.1:
-			currentLap.TiresSpinningTicks += 1
+	deltaFL = tyreSpeedFL / deltaDivisor
+	deltaFR = tyreSpeedFR / deltaDivisor
+	deltaRL = tyreSpeedRL / deltaDivisor
+	deltaRR = tyreSpeedRR / deltaDivisor
 
-		currentLap.DataTires.append(deltaFL+deltaFR+deltaRL+deltaRR)
+	if deltaFL > 1.1 or deltaFR > 1.1 or deltaRL > 1.1 or deltaRR > 1.1:
+		currentLap.TiresSpinningTicks += 1
+
+	currentLap.DataTires.append(deltaFL+deltaFR+deltaRL+deltaRR)
 
 	# if not currentLap.LapTicks % 10 == 0:
 	# 	return
