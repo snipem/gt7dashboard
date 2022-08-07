@@ -1,4 +1,5 @@
 import itertools
+import statistics
 from typing import List
 
 from bokeh.layouts import layout
@@ -22,6 +23,29 @@ def get_brake_points(lap):
 				y.append(lap.PositionsX[i])
 
 	return x, y
+
+def get_median_lap(laps: List[Lap]) -> Lap:
+
+	median_lap = Lap()
+	if len(laps) == 0:
+		return median_lap
+
+	for val in vars(laps[0]):
+		attributes = []
+		for lap in laps:
+			attr =getattr(lap, val)
+			if attr != "" and attr != []:
+				attributes.append(getattr(lap, val))
+		if len(attributes) == 0:
+			continue
+		if isinstance(getattr(laps[0], val), list):
+			median_attribute = [statistics.median(k) for k in zip(*attributes)]
+		else:
+			median_attribute = statistics.median(attributes)
+		setattr(median_lap, val, median_attribute)
+
+	return median_lap
+
 
 def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, color: str, width: int) -> Figure:
 	x_axis = get_x_axis_depending_on_mode(lap, distance_mode)
