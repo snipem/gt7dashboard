@@ -1,10 +1,16 @@
+import pickle
 from datetime import timedelta
+from statistics import StatisticsError
 from typing import Tuple, List
 
 from tabulate import tabulate
 
 from gt7lap import Lap
 
+
+def save_laps(laps: List[Lap]):
+    with open('data/all_laps.pickle', 'wb') as f:
+        pickle.dump(laps, f)
 
 def calculate_remaining_fuel(fuel_start_lap: int, fuel_end_lap: int, lap_time: int) -> Tuple[
     int, float, float]:
@@ -135,3 +141,31 @@ def milliseconds_to_difftime(milliseconds: int):
         return ""
 
     return prefix + delta
+
+def none_ignoring_median(data):
+    """Return the median (middle value) of numeric data but ignore None values.
+
+    When the number of data points is odd, return the middle data point.
+    When the number of data points is even, the median is interpolated by
+    taking the average of the two middle values:
+
+    >>> median([1, 3, None, 5])
+    3
+    >>> median([1, 3, 5, None, 7])
+    4.0
+
+    """
+    # FIXME improve me
+    filtered_data = []
+    for d in data:
+        if d is not None:
+            filtered_data.append(d)
+    filtered_data = sorted(filtered_data)
+    n = len(filtered_data)
+    if n == 0:
+        raise StatisticsError("no median for empty data")
+    if n % 2 == 1:
+        return filtered_data[n // 2]
+    else:
+        i = n // 2
+        return (filtered_data[i - 1] + filtered_data[i]) / 2

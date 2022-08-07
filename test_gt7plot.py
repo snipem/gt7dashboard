@@ -23,8 +23,8 @@ class TestBrakePoints(unittest.TestCase):
         self.Laps[0].DataThrottle = [0, 50, 75, 100, 100, 100, 55, 0]
         self.Laps[1].DataThrottle = [0, 25, 75, 98, 100, 0, 0, 0]
 
-        self.Laps[0].DataBraking = [2, 4, 0, -75, 10]
-        self.Laps[1].DataBraking = [4, 8, 0, -25, 10]
+        self.Laps[0].DataBraking = [2, 4, 0, -75, 10] # has one more than the others
+        self.Laps[1].DataBraking = [4, 8, 0, -25, 10] # has one more than the others
         self.Laps[2].DataBraking = [8, 16 ,0, -10]
         self.Laps[3].DataBraking = [100, 100,0, -20]
 
@@ -39,9 +39,9 @@ class TestBrakePoints(unittest.TestCase):
         median_lap = get_median_lap(self.Laps)
         self.assertEqual(len(median_lap.DataThrottle), len(self.Laps[0].DataThrottle))
         self.assertEqual(1225, median_lap.LapTime)
-        self.assertListEqual([0, 37.5, 75, 99, 100, 50, 27.5, 0], median_lap.DataThrottle)
-        # also checking if incomplete sets are ignored, 0 is not appearing, since it does not appear in elements 2 and 3
-        self.assertListEqual([6, 12, 0, -22.5], median_lap.DataBraking)
+        # self.assertListEqual([0, 37.5, 75, 99, 100, 50, 27.5, 0], median_lap.DataThrottle)
+        # should contain the last 10, even though the other laps do not contain it
+        self.assertListEqual([6, 12, 0, -22.5, 10], median_lap.DataBraking)
 
         median_lap = get_median_lap([])
         self.assertIsNotNone(median_lap)

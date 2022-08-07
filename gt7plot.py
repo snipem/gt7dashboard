@@ -8,6 +8,7 @@ from bokeh.plotting.figure import Figure
 
 import pickle
 
+from gt7helper import none_ignoring_median
 from gt7lap import Lap
 
 def get_best_lap(laps: List[Lap]):
@@ -34,12 +35,13 @@ def get_median_lap(laps: List[Lap]) -> Lap:
 		attributes = []
 		for lap in laps:
 			attr =getattr(lap, val)
-			if attr != "" and attr != []:
+			# FIXME why is it sometimes string AND int?
+			if not isinstance(attr, str) and attr != "" and attr != []:
 				attributes.append(getattr(lap, val))
 		if len(attributes) == 0:
 			continue
 		if isinstance(getattr(laps[0], val), list):
-			median_attribute = [statistics.median(k) for k in zip(*attributes)]
+			median_attribute = [none_ignoring_median(k) for k in itertools.zip_longest(*attributes, fillvalue=None)]
 		else:
 			median_attribute = statistics.median(attributes)
 		setattr(median_lap, val, median_attribute)
@@ -174,7 +176,7 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True, open_in_browser=T
 		save(l)
 
 if __name__ == "__main__":
-	with open('data/magic_numbers.pickle', 'rb') as f:
+	with open('data/bug_qestion.pickle', 'rb') as f:
 		l = pickle.load(f)
 
 	plot_session_analysis(l)

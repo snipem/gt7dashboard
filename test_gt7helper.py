@@ -1,4 +1,5 @@
 import unittest
+from statistics import StatisticsError
 
 from gt7helper import calculate_remaining_fuel, format_laps_to_table, milliseconds_to_difftime
 from gt7lap import Lap

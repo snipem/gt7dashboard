@@ -100,8 +100,7 @@ def secondsToLaptime(seconds):
 
 
 from gt7plot import plot_session_analysis, get_best_lap, get_median_lap
-from gt7helper import format_laps_to_table, calculate_remaining_fuel
-
+from gt7helper import format_laps_to_table, calculate_remaining_fuel, save_laps
 
 def trackLap(lstlap, curlap, bestlap):
 	file_object = open('session.csv', 'a')
@@ -137,9 +136,15 @@ def trackLap(lstlap, curlap, bestlap):
 	# TODO Hack for race mode
 	if not hideanalysis:
 		# open_in_browser = False
-		analysis_laps = [currentLap, get_best_lap(laps), get_median_lap(laps)]
-		thread = Thread(target=plot_session_analysis, args=([analysis_laps]))
-		thread.start()
+		median_lap = get_median_lap(laps)
+		median_lap.Title = "Median (%d Laps): %s" % (len(laps), secondsToLaptime(median_lap.LapTime / 1000))
+		# TODO add median lap
+
+		analysis_laps = [currentLap, get_best_lap(laps), median_lap]
+		thread1 = Thread(target=plot_session_analysis, args=([analysis_laps]))
+		thread2 = Thread(target=save_laps, args=(laps))
+		thread1.start()
+		thread2.start()
 
 	currentLap = Lap()
 	currentLap.FuelAtStart = remainingFuel
@@ -244,7 +249,7 @@ def trackTick(ddata):
 	currentLap.DataSpeed.append(carSpeed)
 
 	deltaDivisor = carSpeed
-	if carSpeed > 0:
+	if carSpeed == 0:
 		deltaDivisor = 1
 
 	deltaFL = tyreSpeedFL / deltaDivisor
@@ -563,6 +568,8 @@ while True:
 			send_hb(s)
 			pknt = 0
 	except Exception as e:
+		import traceback
+		print(traceback.format_exc())
 		printAt('Exception: {}'.format(e), 41, 1, reverse=1, alwaysvisible=True)
 		send_hb(s)
 		pknt = 0
