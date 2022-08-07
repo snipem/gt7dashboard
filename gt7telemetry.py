@@ -133,6 +133,7 @@ def trackLap(lstlap, curlap, bestlap):
 
 	# open_in_browser = True
 
+	save_laps(laps)
 	# TODO Hack for race mode
 	if not hideanalysis:
 		# open_in_browser = False
@@ -140,11 +141,9 @@ def trackLap(lstlap, curlap, bestlap):
 		median_lap.Title = "Median (%d Laps): %s" % (len(laps), secondsToLaptime(median_lap.LapTime / 1000))
 		# TODO add median lap
 
-		analysis_laps = [currentLap, get_best_lap(laps), median_lap]
+		analysis_laps = [currentLap, get_best_lap(laps)]
 		thread1 = Thread(target=plot_session_analysis, args=([analysis_laps]))
-		thread2 = Thread(target=save_laps, args=(laps))
 		thread1.start()
-		thread2.start()
 
 	currentLap = Lap()
 	currentLap.FuelAtStart = remainingFuel
