@@ -13,6 +13,9 @@ from gt7helper import none_ignoring_median, secondsToLaptime
 from gt7lap import Lap
 
 def get_best_lap(laps: List[Lap]):
+	if len(laps) == 0:
+		return None
+
 	return sorted(laps, key=lambda x: x.LapTime, reverse=False)[0]
 
 def get_brake_points(lap):
@@ -26,7 +29,24 @@ def get_brake_points(lap):
 
 	return x, y
 
+def filter_max_min_laps(laps: List[Lap], max_lap_time = -1, min_lap_time = -1) -> List[Lap]:
+	if max_lap_time > 0:
+		laps = list(filter(lambda l: l.LapTime <= max_lap_time, laps))
+
+	if min_lap_time > 0:
+		laps = list(filter(lambda l: l.LapTime >= min_lap_time, laps))
+
+	return laps
+
 def get_median_lap(laps: List[Lap]) -> Lap:
+
+	if len(laps) == 0:
+		raise Exception("Lap list does not contain any laps")
+
+	# Filter out too long laps, like box laps etc, use 10 Seconds of the best lap as a threshhold
+	best_lap = get_best_lap(laps)
+	ten_seconds = 10000
+	laps = filter_max_min_laps(laps, best_lap.LapTime + ten_seconds, best_lap.LapTime-ten_seconds)
 
 	median_lap = Lap()
 	if len(laps) == 0:
@@ -35,7 +55,7 @@ def get_median_lap(laps: List[Lap]) -> Lap:
 	for val in vars(laps[0]):
 		attributes = []
 		for lap in laps:
-			attr =getattr(lap, val)
+			attr = getattr(lap, val)
 			# FIXME why is it sometimes string AND int?
 			if not isinstance(attr, str) and attr != "" and attr != []:
 				attributes.append(getattr(lap, val))
