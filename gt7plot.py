@@ -1,5 +1,6 @@
 import itertools
 import statistics
+import sys
 from typing import List
 
 from bokeh.layouts import layout
@@ -8,7 +9,7 @@ from bokeh.plotting.figure import Figure
 
 import pickle
 
-from gt7helper import none_ignoring_median
+from gt7helper import none_ignoring_median, secondsToLaptime
 from gt7lap import Lap
 
 def get_best_lap(laps: List[Lap]):
@@ -45,6 +46,8 @@ def get_median_lap(laps: List[Lap]) -> Lap:
 		else:
 			median_attribute = statistics.median(attributes)
 		setattr(median_lap, val, median_attribute)
+
+	median_lap.Title = "Median (%d Laps): %s" % (len(laps), secondsToLaptime(median_lap.LapTime / 1000))
 
 	return median_lap
 
@@ -176,7 +179,7 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True, open_in_browser=T
 		save(l)
 
 if __name__ == "__main__":
-	with open('data/bug_qestion.pickle', 'rb') as f:
+	with open(sys.argv[1], 'rb') as f:
 		l = pickle.load(f)
 
-	plot_session_analysis(l)
+	plot_session_analysis([l[0], get_best_lap(l), get_median_lap(l)])

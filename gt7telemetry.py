@@ -138,7 +138,6 @@ def trackLap(lstlap, curlap, bestlap):
 	if not hideanalysis:
 		# open_in_browser = False
 		median_lap = get_median_lap(laps)
-		median_lap.Title = "Median (%d Laps): %s" % (len(laps), secondsToLaptime(median_lap.LapTime / 1000))
 		# TODO add median lap
 
 		analysis_laps = [currentLap, get_best_lap(laps)]

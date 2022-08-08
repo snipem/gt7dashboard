@@ -39,7 +39,7 @@ class TestBrakePoints(unittest.TestCase):
         median_lap = get_median_lap(self.Laps)
         self.assertEqual(len(median_lap.DataThrottle), len(self.Laps[0].DataThrottle))
         self.assertEqual(1225, median_lap.LapTime)
-        # self.assertListEqual([0, 37.5, 75, 99, 100, 50, 27.5, 0], median_lap.DataThrottle)
+        self.assertListEqual([0, 37.5, 75, 99, 100, 50, 27.5, 0], median_lap.DataThrottle)
         # should contain the last 10, even though the other laps do not contain it
         self.assertListEqual([6, 12, 0, -22.5, 10], median_lap.DataBraking)
 
