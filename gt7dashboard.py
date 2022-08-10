@@ -11,9 +11,35 @@ from bokeh.io import show
 import pandas as pd
 
 import gt7communication
-from gt7helper import pd_data_frame_from_lap
+from gt7helper import secondsToLaptime
 from gt7lap import Lap
 from gt7plot import get_session_layout
+
+def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.DataFrame:
+    df = pd.DataFrame()
+    for lap in laps:
+        time_diff = ""
+        if best_lap == lap.LapTime:
+            # lap_color = 35 # magenta
+            # TODO add some formatting
+            pass
+        elif lap.LapTime < best_lap: # LapTime cannot be smaller than bestlap, bestlap is always the smallest. This can only mean that lap.LapTime is from an earlier race on a different track
+            time_diff = "-"
+        elif best_lap > 0:
+            time_diff = secondsToLaptime(-1 * (best_lap / 1000 - lap.LapTime / 1000))
+
+        df = df.append({'number':lap.Number,
+                        'time':secondsToLaptime(lap.LapTime / 1000),
+                        'diff':time_diff,
+                        'fullthrottle':lap.FullThrottleTicks/lap.LapTicks,
+                        'throttleandbreak':lap.ThrottleAndBrakesTicks/lap.LapTicks,
+                        'fullbreak':lap.FullBrakeTicks/lap.LapTicks,
+                        'nothrottle':lap.NoThrottleNoBrakeTicks/lap.LapTicks,
+                        'tyrespinning':lap.TiresSpinningTicks/lap.LapTicks,
+                        },
+                       ignore_index=True)
+
+    return df
 
 p = figure(plot_width=1000, plot_height=600)
 r1 = p.line([], [], color="green", line_width=2)
@@ -27,27 +53,28 @@ ds3 = r3.data_source
 gt7comm = gt7communication.GT7Communication("192.168.178.120")
 gt7comm.start()
 
-source = ColumnDataSource(pd_data_frame_from_lap([]))
+source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=gt7comm.session.best_lap))
 
 columns = [
-    TableColumn(field='SubjectID', title='SubjectID'),
-    TableColumn(field='Result_1', title='Result 1'),
-    TableColumn(field='Result_2', title='Result 2'),
-    TableColumn(field='Result_3', title='Result 3'),
-    TableColumn(field='Result_4', title='Result 4'),
-    TableColumn(field='Result_5', title='Result 5')
+    TableColumn(field='number', title='#'),
+    TableColumn(field='time', title='Time'),
+    TableColumn(field='diff', title='Diff'),
+    TableColumn(field='fullthrottle', title='Full Throttle'),
+    TableColumn(field='fullbreak', title='Full Break'),
+    TableColumn(field='nothrottle', title='No Throttle'),
+    TableColumn(field='tyrespinning', title='Tire Spin')
 ]
 
 
 myTable = DataTable(source=source, columns=columns)
+
 
 @linear()
 def update_laps(step):
     # time, x, y, z = from_csv(reader).next()
     laps = gt7comm.get_laps()
     print("Adding %d laps" % len(laps))
-    print(laps[0])
-    myTable.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps))
+    myTable.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps, best_lap=gt7comm.session.best_lap))
     myTable.trigger('source', myTable.source, myTable.source)
 
 @linear()

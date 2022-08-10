@@ -170,14 +170,3 @@ def none_ignoring_median(data):
     else:
         i = n // 2
         return (filtered_data[i - 1] + filtered_data[i]) / 2
-
-def pd_data_frame_from_lap(laps: List[Lap]) -> pd.core.frame.DataFrame:
-    df = pd.DataFrame()
-    for lap in laps:
-        df = df.append({'SubjectId':lap.Title,
-                        'physics':lap.LapTime,
-                        'fullthrottle':lap.FullThrottleTicks/lap.LapTicks,
-                        'fullbreak':lap.FullBrakeTicks/lap.LapTicks},
-                        ignore_index=True)
-
-    return df

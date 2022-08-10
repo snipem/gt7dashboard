@@ -138,12 +138,23 @@ class GT_Data:
         # struct.unpack('f', ddata[0xEC:0xEC+4])[0]			# 0xEC = ???
         # struct.unpack('f', ddata[0xF0:0xF0+4])[0]			# 0xF0 = ???
 
+class Session():
+    def __init__(self):
+        # best lap overall
+        self.best_lap=-1
+        self.min_body_height=999999
+        self.max_speed=0
+
+
+
 
 class GT7Communication(Thread):
     def __init__(self, playstation_ip):
         Thread.__init__(self)
+        self.session = Session()
         self.laps = []
-        # self.daemon = True
+        # Always quit with the main process
+        self.daemon = True
         self.last_data = None
         self.current_lap = Lap()
         self.SendPort = 33739
@@ -175,7 +186,15 @@ class GT7Communication(Thread):
                         if curlap != prevlap:
                             # New lap
                             prevlap = curlap
+
+                            # Sett info we only now after crossing the line
+                            self.current_lap.LapTime = lstlap
+                            self.current_lap.Number = curlap
+
                             self.laps.insert(0, self.current_lap)
+
+                            self.session.best_lap = bstlap
+
                             self.current_lap = Lap()
                             # trackLap(lstlap, curlap, bstlap)
                     else:
@@ -221,11 +240,11 @@ class GT7Communication(Thread):
         if data.is_paused:
             return
 
-        # if data.ride_height < data.session.minBodyHeight:
-        #     data.session.minBodyHeight = data.ride_height
-        #
-        # if currentSpeed > maxSpeed:
-        #     maxSpeed = currentSpeed
+        if data.ride_height < self.session.min_body_height:
+            self.session.min_body_height = data.ride_height
+
+        if data.carSpeed > self.session.max_speed:
+            self.session.max_speed = data.carSpeed
 
         if data.throttle == 100:
             self.current_lap.FullThrottleTicks += 1
