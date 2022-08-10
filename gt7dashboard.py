@@ -16,7 +16,7 @@ import pandas as pd
 import gt7communication
 from gt7helper import secondsToLaptime
 from gt7lap import Lap
-from gt7plot import get_session_layout, get_x_axis_depending_on_mode, get_best_lap, get_median_lap
+from gt7plot import get_session_layout, get_x_axis_depending_on_mode, get_best_lap, get_median_lap, get_brake_points
 
 
 def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.DataFrame:
@@ -47,10 +47,16 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
 
 def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
 
+    # breakpoints_x, breakpoints_y = get_brake_points(lap)
     data = {
         'throttle': lap.DataThrottle,
         'brake' : lap.DataBraking,
         'speed' : lap.DataSpeed,
+        'raceline_y' : lap.PositionsY,
+        'raceline_x' : lap.PositionsX,
+        'raceline_z' : lap.PositionsZ,
+        # 'breakpoints_x' : breakpoints_x,
+        # 'breakpoints_y' : breakpoints_y,
         'distance': get_x_axis_depending_on_mode(lap, distance_mode),
         # 'title': title,
     }
@@ -116,6 +122,21 @@ velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_
 myTable = DataTable(source=source, columns=columns)
 myTable.width=1000
 
+##### Race line
+
+RACE_LINE_TOOLTIPS = [
+    ("index", "$index"),
+    ("Breakpoint", "")
+]
+
+race_line_width = 500
+speed_diagram_width = 1200
+total_width = race_line_width + speed_diagram_width
+s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500, tooltips=RACE_LINE_TOOLTIPS)
+
+last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1, color="blue")
+best_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Best Lap", line_width=1, color="magenta")
+
 
 @linear()
 def update_last_lap_best_lap(step):
@@ -125,9 +146,15 @@ def update_last_lap_best_lap(step):
         best_lap = get_best_lap(laps)
         median_lap = get_median_lap(laps)
 
-        data_sources[0].data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
-        data_sources[1].data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
+        last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
+        best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
+
+        data_sources[0].data = last_lap_data
+        data_sources[1].data = best_lap_data
         data_sources[2].data = get_data_from_lap(median_lap, title="Median: %s" % last_lap.Title, distance_mode=True)
+
+        last_lap_race_line.data_source.data = last_lap_data
+        best_lap_race_line.data_source.data = best_lap_data
 
 @linear()
 def update_laps(step):
@@ -168,7 +195,8 @@ def update(step):
 l = layout(children=[
     [velocity_and_throttle_diagram],
     # [p],
-    [myTable]
+    [myTable],
+    [s_race_line]
 ])
 
 curdoc().add_root(l)
