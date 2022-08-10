@@ -45,10 +45,20 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
 
     return df
 
-def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], distance_mode: bool, width: int) -> tuple[Figure, list[DataSource]]:
-    last_lap = laps[0]
-    best_lap = get_best_lap(laps)
-    median_lap = get_median_lap(laps)
+def get_data_from_lap(lap: Lap, distance_mode: bool):
+
+    data = {
+        'throttle': lap.DataThrottle,
+        'brake' : lap.DataBraking,
+        'speed' : lap.DataSpeed,
+        'distance': get_x_axis_depending_on_mode(lap, distance_mode),
+    }
+
+    return data
+
+def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], distance_mode: bool, width: int) -> tuple[
+    Figure, list[ColumnDataSource]]:
+
     TOOLTIPS = [
         ("index", "$index"),
         ("value", "$y"),
@@ -57,18 +67,18 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
 
     f = figure(title="Speed/Throttle - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width, height=500, tooltips=TOOLTIPS)
 
-    data_sources = []
+    sources = []
 
-    for i, lap in enumerate([last_lap, best_lap, median_lap]):
+    source = ColumnDataSource(data={})
+    sources.append(source)
 
-        x_axis = get_x_axis_depending_on_mode(lap, distance_mode)
-        line_throttle = f.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=colors[i], line_alpha=0.5)
-        line_speed = f.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=colors[i])
+    f.line(x='distance', y='speed', source=source, legend_label="Fastest lap", line_width=1, color="magenta", line_alpha=1)
+    f.line(x='distance', y='throttle', source=source, legend_label="Fastest lap", line_width=1, color="magenta", line_alpha=0.5)
+    f.line(x='distance', y='brake', source=source, legend_label="Fastest lap", line_width=1, color="magenta", line_alpha=0.2)
 
-        data_sources.append(line_throttle.data_source)
-        data_sources.append(line_speed.data_source)
+        # line_speed = f.line(x='speed', y='distance', source=source, legend_label=lap.Title, line_width=1, color=colors[i])
 
-    return f, data_sources
+    return f, sources
 
 p = figure(plot_width=1000, plot_height=600)
 r1 = p.line([], [], color="green", line_width=2)
@@ -95,18 +105,26 @@ columns = [
     TableColumn(field='tyrespinning', title='Tire Spin')
 ]
 
-# velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
+velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
 
 
 myTable = DataTable(source=source, columns=columns)
 
 
-# @linear()
-# def update_last_lap_best_lap(step):
-#     new_velocity_throttle_diagram, new_data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap(gt7comm.get_laps(), True, 1000)
-#     for i, ds in enumerate(data_sources):
-#         data_sources[i] = new_data_sources[i]
-#         velocity_and_throttle_diagram.trigger('source', [], [])
+@linear()
+def update_last_lap_best_lap(step):
+    # new_velocity_throttle_diagram, new_data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap(gt7comm.get_laps(), True, 1000)
+
+    laps = gt7comm.get_laps()
+    last_lap = laps[0]
+    best_lap = get_best_lap(laps)
+    median_lap = get_median_lap(laps)
+    source = get_data_from_lap(last_lap, distance_mode=True)
+
+    data_sources[0].data = source
+    # for i, ds in enumerate(data_sources):
+    #     data_sources[i].data = new_data_sources[i].data
+        # velocity_and_throttle_diagram.trigger('source', [], [])
 
 @linear()
 def update_laps(step):
@@ -145,7 +163,7 @@ def update(step):
 # show(myTable)
 
 l = layout(children=[
-    # [velocity_and_throttle_diagram],
+    [velocity_and_throttle_diagram],
     # [p],
     [myTable]
 ])
@@ -155,4 +173,4 @@ curdoc().add_root(l)
 # Add a periodic callback to be run every 500 milliseconds
 # curdoc().add_periodic_callback(update, 60) # best would be 16ms, 60ms is smooth enough
 curdoc().add_periodic_callback(update_laps, 1000) # best would be 16ms, 60ms is smooth enough
-# curdoc().add_periodic_callback(update_last_lap_best_lap, 1000) # best would be 16ms, 60ms is smooth enough
+curdoc().add_periodic_callback(update_last_lap_best_lap, 1000) # best would be 16ms, 60ms is smooth enough
