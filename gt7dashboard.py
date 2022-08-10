@@ -12,6 +12,8 @@ from bokeh.models import ColumnDataSource, DataSource, TableColumn, DataTable
 from bokeh.layouts import layout
 from bokeh.io import show
 import pandas as pd
+# from panel.layout import Panel
+from bokeh.models.widgets import Tabs, Panel
 
 import gt7communication
 from gt7helper import secondsToLaptime
@@ -120,7 +122,7 @@ velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_
 
 
 myTable = DataTable(source=source, columns=columns)
-myTable.width=1000
+# myTable.width=1000
 
 ##### Race line
 
@@ -192,13 +194,20 @@ def update(step):
 
 # show(myTable)
 
-l = layout(children=[
+l1 = layout(children=[
     [velocity_and_throttle_diagram, s_race_line],
     # [p],
     [myTable]
 ])
 
-curdoc().add_root(l)
+# l1 = layout([[fig1, fig2]], sizing_mode='fixed')
+l2 = layout([[myTable]],sizing_mode='fixed')
+
+tab1 = Panel(child=l1,title="Get faster")
+tab2 = Panel(child=l2,title="Race")
+tabs = Tabs(tabs=[ tab1, tab2 ])
+
+curdoc().add_root(tabs)
 
 # Add a periodic callback to be run every 500 milliseconds
 # curdoc().add_periodic_callback(update, 60) # best would be 16ms, 60ms is smooth enough
