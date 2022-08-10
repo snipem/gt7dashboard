@@ -24,3 +24,12 @@ class Lap:
         self.Magic0x98=[]
         self.Magic0x9C=[]
         self.Magic0xA0=[]
+
+    def __str__(self):
+        return ('\n %s, %2d, %1.f, %4d, %4d, %4d' % (
+            self.Title,
+            self.Number,
+            self.RemainingFuel,
+            self.FullThrottleTicks,
+            self.FullBrakeTicks,
+            self.NoThrottleNoBrakeTicks))

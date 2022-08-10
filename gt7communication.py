@@ -175,6 +175,8 @@ class GT7Communication(Thread):
                         if curlap != prevlap:
                             # New lap
                             prevlap = curlap
+                            self.laps.insert(0, self.current_lap)
+                            self.current_lap = Lap()
                             # trackLap(lstlap, curlap, bstlap)
                     else:
                         curLapTime = 0
