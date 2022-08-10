@@ -45,13 +45,14 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
 
     return df
 
-def get_data_from_lap(lap: Lap, distance_mode: bool):
+def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
 
     data = {
         'throttle': lap.DataThrottle,
         'brake' : lap.DataBraking,
         'speed' : lap.DataSpeed,
         'distance': get_x_axis_depending_on_mode(lap, distance_mode),
+        # 'title': title,
     }
 
     return data
@@ -64,20 +65,24 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
         ("value", "$y"),
     ]
     colors = ["blue", "magenta", "green"]
+    legends = ["Last Lap", "Best Lap", "Median Lap"]
 
     f = figure(title="Speed/Throttle - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width, height=500, tooltips=TOOLTIPS)
 
     sources = []
 
-    source = ColumnDataSource(data={})
-    sources.append(source)
+    for color, legend in zip(colors, legends):
 
-    f.line(x='distance', y='speed', source=source, legend_label="Fastest lap", line_width=1, color="magenta", line_alpha=1)
-    f.line(x='distance', y='throttle', source=source, legend_label="Fastest lap", line_width=1, color="magenta", line_alpha=0.5)
-    f.line(x='distance', y='brake', source=source, legend_label="Fastest lap", line_width=1, color="magenta", line_alpha=0.2)
+        source = ColumnDataSource(data={})
+        sources.append(source)
+
+        f.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
+        f.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color, line_alpha=0.5)
+        f.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color, line_alpha=0.2)
 
         # line_speed = f.line(x='speed', y='distance', source=source, legend_label=lap.Title, line_width=1, color=colors[i])
 
+    f.legend.click_policy="hide"
     return f, sources
 
 p = figure(plot_width=1000, plot_height=600)
@@ -109,22 +114,20 @@ velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_
 
 
 myTable = DataTable(source=source, columns=columns)
+myTable.width=1000
 
 
 @linear()
 def update_last_lap_best_lap(step):
-    # new_velocity_throttle_diagram, new_data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap(gt7comm.get_laps(), True, 1000)
-
     laps = gt7comm.get_laps()
-    last_lap = laps[0]
-    best_lap = get_best_lap(laps)
-    median_lap = get_median_lap(laps)
-    source = get_data_from_lap(last_lap, distance_mode=True)
+    if len(laps) > 0:
+        last_lap = laps[0]
+        best_lap = get_best_lap(laps)
+        median_lap = get_median_lap(laps)
 
-    data_sources[0].data = source
-    # for i, ds in enumerate(data_sources):
-    #     data_sources[i].data = new_data_sources[i].data
-        # velocity_and_throttle_diagram.trigger('source', [], [])
+        data_sources[0].data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
+        data_sources[1].data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
+        data_sources[2].data = get_data_from_lap(median_lap, title="Median: %s" % last_lap.Title, distance_mode=True)
 
 @linear()
 def update_laps(step):
