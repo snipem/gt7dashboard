@@ -108,12 +108,7 @@ def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
 	pass
 
 
-def plot_session_analysis(laps: List[Lap], distance_mode=True, open_in_browser=True):
-
-	with open('data/new.pickle', 'wb') as f:
-		pickle.dump(laps, f)
-
-	output_file(filename="analysis_latest.html")
+def get_session_layout(laps: List[Lap], distance_mode=True):
 
 	TOOLTIPS = [
 		("index", "$index"),
@@ -193,6 +188,18 @@ def plot_session_analysis(laps: List[Lap], distance_mode=True, open_in_browser=T
 		# [s_magic_numbers_3],
 		# [s_magic_numbers_4],
 	])
+
+	return l
+
+def plot_session_analysis(laps: List[Lap], distance_mode=True, open_in_browser=True):
+
+	with open('data/new.pickle', 'wb') as f:
+		pickle.dump(laps, f)
+
+	output_file(filename="analysis_latest.html")
+
+	l = get_session_layout(laps, distance_mode)
+
 	if open_in_browser:
 		show(l)
 	else:
