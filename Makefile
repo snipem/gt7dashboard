@@ -9,3 +9,6 @@ normal:
 
 deps:
 	pip3 install -r requirements
+
+serve:
+	bokeh serve gt7dashboard.py
