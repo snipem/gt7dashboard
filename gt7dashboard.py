@@ -193,10 +193,9 @@ def update(step):
 # show(myTable)
 
 l = layout(children=[
-    [velocity_and_throttle_diagram],
+    [velocity_and_throttle_diagram, s_race_line],
     # [p],
-    [myTable],
-    [s_race_line]
+    [myTable]
 ])
 
 curdoc().add_root(l)
