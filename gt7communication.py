@@ -191,7 +191,8 @@ class GT7Communication(Thread):
                             self.current_lap.LapTime = lstlap
                             self.current_lap.Number = curlap
 
-                            self.laps.insert(0, self.current_lap)
+                            if lstlap > 0:
+                                self.laps.insert(0, self.current_lap)
 
                             self.session.best_lap = bstlap
 
