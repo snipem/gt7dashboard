@@ -45,8 +45,7 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
 
     return df
 
-def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], distance_mode: bool, width: int) -> tuple[
-    Figure, list[DataSource]]:
+def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], distance_mode: bool, width: int) -> tuple[Figure, list[DataSource]]:
     last_lap = laps[0]
     best_lap = get_best_lap(laps)
     median_lap = get_median_lap(laps)
