@@ -39,11 +39,11 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
                         'time':secondsToLaptime(lap.LapTime / 1000),
                         'diff':time_diff,
                         'fuelconsumed': "%d" % (lap.FuelConsumed),
-                        'fullthrottle': "%.2f" % (lap.FullThrottleTicks/lap.LapTicks),
-                        'throttleandbreak': "%.2f" % (lap.ThrottleAndBrakesTicks/lap.LapTicks),
-                        'fullbreak': "%.2f" % (lap.FullBrakeTicks/lap.LapTicks),
-                        'nothrottle': "%.2f" % (lap.NoThrottleNoBrakeTicks/lap.LapTicks),
-                        'tyrespinning': "%.2f" % (lap.TiresSpinningTicks/lap.LapTicks),
+                        'fullthrottle': "%d" % (lap.FullThrottleTicks/lap.LapTicks*1000),
+                        'throttleandbreak': "%d" % (lap.ThrottleAndBrakesTicks/lap.LapTicks*1000),
+                        'fullbreak': "%d" % (lap.FullBrakeTicks/lap.LapTicks*1000),
+                        'nothrottle': "%d" % (lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000),
+                        'tyrespinning': "%d" % (lap.TiresSpinningTicks/lap.LapTicks*1000),
                         }], index=[i])
         df = pd.concat([df, df_add])
 
