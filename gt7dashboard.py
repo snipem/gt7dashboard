@@ -24,7 +24,7 @@ from gt7plot import get_session_layout, get_x_axis_depending_on_mode, get_best_l
 
 def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.DataFrame:
     df = pd.DataFrame()
-    for lap in laps:
+    for i, lap in enumerate(laps):
         time_diff = ""
         if best_lap == lap.LapTime:
             # lap_color = 35 # magenta
@@ -35,7 +35,7 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
         elif best_lap > 0:
             time_diff = secondsToLaptime(-1 * (best_lap / 1000 - lap.LapTime / 1000))
 
-        df = df.append({'number':lap.Number,
+        df_add = pd.DataFrame([{'number':lap.Number,
                         'time':secondsToLaptime(lap.LapTime / 1000),
                         'diff':time_diff,
                         'fullthrottle': "%.2f" % (lap.FullThrottleTicks/lap.LapTicks),
@@ -43,8 +43,8 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
                         'fullbreak': "%.2f" % (lap.FullBrakeTicks/lap.LapTicks),
                         'nothrottle': "%.2f" % (lap.NoThrottleNoBrakeTicks/lap.LapTicks),
                         'tyrespinning': "%.2f" % (lap.TiresSpinningTicks/lap.LapTicks),
-                        },
-                       ignore_index=True)
+                        }], index=[i])
+        df = pd.concat([df, df_add])
 
     return df
 
