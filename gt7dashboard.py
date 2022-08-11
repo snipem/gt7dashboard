@@ -21,6 +21,7 @@ from gt7lap import Lap
 from gt7plot import get_session_layout, get_x_axis_depending_on_mode, get_best_lap, get_median_lap, get_brake_points
 
 
+
 def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.DataFrame:
     df = pd.DataFrame()
     for lap in laps:
@@ -139,30 +140,41 @@ s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", widt
 last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1, color="blue")
 best_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Best Lap", line_width=1, color="magenta")
 
-
+laps_stored = []
 @linear()
-def update_last_lap_best_lap(step):
-    laps = gt7comm.get_laps()
-    if len(laps) > 0:
-        last_lap = laps[0]
-        best_lap = get_best_lap(laps)
-        median_lap = get_median_lap(laps)
-
-        last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
-        best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
-
-        data_sources[0].data = last_lap_data
-        data_sources[1].data = best_lap_data
-        data_sources[2].data = get_data_from_lap(median_lap, title="Median: %s" % last_lap.Title, distance_mode=True)
-
-        last_lap_race_line.data_source.data = last_lap_data
-        best_lap_race_line.data_source.data = best_lap_data
-
-@linear()
-def update_laps(step):
+def update_lap_change(step):
     # time, x, y, z = from_csv(reader).next()
+    global laps_stored
     laps = gt7comm.get_laps()
-    print("Adding %d laps" % len(laps))
+
+    # This saves on cpu time, 99.9% of the time this is true
+    if laps == laps_stored or len(laps) == 0:
+        return
+
+    update_time_table(laps)
+    update_speed_velocity_graph(laps)
+
+    laps_stored = laps.copy()
+
+
+def update_speed_velocity_graph(laps: List[Lap]):
+
+    last_lap = laps[0]
+    best_lap = get_best_lap(laps)
+    median_lap = get_median_lap(laps)
+
+    last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
+    best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
+
+    data_sources[0].data = last_lap_data
+    data_sources[1].data = best_lap_data
+    data_sources[2].data = get_data_from_lap(median_lap, title="Median: %s" % last_lap.Title, distance_mode=True)
+
+    last_lap_race_line.data_source.data = last_lap_data
+    best_lap_race_line.data_source.data = best_lap_data
+
+def update_time_table(laps: List[Lap]):
+    print("Adding %d laps to table" % len(laps))
     myTable.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps, best_lap=gt7comm.session.best_lap))
     myTable.trigger('source', myTable.source, myTable.source)
 
@@ -203,7 +215,7 @@ l1 = layout(children=[
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
 l2 = layout([[myTable]],sizing_mode='fixed')
 
-tab1 = Panel(child=l1,title="Get faster")
+tab1 = Panel(child=l1,title="Get Faster")
 tab2 = Panel(child=l2,title="Race")
 tabs = Tabs(tabs=[ tab1, tab2 ])
 
@@ -211,5 +223,6 @@ curdoc().add_root(tabs)
 
 # Add a periodic callback to be run every 500 milliseconds
 # curdoc().add_periodic_callback(update, 60) # best would be 16ms, 60ms is smooth enough
-curdoc().add_periodic_callback(update_laps, 1000) # best would be 16ms, 60ms is smooth enough
-curdoc().add_periodic_callback(update_last_lap_best_lap, 1000) # best would be 16ms, 60ms is smooth enough
+
+# This will only trigger once per lap, but we check every second if anything happened
+curdoc().add_periodic_callback(update_lap_change, 1000)
