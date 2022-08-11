@@ -7,11 +7,15 @@ from typing import List
 
 from salsa20 import Salsa20_xor
 
+from gt7helper import secondsToLaptime
 from gt7lap import Lap
 
 
 class GT_Data:
     def __init__(self, ddata):
+        if not ddata:
+            return
+
         self.package_id = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
         self.bst_lap = struct.unpack('i', ddata[0x78:0x78 + 4])[0]
         self.last_lap = struct.unpack('i', ddata[0x7C:0x7C + 4])[0]
@@ -155,7 +159,7 @@ class GT7Communication(Thread):
         self.laps = []
         # Always quit with the main process
         self.daemon = True
-        self.last_data = None
+        self.last_data = GT_Data(None)
         self.current_lap = Lap()
         self.SendPort = 33739
         self.ReceivePort = 33740
@@ -177,33 +181,35 @@ class GT7Communication(Thread):
                 pknt = pknt + 1
                 ddata = salsa20_dec(data)
                 if len(ddata) > 0 and struct.unpack('i', ddata[0x70:0x70 + 4])[0] > pktid:
+
+                    self.last_data = GT_Data(ddata)
+
                     pktid = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
 
                     bstlap = struct.unpack('i', ddata[0x78:0x78 + 4])[0]
                     lstlap = struct.unpack('i', ddata[0x7C:0x7C + 4])[0]
                     curlap = struct.unpack('h', ddata[0x74:0x74 + 2])[0]
+
                     if curlap > 0:
                         if curlap != prevlap:
                             # New lap
                             prevlap = curlap
 
-                            # Sett info we only now after crossing the line
-                            self.current_lap.LapTime = lstlap
-                            self.current_lap.Number = curlap
 
+                            self._log_lap()
                             if lstlap > 0:
                                 self.laps.insert(0, self.current_lap)
 
                             self.session.best_lap = bstlap
 
                             self.current_lap = Lap()
+                            self.current_lap.FuelAtStart = self.last_data.current_fuel
                             # trackLap(lstlap, curlap, bstlap)
                     else:
                         curLapTime = 0
                         # Reset lap
                         self.current_lap = Lap()
 
-                    self.last_data = GT_Data(ddata)
                     self._log_data(self.last_data)
 
                     if pknt > 100:
@@ -291,6 +297,15 @@ class GT7Communication(Thread):
         self.current_lap.PositionsY.append(data.pos_y)
         self.current_lap.PositionsZ.append(data.pos_z)
 
+    def _log_lap(self):
+        # Sett info we only now after crossing the line
+        self.current_lap.LapTime = self.last_data.last_lap
+        self.current_lap.RemainingFuel = self.last_data.current_fuel
+        self.current_lap.FuelAtEnd = self.last_data.current_fuel
+        self.current_lap.FuelConsumed = self.current_lap.FuelAtStart - self.current_lap.FuelAtEnd
+        self.current_lap.LapTime = self.current_lap.LapTime
+        self.current_lap.Title = secondsToLaptime(self.current_lap.LapTime / 1000)
+        self.current_lap.Number = self.last_data.current_lap - 1  # Is not counting the same way as the time table
 
 # data stream decoding
 def salsa20_dec(dat):
