@@ -8,7 +8,7 @@ from bokeh.driving import linear
 
 from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
-from bokeh.models import ColumnDataSource, DataSource, TableColumn, DataTable
+from bokeh.models import ColumnDataSource, DataSource, TableColumn, DataTable, HTMLTemplateFormatter
 from bokeh.layouts import layout
 from bokeh.io import show
 import pandas as pd
@@ -110,15 +110,26 @@ gt7comm.start()
 
 source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=gt7comm.session.best_lap))
 
+template="""<div style="color:<%= 
+                (function colorfromint(){
+                    if (diff == "")
+                        {return('magenta')}
+                    }()) %>;"> 
+                <%= value %>
+            </div>
+            """
+formatter =  HTMLTemplateFormatter(template=template)
+
+
 columns = [
-    TableColumn(field='number', title='#'),
-    TableColumn(field='time', title='Time'),
-    TableColumn(field='diff', title='Diff'),
-    TableColumn(field='fuelconsumed', title='Fuel Consumed'),
-    TableColumn(field='fullthrottle', title='Full Throttle'),
-    TableColumn(field='fullbreak', title='Full Break'),
-    TableColumn(field='nothrottle', title='No Throttle'),
-    TableColumn(field='tyrespinning', title='Tire Spin')
+    TableColumn(field='number', title='#', formatter=formatter),
+    TableColumn(field='time', title='Time', formatter=formatter),
+    TableColumn(field='diff', title='Diff', formatter=formatter),
+    TableColumn(field='fuelconsumed', title='Fuel Consumed', formatter=formatter),
+    TableColumn(field='fullthrottle', title='Full Throttle', formatter=formatter),
+    TableColumn(field='fullbreak', title='Full Break', formatter=formatter),
+    TableColumn(field='nothrottle', title='No Throttle', formatter=formatter),
+    TableColumn(field='tyrespinning', title='Tire Spin', formatter=formatter)
 ]
 
 velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
