@@ -149,6 +149,9 @@ class Session():
         self.min_body_height=999999
         self.max_speed=0
 
+    def __eq__(self, other):
+        return other is not None and self.best_lap == other.best_lap and self.min_body_height == other.min_body_height and self.max_speed == other.max_speed
+
 
 
 

@@ -1,10 +1,11 @@
+import copy
 from typing import List
 
 import bokeh.application
 import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
-from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button
+from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div
 # from panel.layout import Panel
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
@@ -157,13 +158,20 @@ best_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_lab
                                       color="magenta")
 
 laps_stored = []
+session_stored = None
 
 
 @linear()
 def update_lap_change(step):
     # time, x, y, z = from_csv(reader).next()
     global laps_stored
+    global session_stored
+
     laps = app.gt7comm.get_laps()
+
+    if app.gt7comm.session != session_stored:
+        update_tuning_info()
+        session_stored = copy.copy(app.gt7comm.session)
 
     # This saves on cpu time, 99.9% of the time this is true
     if laps == laps_stored:
@@ -236,11 +244,19 @@ def reset_button_handler(event):
 reset_button = Button(label="Reset")
 reset_button.on_click(reset_button_handler)
 
+tuning_info = Div(width=200, height=100)
+
+
+def update_tuning_info():
+    tuning_info.text = """<p>Max Speed: <b>%d</b> kmh</p>
+    <p>Min Body Height: <b>%d</b> mm</p>""" % (app.gt7comm.session.max_speed, app.gt7comm.session.min_body_height)
+
+
 l1 = layout(children=[
     [reset_button],
     [velocity_and_throttle_diagram, s_race_line],
     # [p],
-    [myTable]
+    [myTable, tuning_info]
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
