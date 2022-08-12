@@ -4,7 +4,7 @@ import bokeh.application
 import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
-from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter
+from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button
 # from panel.layout import Panel
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
@@ -166,7 +166,7 @@ def update_lap_change(step):
     laps = app.gt7comm.get_laps()
 
     # This saves on cpu time, 99.9% of the time this is true
-    if laps == laps_stored or len(laps) == 0:
+    if laps == laps_stored:
         return
 
     update_time_table(laps)
@@ -176,9 +176,15 @@ def update_lap_change(step):
 
 
 def update_speed_velocity_graph(laps: List[Lap]):
-    last_lap = laps[0]
-    best_lap = get_best_lap(laps)
-    median_lap = get_median_lap(laps)
+
+    if len(laps) == 0:
+        last_lap = Lap()
+        best_lap = Lap()
+        median_lap = Lap()
+    else:
+        last_lap = laps[0]
+        best_lap = get_best_lap(laps)
+        median_lap = get_median_lap(laps)
 
     last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
     best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
@@ -211,6 +217,9 @@ def update(step):
     ds2.trigger('data', ds2.data, ds2.data)
     ds3.trigger('data', ds3.data, ds3.data)
 
+def reset_button_handler(event):
+    print("button clicked")
+    app.gt7comm.reset()
 # l = get_session_layout(gt7comm.get_laps(), True)
 
 
@@ -224,14 +233,18 @@ def update(step):
 
 # show(myTable)
 
+reset_button = Button(label="Reset")
+reset_button.on_click(reset_button_handler)
+
 l1 = layout(children=[
+    [reset_button],
     [velocity_and_throttle_diagram, s_race_line],
     # [p],
     [myTable]
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
-l2 = layout([[myTable]], sizing_mode='fixed')
+l2 = layout([[reset_button],[myTable]], sizing_mode='fixed')
 
 tab1 = Panel(child=l1, title="Get Faster")
 tab2 = Panel(child=l2, title="Race")

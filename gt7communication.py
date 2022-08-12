@@ -307,6 +307,13 @@ class GT7Communication(Thread):
         self.current_lap.Title = secondsToLaptime(self.current_lap.LapTime / 1000)
         self.current_lap.Number = self.last_data.current_lap - 1  # Is not counting the same way as the time table
 
+    def reset(self):
+        self.current_lap = Lap()
+        self.session = Session()
+        self.last_data = GT_Data(None)
+        self.laps = []
+
+
 # data stream decoding
 def salsa20_dec(dat):
     KEY = b'Simulator Interface Packet GT7 ver 0.0'
