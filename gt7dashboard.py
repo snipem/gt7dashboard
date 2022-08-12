@@ -1,25 +1,19 @@
-from typing import List, Tuple, Union, Any
+from typing import List
 
-import pandas
-from bokeh.core.has_props import HasProps
-from bokeh.core.property.instance import Instance
-from bokeh.plotting import figure, curdoc, Figure
-from bokeh.driving import linear
-
-from bokeh.plotting import figure
-from bokeh.plotting.figure import Figure
-from bokeh.models import ColumnDataSource, DataSource, TableColumn, DataTable, HTMLTemplateFormatter
-from bokeh.layouts import layout
-from bokeh.io import show
 import pandas as pd
+from bokeh.driving import linear
+from bokeh.layouts import layout
+from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter
 # from panel.layout import Panel
 from bokeh.models.widgets import Tabs, Panel
+from bokeh.plotting import curdoc
+from bokeh.plotting import figure
+from bokeh.plotting.figure import Figure
 
 import gt7communication
 from gt7helper import secondsToLaptime
 from gt7lap import Lap
-from gt7plot import get_session_layout, get_x_axis_depending_on_mode, get_best_lap, get_median_lap, get_brake_points
-
+from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap
 
 
 def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.DataFrame:
