@@ -1,5 +1,6 @@
 from typing import List
 
+import bokeh.application
 import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
@@ -24,35 +25,35 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.Data
             # lap_color = 35 # magenta
             # TODO add some formatting
             pass
-        elif lap.LapTime < best_lap: # LapTime cannot be smaller than bestlap, bestlap is always the smallest. This can only mean that lap.LapTime is from an earlier race on a different track
+        elif lap.LapTime < best_lap:  # LapTime cannot be smaller than bestlap, bestlap is always the smallest. This can only mean that lap.LapTime is from an earlier race on a different track
             time_diff = "-"
         elif best_lap > 0:
             time_diff = secondsToLaptime(-1 * (best_lap / 1000 - lap.LapTime / 1000))
 
-        df_add = pd.DataFrame([{'number':lap.Number,
-                        'time':secondsToLaptime(lap.LapTime / 1000),
-                        'diff':time_diff,
-                        'fuelconsumed': "%d" % (lap.FuelConsumed),
-                        'fullthrottle': "%d" % (lap.FullThrottleTicks/lap.LapTicks*1000),
-                        'throttleandbreak': "%d" % (lap.ThrottleAndBrakesTicks/lap.LapTicks*1000),
-                        'fullbreak': "%d" % (lap.FullBrakeTicks/lap.LapTicks*1000),
-                        'nothrottle': "%d" % (lap.NoThrottleNoBrakeTicks/lap.LapTicks*1000),
-                        'tyrespinning': "%d" % (lap.TiresSpinningTicks/lap.LapTicks*1000),
-                        }], index=[i])
+        df_add = pd.DataFrame([{'number': lap.Number,
+                                'time': secondsToLaptime(lap.LapTime / 1000),
+                                'diff': time_diff,
+                                'fuelconsumed': "%d" % (lap.FuelConsumed),
+                                'fullthrottle': "%d" % (lap.FullThrottleTicks / lap.LapTicks * 1000),
+                                'throttleandbreak': "%d" % (lap.ThrottleAndBrakesTicks / lap.LapTicks * 1000),
+                                'fullbreak': "%d" % (lap.FullBrakeTicks / lap.LapTicks * 1000),
+                                'nothrottle': "%d" % (lap.NoThrottleNoBrakeTicks / lap.LapTicks * 1000),
+                                'tyrespinning': "%d" % (lap.TiresSpinningTicks / lap.LapTicks * 1000),
+                                }], index=[i])
         df = pd.concat([df, df_add])
 
     return df
 
-def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
 
+def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
     # breakpoints_x, breakpoints_y = get_brake_points(lap)
     data = {
         'throttle': lap.DataThrottle,
-        'brake' : lap.DataBraking,
-        'speed' : lap.DataSpeed,
-        'raceline_y' : lap.PositionsY,
-        'raceline_x' : lap.PositionsX,
-        'raceline_z' : lap.PositionsZ,
+        'brake': lap.DataBraking,
+        'speed': lap.DataSpeed,
+        'raceline_y': lap.PositionsY,
+        'raceline_x': lap.PositionsX,
+        'raceline_z': lap.PositionsZ,
         # 'breakpoints_x' : breakpoints_x,
         # 'breakpoints_y' : breakpoints_y,
         'distance': get_x_axis_depending_on_mode(lap, distance_mode),
@@ -61,9 +62,9 @@ def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
 
     return data
 
+
 def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], distance_mode: bool, width: int) -> tuple[
     Figure, list[ColumnDataSource]]:
-
     TOOLTIPS = [
         ("index", "$index"),
         ("value", "$y"),
@@ -71,23 +72,25 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Best Lap", "Median Lap"]
 
-    f = figure(title="Speed/Throttle - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width, height=500, tooltips=TOOLTIPS)
+    f = figure(title="Speed/Throttle - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+               height=500, tooltips=TOOLTIPS)
 
     sources = []
 
     for color, legend in zip(colors, legends):
-
         source = ColumnDataSource(data={})
         sources.append(source)
 
         f.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
-        f.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color, line_alpha=0.5)
+        f.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color,
+               line_alpha=0.5)
         f.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color, line_alpha=0.2)
 
         # line_speed = f.line(x='speed', y='distance', source=source, legend_label=lap.Title, line_width=1, color=colors[i])
 
-    f.legend.click_policy="hide"
+    f.legend.click_policy = "hide"
     return f, sources
+
 
 p = figure(plot_width=1000, plot_height=600)
 r1 = p.line([], [], color="green", line_width=2)
@@ -99,12 +102,17 @@ ds2 = r2.data_source
 ds3 = r3.data_source
 
 # def on_server_loaded(server_context):
-gt7comm = gt7communication.GT7Communication("192.168.178.120")
-gt7comm.start()
+app = bokeh.application.Application
 
-source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=gt7comm.session.best_lap))
+# Share the gt7comm connection between sessions by storing them as an application attribute
+if not hasattr(app, "gt7comm"):
+    app.gt7comm = gt7communication.GT7Communication("192.168.178.120")
+    app.gt7comm.start()
 
-template="""<div style="color:<%= 
+source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=app.gt7comm.session.best_lap))
+
+# FIXME Not working correctly
+template = """<div style="color:<%= 
                 (function colorfromint(){
                     if (diff == "")
                         {return('magenta')}
@@ -112,8 +120,7 @@ template="""<div style="color:<%=
                 <%= value %>
             </div>
             """
-formatter =  HTMLTemplateFormatter(template=template)
-
+formatter = HTMLTemplateFormatter(template=template)
 
 columns = [
     TableColumn(field='number', title='#', formatter=formatter),
@@ -128,7 +135,6 @@ columns = [
 
 velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
 
-
 myTable = DataTable(source=source, columns=columns)
 # myTable.width=1000
 
@@ -142,17 +148,22 @@ RACE_LINE_TOOLTIPS = [
 race_line_width = 500
 speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
-s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500, tooltips=RACE_LINE_TOOLTIPS)
+s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500,
+                     tooltips=RACE_LINE_TOOLTIPS)
 
-last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1, color="blue")
-best_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Best Lap", line_width=1, color="magenta")
+last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1,
+                                      color="blue")
+best_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Best Lap", line_width=1,
+                                      color="magenta")
 
 laps_stored = []
+
+
 @linear()
 def update_lap_change(step):
     # time, x, y, z = from_csv(reader).next()
     global laps_stored
-    laps = gt7comm.get_laps()
+    laps = app.gt7comm.get_laps()
 
     # This saves on cpu time, 99.9% of the time this is true
     if laps == laps_stored or len(laps) == 0:
@@ -165,7 +176,6 @@ def update_lap_change(step):
 
 
 def update_speed_velocity_graph(laps: List[Lap]):
-
     last_lap = laps[0]
     best_lap = get_best_lap(laps)
     median_lap = get_median_lap(laps)
@@ -180,15 +190,17 @@ def update_speed_velocity_graph(laps: List[Lap]):
     last_lap_race_line.data_source.data = last_lap_data
     best_lap_race_line.data_source.data = best_lap_data
 
+
 def update_time_table(laps: List[Lap]):
     print("Adding %d laps to table" % len(laps))
-    myTable.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps, best_lap=gt7comm.session.best_lap))
+    myTable.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps, best_lap=app.gt7comm.session.best_lap))
     myTable.trigger('source', myTable.source, myTable.source)
+
 
 @linear()
 def update(step):
     # time, x, y, z = from_csv(reader).next()
-    last_package = gt7comm.get_last_data()
+    last_package = app.gt7comm.get_last_data()
     ds1.data['x'].append(last_package.package_id)
     ds2.data['x'].append(last_package.package_id)
     ds3.data['x'].append(last_package.package_id)
@@ -200,7 +212,6 @@ def update(step):
     ds3.trigger('data', ds3.data, ds3.data)
 
 # l = get_session_layout(gt7comm.get_laps(), True)
-
 
 
 # df = pd.DataFrame({
@@ -220,11 +231,11 @@ l1 = layout(children=[
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
-l2 = layout([[myTable]],sizing_mode='fixed')
+l2 = layout([[myTable]], sizing_mode='fixed')
 
-tab1 = Panel(child=l1,title="Get Faster")
-tab2 = Panel(child=l2,title="Race")
-tabs = Tabs(tabs=[ tab1, tab2 ])
+tab1 = Panel(child=l1, title="Get Faster")
+tab2 = Panel(child=l2, title="Race")
+tabs = Tabs(tabs=[tab1, tab2])
 
 curdoc().add_root(tabs)
 
