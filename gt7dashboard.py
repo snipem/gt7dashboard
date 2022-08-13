@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import List
+from typing import List, Tuple
 
 import bokeh.application
 import pandas as pd
@@ -9,7 +9,7 @@ from bokeh.layouts import layout
 from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div
 # from panel.layout import Panel
 from bokeh.models.widgets import Tabs, Panel
-from bokeh.plotting import curdoc
+from bokeh.plotting import curdoc, Figure
 from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
@@ -66,7 +66,7 @@ def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
 
 
 def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], distance_mode: bool, width: int) -> tuple[
-    Figure, list[ColumnDataSource]]:
+    Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
     TOOLTIPS = [
         ("index", "$index"),
         ("value", "$y"),
@@ -74,8 +74,16 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Best Lap", "Median Lap"]
 
-    f = figure(title="Speed/Throttle - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+    f_speed = figure(title="Speed - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
                height=500, tooltips=TOOLTIPS)
+
+    f_throttle = figure(title="Throttle - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+                        height=250, tooltips=TOOLTIPS)
+    f_braking = figure(title="Braking - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+                       height=250, tooltips=TOOLTIPS)
+
+    f_coasting = figure(title="Braking - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+                       height=250, tooltips=TOOLTIPS)
 
     sources = []
 
@@ -83,15 +91,20 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
         source = ColumnDataSource(data={})
         sources.append(source)
 
-        f.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
-        f.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color,
+        f_speed.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
+        f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color,
                line_alpha=0.5)
-        f.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color, line_alpha=0.2)
+        f_braking.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
+        f_coasting.line(x='distance', y='coast', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
 
         # line_speed = f.line(x='speed', y='distance', source=source, legend_label=lap.Title, line_width=1, color=colors[i])
 
-    f.legend.click_policy = "hide"
-    return f, sources
+    f_speed.legend.click_policy = "hide"
+    f_throttle.legend.click_policy = f_speed.legend.click_policy
+    f_braking.legend.click_policy = f_speed.legend.click_policy
+    f_coasting.legend.click_policy = f_speed.legend.click_policy
+
+    return f_speed, f_throttle, f_braking, f_coasting, sources
 
 
 p = figure(plot_width=1000, plot_height=600)
@@ -140,7 +153,7 @@ columns = [
     TableColumn(field='tyrespinning', title='Tire Spin', formatter=formatter)
 ]
 
-velocity_and_throttle_diagram, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
+f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
 
 myTable = DataTable(source=source, columns=columns)
 # myTable.width=1000
@@ -301,7 +314,10 @@ def update_tuning_info():
 
 l1 = layout(children=[
     [reset_button],
-    [velocity_and_throttle_diagram, s_race_line],
+    [f_speed, s_race_line],
+    [f_throttle],
+    [f_braking],
+    [f_coasting],
     # [p],
     [myTable, tuning_info, div_last_lap, div_best_lap]
 ])
