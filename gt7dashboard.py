@@ -112,7 +112,7 @@ if not hasattr(app, "gt7comm"):
 
     if not playstation_ip:
         raise Exception("No IP set in env var GT7_PLAYSTATION_IP")
-    
+
     app.gt7comm = gt7communication.GT7Communication(playstation_ip)
     app.gt7comm.start()
 
@@ -191,14 +191,23 @@ def update_lap_change(step):
 
 def update_speed_velocity_graph(laps: List[Lap]):
 
-    if len(laps) == 0:
+    if len(laps) == 0: # Show nothing
         last_lap = Lap()
         best_lap = Lap()
         median_lap = Lap()
-    else:
+    elif len(laps) == 1: # Only show last lap
+        last_lap = laps[0]
+        best_lap = Lap() # Use empty lap for best
+        median_lap = Lap() # Use empty lap for median
+    elif len(laps) == 2: # Only show last and best lap
+        last_lap = laps[0]
+        best_lap = get_best_lap(laps)
+        median_lap = Lap() # Use empty lap for median
+    else: # Fill all laps
         last_lap = laps[0]
         best_lap = get_best_lap(laps)
         median_lap = get_median_lap(laps)
+
 
     last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
     best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
