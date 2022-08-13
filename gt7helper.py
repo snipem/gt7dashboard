@@ -4,6 +4,7 @@ from statistics import StatisticsError
 from typing import Tuple, List
 
 import pandas as pd
+from scipy.signal import find_peaks
 from tabulate import tabulate
 
 from gt7lap import Lap
@@ -142,6 +143,33 @@ def milliseconds_to_difftime(milliseconds: int):
         return ""
 
     return prefix + delta
+
+
+def find_speed_peaks_and_valleys(lap: Lap, width: int = 100) -> tuple[list[int], list[int]]:
+    inv_data_speed = [i*-1 for i in lap.DataSpeed]
+    peaks, whatisthis = find_peaks(lap.DataSpeed, width=width)
+    valleys, whatisthis = find_peaks(inv_data_speed, width=width)
+    return list(peaks), list(valleys)
+
+
+def get_speed_peaks_and_valleys(lap: Lap):
+    peaks, valleys = find_speed_peaks_and_valleys(lap, width=100)
+
+    peak_speed_data_x = []
+    peak_speed_data_y = []
+
+    valley_speed_data_x = []
+    valley_speed_data_y = []
+
+    for p in peaks:
+        peak_speed_data_x.append(lap.DataSpeed[p])
+        peak_speed_data_y.append(p)
+
+    for v in valleys:
+        valley_speed_data_x.append(lap.DataSpeed[v])
+        valley_speed_data_y.append(v)
+
+    return peak_speed_data_x, peak_speed_data_y, valley_speed_data_x, valley_speed_data_y
 
 def none_ignoring_median(data):
     """Return the median (middle value) of numeric data but ignore None values.

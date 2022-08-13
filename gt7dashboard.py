@@ -14,7 +14,7 @@ from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
 import gt7communication
-from gt7helper import secondsToLaptime
+from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys
 from gt7lap import Lap
 from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap
 
@@ -183,6 +183,7 @@ def update_lap_change(step):
     if laps == laps_stored:
         return
 
+    update_speed_peak_and_valley_diagram(laps)
     update_time_table(laps)
     update_speed_velocity_graph(laps)
 
@@ -261,6 +262,38 @@ reset_button.on_click(reset_button_handler)
 
 tuning_info = Div(width=200, height=100)
 
+speed_peak_valley_diagram = Div(width=200, height=200)
+
+def update_speed_peak_and_valley_diagram(laps):
+    if len(laps) == 0:
+        return
+
+    last_lap = laps[0]
+    if len(laps) == 1:
+        best_lap = Lap()
+    else:
+        best_lap = get_best_lap(laps)
+
+    table = """<table>"""
+
+    for l in [last_lap, best_lap]:
+
+        peak_speed_data_x, peak_speed_data_y, valley_speed_data_x, valley_speed_data_y = get_speed_peaks_and_valleys(l)
+
+        table += "<tr><th>%s</tr></th>" % l.Title
+        
+        table = table + "<tr><th>Peak Speed</th><th>Position</th></tr>"
+        for i, dx in enumerate(peak_speed_data_x):
+            table = table + "<tr><td>%d kmh</td><td>%d</td></tr>" % (peak_speed_data_x[i], peak_speed_data_y[i])
+
+        table = table + "<tr><th>Valley Speed</th><th>Position</th></tr>"
+        for i, dx in enumerate(valley_speed_data_x):
+            table = table + "<tr><td>%d kmh</td><td>%d</td></tr>" % (valley_speed_data_x[i], valley_speed_data_y[i])
+
+    table = table + """</table>"""
+    speed_peak_valley_diagram.text = table
+
+
 
 def update_tuning_info():
     tuning_info.text = """<p>Max Speed: <b>%d</b> kmh</p>
@@ -271,7 +304,7 @@ l1 = layout(children=[
     [reset_button],
     [velocity_and_throttle_diagram, s_race_line],
     # [p],
-    [myTable, tuning_info]
+    [myTable, tuning_info, speed_peak_valley_diagram]
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
