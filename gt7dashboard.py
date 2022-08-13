@@ -1,4 +1,5 @@
 import copy
+import os
 from typing import List
 
 import bokeh.application
@@ -107,7 +108,12 @@ app = bokeh.application.Application
 
 # Share the gt7comm connection between sessions by storing them as an application attribute
 if not hasattr(app, "gt7comm"):
-    app.gt7comm = gt7communication.GT7Communication("192.168.178.120")
+    playstation_ip = os.environ.get("GT7_PLAYSTATION_IP")
+
+    if not playstation_ip:
+        raise Exception("No IP set in env var GT7_PLAYSTATION_IP")
+    
+    app.gt7comm = gt7communication.GT7Communication(playstation_ip)
     app.gt7comm.start()
 
 source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=app.gt7comm.session.best_lap))
