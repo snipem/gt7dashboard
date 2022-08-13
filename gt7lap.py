@@ -1,5 +1,6 @@
 class Lap:
     def __init__(self):
+        self.DataCoasting = []
         self.RemainingFuel = -1
         self.DataTires = []
         self.PositionsX = []
@@ -17,6 +18,7 @@ class Lap:
         self.TiresSpinningTicks = 0
         self.DataThrottle = []
         self.DataBraking = []
+        self.DataCoasting = []
         self.DataSpeed = []
         self.FuelAtStart = 0
         self.FuelConsumed = -1

@@ -53,6 +53,7 @@ def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
         'throttle': lap.DataThrottle,
         'brake': lap.DataBraking,
         'speed': lap.DataSpeed,
+        'coast': lap.DataCoasting,
         'raceline_y': lap.PositionsY,
         'raceline_x': lap.PositionsX,
         'raceline_z': lap.PositionsZ,
@@ -77,12 +78,12 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     f_speed = figure(title="Speed - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
                height=500, tooltips=TOOLTIPS)
 
-    f_throttle = figure(title="Throttle - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+    f_throttle = figure(title="Throttle - Last, Best, Median", x_range=f_speed.x_range, x_axis_label="Distance", y_axis_label="Value", width=width,
                         height=250, tooltips=TOOLTIPS)
-    f_braking = figure(title="Braking - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+    f_braking = figure(title="Braking - Last, Best, Median", x_range=f_speed.x_range, x_axis_label="Distance", y_axis_label="Value", width=width,
                        height=250, tooltips=TOOLTIPS)
 
-    f_coasting = figure(title="Braking - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
+    f_coasting = figure(title="Braking - Last, Best, Median", x_range=f_speed.x_range, x_axis_label="Distance", y_axis_label="Value", width=width,
                        height=250, tooltips=TOOLTIPS)
 
     sources = []
@@ -92,8 +93,7 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
         sources.append(source)
 
         f_speed.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
-        f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color,
-               line_alpha=0.5)
+        f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
         f_braking.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
         f_coasting.line(x='distance', y='coast', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
 

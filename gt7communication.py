@@ -264,6 +264,9 @@ class GT7Communication(Thread):
 
         if data.brake == 0 and data.throttle == 0:
             self.current_lap.NoThrottleNoBrakeTicks += 1
+            self.current_lap.DataCoasting.append(1)
+        else:
+            self.current_lap.DataCoasting.append(0)
 
         if data.brake > 0 and data.throttle > 0:
             self.current_lap.ThrottleAndBrakesTicks += 1
