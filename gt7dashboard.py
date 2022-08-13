@@ -183,7 +183,15 @@ def update_lap_change(step):
     if laps == laps_stored:
         return
 
-    update_speed_peak_and_valley_diagram(laps)
+    if len(laps) > 0:
+
+        last_lap = laps[0]
+
+        if len(laps) >= 1:
+            best_lap = get_best_lap(laps)
+
+        update_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
+        update_speed_peak_and_valley_diagram(div_best_lap, best_lap, "Best Lap")
     update_time_table(laps)
     update_speed_velocity_graph(laps)
 
@@ -262,36 +270,27 @@ reset_button.on_click(reset_button_handler)
 
 tuning_info = Div(width=200, height=100)
 
-speed_peak_valley_diagram = Div(width=200, height=200)
+div_last_lap = Div(width=200, height=200)
+div_best_lap = Div(width=200, height=200)
 
-def update_speed_peak_and_valley_diagram(laps):
-    if len(laps) == 0:
-        return
-
-    last_lap = laps[0]
-    if len(laps) == 1:
-        best_lap = Lap()
-    else:
-        best_lap = get_best_lap(laps)
+def update_speed_peak_and_valley_diagram(div, lap, title):
 
     table = """<table>"""
 
-    for l in [last_lap, best_lap]:
+    peak_speed_data_x, peak_speed_data_y, valley_speed_data_x, valley_speed_data_y = get_speed_peaks_and_valleys(lap)
 
-        peak_speed_data_x, peak_speed_data_y, valley_speed_data_x, valley_speed_data_y = get_speed_peaks_and_valleys(l)
+    table += "<tr><th colspan=\"3\">%s - %s</th></tr>" % (title, lap.Title)
 
-        table += "<tr><th>%s</tr></th>" % l.Title
-        
-        table = table + "<tr><th>Peak Speed</th><th>Position</th></tr>"
-        for i, dx in enumerate(peak_speed_data_x):
-            table = table + "<tr><td>%d kmh</td><td>%d</td></tr>" % (peak_speed_data_x[i], peak_speed_data_y[i])
+    table = table + "<tr><th>#</th><th>Peak Speed</th><th>Position</th></tr>"
+    for i, dx in enumerate(peak_speed_data_x):
+        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (i+1, peak_speed_data_x[i], peak_speed_data_y[i])
 
-        table = table + "<tr><th>Valley Speed</th><th>Position</th></tr>"
-        for i, dx in enumerate(valley_speed_data_x):
-            table = table + "<tr><td>%d kmh</td><td>%d</td></tr>" % (valley_speed_data_x[i], valley_speed_data_y[i])
+    table = table + "<tr><th>#</th><th>Valley Speed</th><th>Position</th></tr>"
+    for i, dx in enumerate(valley_speed_data_x):
+        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (i+1, valley_speed_data_x[i], valley_speed_data_y[i])
 
     table = table + """</table>"""
-    speed_peak_valley_diagram.text = table
+    div.text = table
 
 
 
@@ -304,7 +303,7 @@ l1 = layout(children=[
     [reset_button],
     [velocity_and_throttle_diagram, s_race_line],
     # [p],
-    [myTable, tuning_info, speed_peak_valley_diagram]
+    [myTable, tuning_info, div_last_lap, div_best_lap]
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
