@@ -6,7 +6,7 @@ import bokeh.application
 import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
-from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div
+from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div, Legend
 # from panel.layout import Panel
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc, Figure
@@ -75,16 +75,28 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Best Lap", "Median Lap"]
 
-    f_speed = figure(title="Speed - Last, Best, Median", x_axis_label="Distance", y_axis_label="Value", width=width,
-               height=500, tooltips=TOOLTIPS)
+    f_speed = figure(title="Telemetry - Last, Best, Median", y_axis_label="Speed", width=width,
+               height=250, tooltips=TOOLTIPS)
 
-    f_throttle = figure(title="Throttle - Last, Best, Median", x_range=f_speed.x_range, x_axis_label="Distance", y_axis_label="Value", width=width,
+    f_throttle = figure(x_range=f_speed.x_range, y_axis_label="Throttle", width=width,
                         height=250, tooltips=TOOLTIPS)
-    f_braking = figure(title="Braking - Last, Best, Median", x_range=f_speed.x_range, x_axis_label="Distance", y_axis_label="Value", width=width,
+    f_braking = figure(x_range=f_speed.x_range,  y_axis_label="Braking", width=width,
                        height=250, tooltips=TOOLTIPS)
 
-    f_coasting = figure(title="Braking - Last, Best, Median", x_range=f_speed.x_range, x_axis_label="Distance", y_axis_label="Value", width=width,
+    f_coasting = figure(x_range=f_speed.x_range, y_axis_label="Coasting", width=width,
                        height=250, tooltips=TOOLTIPS)
+
+    # f_speed.xaxis.visible = False
+    f_speed.toolbar.autohide = True
+
+    f_throttle.xaxis.visible = False
+    f_throttle.toolbar.autohide = True
+
+    f_braking.xaxis.visible = False
+    f_braking.toolbar.autohide = True
+
+    f_coasting.xaxis.visible = False
+    f_coasting.toolbar.autohide = True
 
     sources = []
 
@@ -155,8 +167,8 @@ columns = [
 
 f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
 
-myTable = DataTable(source=source, columns=columns)
-# myTable.width=1000
+t_lap_times = DataTable(source=source, columns=columns)
+t_lap_times.width=1000
 
 ##### Race line
 
@@ -168,8 +180,11 @@ RACE_LINE_TOOLTIPS = [
 race_line_width = 500
 speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
-s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=500, height=500,
+s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=430, height=250,
                      tooltips=RACE_LINE_TOOLTIPS)
+s_race_line.axis.visible = False
+s_race_line.toolbar.autohide = True
+s_race_line.add_layout(Legend(), 'right')
 
 last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1,
                                       color="blue")
@@ -244,8 +259,8 @@ def update_speed_velocity_graph(laps: List[Lap]):
 
 def update_time_table(laps: List[Lap]):
     print("Adding %d laps to table" % len(laps))
-    myTable.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps, best_lap=app.gt7comm.session.best_lap))
-    myTable.trigger('source', myTable.source, myTable.source)
+    t_lap_times.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps, best_lap=app.gt7comm.session.best_lap))
+    t_lap_times.trigger('source', t_lap_times.source, t_lap_times.source)
 
 
 @linear()
@@ -294,11 +309,11 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
     table += "<tr><th colspan=\"3\">%s - %s</th></tr>" % (title, lap.Title)
 
-    table = table + "<tr><th>#</th><th>Peak Speed</th><th>Position</th></tr>"
+    table = table + "<tr><th>#</th><th>Peak</th><th>Position</th></tr>"
     for i, dx in enumerate(peak_speed_data_x):
         table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (i+1, peak_speed_data_x[i], peak_speed_data_y[i])
 
-    table = table + "<tr><th>#</th><th>Valley Speed</th><th>Position</th></tr>"
+    table = table + "<tr><th>#</th><th>Valley</th><th>Position</th></tr>"
     for i, dx in enumerate(valley_speed_data_x):
         table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (i+1, valley_speed_data_x[i], valley_speed_data_y[i])
 
@@ -313,17 +328,17 @@ def update_tuning_info():
 
 
 l1 = layout(children=[
-    [reset_button],
     [f_speed, s_race_line],
-    [f_throttle],
+    [f_throttle, div_last_lap, div_best_lap],
     [f_braking],
-    [f_coasting],
+    [f_coasting, tuning_info],
     # [p],
-    [myTable, tuning_info, div_last_lap, div_best_lap]
+    [t_lap_times],
+    [reset_button],
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
-l2 = layout([[reset_button],[myTable]], sizing_mode='fixed')
+l2 = layout([[reset_button], [t_lap_times]], sizing_mode='fixed')
 
 tab1 = Panel(child=l1, title="Get Faster")
 tab2 = Panel(child=l2, title="Race")
