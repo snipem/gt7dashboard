@@ -214,12 +214,12 @@ def update_lap_change(step):
     if len(laps) > 0:
 
         last_lap = laps[0]
-
-        if len(laps) >= 1:
-            best_lap = get_best_lap(laps)
-
         update_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
-        update_speed_peak_and_valley_diagram(div_best_lap, best_lap, "Best Lap")
+
+        if len(laps) > 1:
+            best_lap = get_best_lap(laps)
+            update_speed_peak_and_valley_diagram(div_best_lap, best_lap, "Best Lap")
+
     update_time_table(laps)
     update_speed_velocity_graph(laps)
 
@@ -279,6 +279,8 @@ def update(step):
 
 def reset_button_handler(event):
     print("button clicked")
+    div_best_lap.text = ""
+    div_last_lap.text = ""
     app.gt7comm.reset()
 # l = get_session_layout(gt7comm.get_laps(), True)
 
