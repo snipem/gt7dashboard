@@ -198,3 +198,11 @@ def none_ignoring_median(data):
     else:
         i = n // 2
         return (filtered_data[i - 1] + filtered_data[i]) / 2
+
+def load_laps_from_pickle(path: str) -> List[Lap]:
+    with open(path, 'rb') as f:
+        return pickle.load(f)
+
+def save_laps_to_pickle(laps: List[Lap]):
+    with open('data/latest_save.pickle', 'wb') as f:
+        pickle.dump(laps, f)

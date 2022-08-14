@@ -14,7 +14,7 @@ from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
 import gt7communication
-from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys
+from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle
 from gt7lap import Lap
 from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap
 
@@ -134,11 +134,16 @@ app = bokeh.application.Application
 # Share the gt7comm connection between sessions by storing them as an application attribute
 if not hasattr(app, "gt7comm"):
     playstation_ip = os.environ.get("GT7_PLAYSTATION_IP")
+    load_laps_path = os.environ.get("GT7_LOAD_LAPS_PATH")
 
     if not playstation_ip:
         raise Exception("No IP set in env var GT7_PLAYSTATION_IP")
 
     app.gt7comm = gt7communication.GT7Communication(playstation_ip)
+
+    if load_laps_path:
+        app.gt7comm.load_laps(load_laps_from_pickle(load_laps_path), replace_other_laps=True)
+
     app.gt7comm.start()
 
 source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=app.gt7comm.session.best_lap))
@@ -278,10 +283,15 @@ def update(step):
     ds3.trigger('data', ds3.data, ds3.data)
 
 def reset_button_handler(event):
-    print("button clicked")
+    print("reset button clicked")
     div_best_lap.text = ""
     div_last_lap.text = ""
     app.gt7comm.reset()
+
+
+def save_button_handler(event):
+    print("save button clicked")
+    save_laps_to_pickle(app.gt7comm.laps)
 # l = get_session_layout(gt7comm.get_laps(), True)
 
 
@@ -295,8 +305,11 @@ def reset_button_handler(event):
 
 # show(myTable)
 
-reset_button = Button(label="Reset")
-reset_button.on_click(reset_button_handler)
+reset_button = Button(label="Save")
+reset_button.on_click(save_button_handler)
+
+save_button = Button(label="Reset")
+save_button.on_click(reset_button_handler)
 
 tuning_info = Div(width=200, height=100)
 
@@ -336,11 +349,11 @@ l1 = layout(children=[
     [f_coasting, tuning_info],
     # [p],
     [t_lap_times],
-    [reset_button],
+    [reset_button, save_button],
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')
-l2 = layout([[reset_button], [t_lap_times]], sizing_mode='fixed')
+l2 = layout([[reset_button, save_button], [t_lap_times]], sizing_mode='fixed')
 
 tab1 = Panel(child=l1, title="Get Faster")
 tab2 = Panel(child=l2, title="Race")

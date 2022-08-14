@@ -245,6 +245,14 @@ class GT7Communication(Thread):
     def get_laps(self) -> List[Lap]:
         return self.laps
 
+    def load_laps(self, laps: List[Lap], to_last_position = False, to_first_position = False, replace_other_laps = False):
+        if to_last_position:
+            self.laps = self.laps + laps
+        elif to_first_position:
+            self.laps = laps + self.laps
+        elif replace_other_laps:
+            self.laps = laps
+
     def _log_data(self, data):
 
         if data.is_paused:
