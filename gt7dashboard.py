@@ -297,8 +297,8 @@ def reset_button_handler(event):
 
 
 def save_button_handler(event):
-    print("save button clicked")
-    save_laps_to_pickle(app.gt7comm.laps)
+    path = save_laps_to_pickle(app.gt7comm.laps)
+    print("Saved %d laps as %s" %(len(app.gt7comm.laps), path))
 # l = get_session_layout(gt7comm.get_laps(), True)
 
 
