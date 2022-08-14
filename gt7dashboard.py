@@ -53,6 +53,7 @@ def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
         'throttle': lap.DataThrottle,
         'brake': lap.DataBraking,
         'speed': lap.DataSpeed,
+        'ticks': list(range(len(lap.DataSpeed))),
         'coast': lap.DataCoasting,
         'raceline_y': lap.PositionsY,
         'raceline_x': lap.PositionsX,
@@ -67,13 +68,16 @@ def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
 
 
 def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], distance_mode: bool, width: int) -> tuple[
-    Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
+    Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
     TOOLTIPS = [
         ("index", "$index"),
         ("value", "$y"),
     ]
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Best Lap", "Median Lap"]
+
+    f_ticks = figure(title="Telemetry - Last, Best, Median", y_axis_label="Time / Diff", width=width,
+                     height=250, tooltips=TOOLTIPS)
 
     f_speed = figure(title="Telemetry - Last, Best, Median", y_axis_label="Speed", width=width,
                height=250, tooltips=TOOLTIPS)
@@ -104,6 +108,7 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
         source = ColumnDataSource(data={})
         sources.append(source)
 
+        f_ticks.line(x='distance', y='ticks', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
         f_speed.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
         f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
         f_braking.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
@@ -116,7 +121,7 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     f_braking.legend.click_policy = f_speed.legend.click_policy
     f_coasting.legend.click_policy = f_speed.legend.click_policy
 
-    return f_speed, f_throttle, f_braking, f_coasting, sources
+    return f_ticks, f_speed, f_throttle, f_braking, f_coasting, sources
 
 
 p = figure(plot_width=1000, plot_height=600)
@@ -170,7 +175,7 @@ columns = [
     TableColumn(field='tyrespinning', title='Tire Spin', formatter=formatter)
 ]
 
-f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
+f_ticks, f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
 
 t_lap_times = DataTable(source=source, columns=columns)
 t_lap_times.width=1000
@@ -182,14 +187,16 @@ RACE_LINE_TOOLTIPS = [
     ("Breakpoint", "")
 ]
 
-race_line_width = 500
+race_line_width = 250
 speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
-s_race_line = figure(title="Race Line", x_axis_label="z", y_axis_label="x", width=430, height=250,
+s_race_line = figure(title="Race Line",
+                     x_axis_label="z", y_axis_label="x", width=race_line_width, height=race_line_width,
                      tooltips=RACE_LINE_TOOLTIPS)
 s_race_line.axis.visible = False
-s_race_line.toolbar.autohide = True
-s_race_line.add_layout(Legend(), 'right')
+# s_race_line.toolbar.autohide = True
+s_race_line.legend.click_policy = "hide"
+s_race_line.add_layout(Legend(), 'center')
 
 last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1,
                                       color="blue")
@@ -343,6 +350,7 @@ def update_tuning_info():
 
 
 l1 = layout(children=[
+    # [f_ticks], # TODO Have to calculate differences
     [f_speed, s_race_line],
     [f_throttle, div_last_lap, div_best_lap],
     [f_braking],
