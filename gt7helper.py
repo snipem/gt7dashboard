@@ -3,7 +3,7 @@ from datetime import timedelta
 from statistics import StatisticsError
 from typing import Tuple, List
 
-import pandas as pd
+from pathlib import Path
 from scipy.signal import find_peaks
 from tabulate import tabulate
 
@@ -204,5 +204,10 @@ def load_laps_from_pickle(path: str) -> List[Lap]:
         return pickle.load(f)
 
 def save_laps_to_pickle(laps: List[Lap]):
-    with open('data/latest_save.pickle', 'wb') as f:
+
+    storage_folder = "data"
+    storage_filename = "latest_save.pickle"
+    Path(storage_folder).mkdir(parents=True, exist_ok=True)
+
+    with open(storage_folder+"/"+storage_filename, 'wb') as f:
         pickle.dump(laps, f)
