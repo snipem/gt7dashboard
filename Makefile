@@ -10,7 +10,7 @@ normal:
 	python3 gt7telemetry.py 192.168.178.120
 
 deps:
-	pip3 install -r requirements
+	pip3 install -r requirements.txt
 
 serve:
 	GT7_PLAYSTATION_IP=192.168.178.120 bokeh serve gt7dashboard.py
