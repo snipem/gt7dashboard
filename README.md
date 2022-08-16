@@ -1,23 +1,58 @@
-# gt7telemetry
-Python script to display GT7 telemetry data.
+# gt7dashboard
 
-See also the [README](README.snipem.md) of my fork.
+gt7dashboard is a live dashboard for Gran Turismo 7. Based on the recent discovery of the telemetry interface of GT7 described [here first](https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728 ). This began as a fork of Bornhalls [gt7telemetry](https://github.com/Bornhall/gt7telemetry).
 
-**Needs to be run from the terminal**, and works best with a terminal of at least 92 x 42 characters. The output is in a separate buffer, but you can comment out lines 10-29 to just write to your current terminal (might want to clear the terminal first).
+## Features
 
-Run like this (substitute with your own console's LAN IP address):
+![image-20220816134203167](README.assets/image-20220816134203167.png)
 
-    python3 gt7telemetry.py 129.168.1.123
+...
 
-This work is based purely on the shoulders of others. Python script originally from https://github.com/lmirel/mfc/blob/master/clients/gt7racedata.py
+![image-20220816134448786](README.assets/image-20220816134448786.png)
 
-Thanks to the help of the people of GTPlanet, specifically the thread https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728 and people like Nenkai, Stoobert and more.
+* Speed/Distance Graph for Last Lap, Best Lap and Median Lap.
+  * Median Lap is calculated by the median of all recent laps
+* Throttle/Distance Graph
+* Braking/Distance Graph
+* Coasting/Distance Graph
+* Race Line Graph
+* Table of Speed Peaks and Valleys. Compared between best and last lap
+* Additional data for tuning such as Max Speed and Min Body Height
+* List off all recent laps with additional metrics, measured in percentage * 1000 for better visiuals
+* Ability to Save current laps and reset all laps
+* Additional "Race view" with only the laps
 
-If anyone can gain anything from this, feel free to do so!!
+## How to run
 
-![Screenshot of output](https://user-images.githubusercontent.com/3602224/182450262-56992d54-409d-4fb7-bfec-35b04dc7f6aa.png)
+1. `pip3 -r requirements.txt` to install Python dependencies (once)
+2. `GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS> bokeh serve gt7dashboard.py`
 
-## Requirements
-You will need python 3.x installed, and you need to install the salsa20 module via pip:
+## Docker
 
-    pip3 install salsa20
+There is a `Dockerfile` available. This is a sample `docker-compose` configuration:
+
+```yaml
+    gt7dashboard:
+        build:
+            context: /home/user/work/gt7dashboard
+        restart: unless-stopped
+        container_name: gt7dashboard
+        user: "1002"
+        ports:
+            - "5006:5006/tcp"
+            - "33740:33740/udp"
+        volumes:
+            - /home/user/gt7data/:/usr/src/app/data
+        environment:
+            - BOKEH_ALLOW_WS_ORIGIN=domain_of_server:5006
+            - GT7_PLAYSTATION_IP=<playstation ip>
+            - TZ=Europe/Berlin
+```
+
+
+
+## Get Telemetry of a Demonstration lap or Replay
+
+Replays and demonstrations will also output telemetry data. Start the replay or demonstration and enjoy the data.
+
+Some demonstration data is cut short at the start. In the game this comes as a fast-forward effect at the start of the lap. Start the demonstration again, to get a proper lap.
