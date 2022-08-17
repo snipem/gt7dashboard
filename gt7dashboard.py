@@ -6,8 +6,7 @@ import bokeh.application
 import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
-from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div, Legend
-# from panel.layout import Panel
+from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div, Legend
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
@@ -336,7 +335,6 @@ tuning_info = Div(width=200, height=100)
 div_last_lap = Div(width=200, height=200)
 div_best_lap = Div(width=200, height=200)
 
-from bokeh.models import Select
 
 
 def bokeh_tuple_for_list_of_laps(lapfiles: List[LapFile]):
@@ -348,7 +346,8 @@ def bokeh_tuple_for_list_of_laps(lapfiles: List[LapFile]):
 
 stored_lap_files = bokeh_tuple_for_list_of_laps(list_lap_files_from_path("data"))
 
-select = Select(title="Option:", value="foo", options=stored_lap_files)
+select_title = Paragraph(text="Load Laps:", align="center")
+select = Select(value="laps", options=stored_lap_files)
 select.on_change("value", load_laps_handler)
 
 
@@ -386,7 +385,7 @@ l1 = layout(children=[
     [f_coasting, tuning_info],
     # [p],
     [t_lap_times],
-    [reset_button, save_button, select],
+    [reset_button, save_button, select_title, select],
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')

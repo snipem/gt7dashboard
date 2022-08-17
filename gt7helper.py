@@ -213,7 +213,6 @@ def list_lap_files_from_path(root: str):
     lap_files = []
     for path, subdirs, files in os.walk(root):
         for name in files:
-            print(os.path.join(path, name))
             lf = LapFile()
             lf.name = name
             lf.path = os.path.join(path, name)
