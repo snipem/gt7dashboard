@@ -14,7 +14,8 @@ from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
 import gt7communication
-from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle
+from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
+    list_lap_files_from_path, LapFile
 from gt7lap import Lap
 from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap
 
@@ -301,6 +302,10 @@ def save_button_handler(event):
     print("Saved %d laps as %s" %(len(app.gt7comm.laps), path))
 # l = get_session_layout(gt7comm.get_laps(), True)
 
+def load_laps_handler(attr, old, new):
+    print("Loading %s" % new)
+    app.gt7comm.load_laps(load_laps_from_pickle(new), replace_other_laps=True)
+
 
 # df = pd.DataFrame({
 #     'SubjectID': ['Subject_01','Subject_02','Subject_03'],
@@ -322,6 +327,21 @@ tuning_info = Div(width=200, height=100)
 
 div_last_lap = Div(width=200, height=200)
 div_best_lap = Div(width=200, height=200)
+
+from bokeh.models import CustomJS, Select
+
+
+def bokeh_tuple_for_list_of_laps(lapfiles: List[LapFile]):
+    tuples = []
+    for lapfile in lapfiles:
+        tuples.append(tuple((lapfile.path, lapfile.__str__())))
+    return tuples
+
+
+stored_lap_files = bokeh_tuple_for_list_of_laps(list_lap_files_from_path("data"))
+
+select = Select(title="Option:", value="foo", options=stored_lap_files)
+select.on_change("value", load_laps_handler)
 
 def update_speed_peak_and_valley_diagram(div, lap, title):
 
@@ -357,7 +377,7 @@ l1 = layout(children=[
     [f_coasting, tuning_info],
     # [p],
     [t_lap_times],
-    [reset_button, save_button],
+    [reset_button, save_button, select],
 ])
 
 # l1 = layout([[fig1, fig2]], sizing_mode='fixed')

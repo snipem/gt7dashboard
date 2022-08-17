@@ -1,3 +1,4 @@
+import os
 import pickle
 from datetime import timedelta, datetime, timezone
 from statistics import StatisticsError
@@ -198,6 +199,28 @@ def none_ignoring_median(data):
     else:
         i = n // 2
         return (filtered_data[i - 1] + filtered_data[i]) / 2
+
+class LapFile:
+    def __init__(self):
+        self.name = None
+        self.path = None
+        self.size = None
+
+    def __str__(self):
+        return "%s - %d KB" % (self.name, self.size)
+
+def list_lap_files_from_path(root: str):
+    lap_files = []
+    for path, subdirs, files in os.walk(root):
+        for name in files:
+            print(os.path.join(path, name))
+            lf = LapFile()
+            lf.name = name
+            lf.path = os.path.join(path, name)
+            lf.size = os.path.getsize(lf.path)
+            lap_files.append(lf)
+
+    return lap_files
 
 def load_laps_from_pickle(path: str) -> List[Lap]:
     with open(path, 'rb') as f:
