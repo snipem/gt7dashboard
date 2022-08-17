@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import List, Tuple
+from typing import List
 
 import bokeh.application
 import pandas as pd
@@ -9,7 +9,7 @@ from bokeh.layouts import layout
 from bokeh.models import ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div, Legend
 # from panel.layout import Panel
 from bokeh.models.widgets import Tabs, Panel
-from bokeh.plotting import curdoc, Figure
+from bokeh.plotting import curdoc
 from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
@@ -81,15 +81,15 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
                      height=250, tooltips=TOOLTIPS)
 
     f_speed = figure(title="Telemetry - Last, Best, Median", y_axis_label="Speed", width=width,
-               height=250, tooltips=TOOLTIPS)
+                     height=250, tooltips=TOOLTIPS)
 
     f_throttle = figure(x_range=f_speed.x_range, y_axis_label="Throttle", width=width,
                         height=250, tooltips=TOOLTIPS)
-    f_braking = figure(x_range=f_speed.x_range,  y_axis_label="Braking", width=width,
+    f_braking = figure(x_range=f_speed.x_range, y_axis_label="Braking", width=width,
                        height=250, tooltips=TOOLTIPS)
 
     f_coasting = figure(x_range=f_speed.x_range, y_axis_label="Coasting", width=width,
-                       height=250, tooltips=TOOLTIPS)
+                        height=250, tooltips=TOOLTIPS)
 
     # f_speed.xaxis.visible = False
     f_speed.toolbar.autohide = True
@@ -109,11 +109,16 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
         source = ColumnDataSource(data={})
         sources.append(source)
 
-        f_ticks.line(x='distance', y='ticks', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
-        f_speed.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
-        f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
-        f_braking.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
-        f_coasting.line(x='distance', y='coast', source=source, legend_label=legend, line_width=1, color=color, line_alpha=1)
+        f_ticks.line(x='distance', y='ticks', source=source, legend_label=legend, line_width=1, color=color,
+                     line_alpha=1)
+        f_speed.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color,
+                     line_alpha=1)
+        f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color,
+                        line_alpha=1)
+        f_braking.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color,
+                       line_alpha=1)
+        f_coasting.line(x='distance', y='coast', source=source, legend_label=legend, line_width=1, color=color,
+                        line_alpha=1)
 
         # line_speed = f.line(x='speed', y='distance', source=source, legend_label=lap.Title, line_width=1, color=colors[i])
 
@@ -176,10 +181,11 @@ columns = [
     TableColumn(field='tyrespinning', title='Tire Spin', formatter=formatter)
 ]
 
-f_ticks, f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap([], True, 1000)
+f_ticks, f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap(
+    [], True, 1000)
 
 t_lap_times = DataTable(source=source, columns=columns)
-t_lap_times.width=1000
+t_lap_times.width = 1000
 
 ##### Race line
 
@@ -240,24 +246,22 @@ def update_lap_change(step):
 
 
 def update_speed_velocity_graph(laps: List[Lap]):
-
-    if len(laps) == 0: # Show nothing
+    if len(laps) == 0:  # Show nothing
         last_lap = Lap()
         best_lap = Lap()
         median_lap = Lap()
-    elif len(laps) == 1: # Only show last lap
+    elif len(laps) == 1:  # Only show last lap
         last_lap = laps[0]
-        best_lap = Lap() # Use empty lap for best
-        median_lap = Lap() # Use empty lap for median
-    elif len(laps) == 2: # Only show last and best lap
+        best_lap = Lap()  # Use empty lap for best
+        median_lap = Lap()  # Use empty lap for median
+    elif len(laps) == 2:  # Only show last and best lap
         last_lap = laps[0]
         best_lap = get_best_lap(laps)
-        median_lap = Lap() # Use empty lap for median
-    else: # Fill all laps
+        median_lap = Lap()  # Use empty lap for median
+    else:  # Fill all laps
         last_lap = laps[0]
         best_lap = get_best_lap(laps)
         median_lap = get_median_lap(laps)
-
 
     last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
     best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
@@ -272,7 +276,8 @@ def update_speed_velocity_graph(laps: List[Lap]):
 
 def update_time_table(laps: List[Lap]):
     print("Adding %d laps to table" % len(laps))
-    t_lap_times.source.data = ColumnDataSource.from_df(pd_data_frame_from_lap(laps, best_lap=app.gt7comm.session.best_lap))
+    t_lap_times.source.data = ColumnDataSource.from_df(
+        pd_data_frame_from_lap(laps, best_lap=app.gt7comm.session.best_lap))
     t_lap_times.trigger('source', t_lap_times.source, t_lap_times.source)
 
 
@@ -290,6 +295,7 @@ def update(step):
     ds2.trigger('data', ds2.data, ds2.data)
     ds3.trigger('data', ds3.data, ds3.data)
 
+
 def reset_button_handler(event):
     print("reset button clicked")
     div_best_lap.text = ""
@@ -299,7 +305,9 @@ def reset_button_handler(event):
 
 def save_button_handler(event):
     path = save_laps_to_pickle(app.gt7comm.laps)
-    print("Saved %d laps as %s" %(len(app.gt7comm.laps), path))
+    print("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
+
+
 # l = get_session_layout(gt7comm.get_laps(), True)
 
 def load_laps_handler(attr, old, new):
@@ -328,7 +336,7 @@ tuning_info = Div(width=200, height=100)
 div_last_lap = Div(width=200, height=200)
 div_best_lap = Div(width=200, height=200)
 
-from bokeh.models import CustomJS, Select
+from bokeh.models import Select
 
 
 def bokeh_tuple_for_list_of_laps(lapfiles: List[LapFile]):
@@ -343,8 +351,8 @@ stored_lap_files = bokeh_tuple_for_list_of_laps(list_lap_files_from_path("data")
 select = Select(title="Option:", value="foo", options=stored_lap_files)
 select.on_change("value", load_laps_handler)
 
-def update_speed_peak_and_valley_diagram(div, lap, title):
 
+def update_speed_peak_and_valley_diagram(div, lap, title):
     table = """<table>"""
 
     peak_speed_data_x, peak_speed_data_y, valley_speed_data_x, valley_speed_data_y = get_speed_peaks_and_valleys(lap)
@@ -353,15 +361,16 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
     table = table + "<tr><th>#</th><th>Peak</th><th>Position</th></tr>"
     for i, dx in enumerate(peak_speed_data_x):
-        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (i+1, peak_speed_data_x[i], peak_speed_data_y[i])
+        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
+        i + 1, peak_speed_data_x[i], peak_speed_data_y[i])
 
     table = table + "<tr><th>#</th><th>Valley</th><th>Position</th></tr>"
     for i, dx in enumerate(valley_speed_data_x):
-        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (i+1, valley_speed_data_x[i], valley_speed_data_y[i])
+        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
+        i + 1, valley_speed_data_x[i], valley_speed_data_y[i])
 
     table = table + """</table>"""
     div.text = table
-
 
 
 def update_tuning_info():

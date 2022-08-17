@@ -207,7 +207,7 @@ class LapFile:
         self.size = None
 
     def __str__(self):
-        return "%s - %d KB" % (self.name, self.size)
+        return "%s - %s" % (self.name, human_readable_size(self.size, decimal_places=0))
 
 def list_lap_files_from_path(root: str):
     lap_files = []
@@ -242,3 +242,10 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
         pickle.dump(laps, f)
 
     return path
+
+def human_readable_size(size, decimal_places=3):
+    for unit in ['B','KB','MB','GB','TB']:
+        if size < 1024.0:
+            break
+        size /= 1024.0
+    return f"{size:.{decimal_places}f} {unit}"
