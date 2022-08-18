@@ -1,6 +1,7 @@
 import socket
 import struct
 import time
+import traceback
 from datetime import timedelta
 from threading import Thread
 from typing import List
@@ -166,6 +167,7 @@ class GT7Communication(Thread):
         self.current_lap = Lap()
         self.SendPort = 33739
         self.ReceivePort = 33740
+        self._last_data_received = 0
         self.Playstation_IP = playstation_ip
         self.dataExample = []
 
@@ -186,6 +188,7 @@ class GT7Communication(Thread):
                 if len(ddata) > 0 and struct.unpack('i', ddata[0x70:0x70 + 4])[0] > pktid:
 
                     self.last_data = GT_Data(ddata)
+                    self._last_data_received = time.time()
 
                     pktid = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
 
@@ -219,11 +222,13 @@ class GT7Communication(Thread):
                         self._send_hb(s)
                         pknt = 0
             except Exception as e:
-                import traceback
                 print(traceback.format_exc())
                 self._send_hb(s)
                 pknt = 0
                 pass
+
+    def is_connected(self) -> bool:
+        return self._last_data_received > 0 and (time.time() - self._last_data_received) <= 1
 
     def get_data_example(self):
         return self.dataExample

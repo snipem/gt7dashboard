@@ -6,7 +6,7 @@ import bokeh.application
 import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
-from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div, Legend
+from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div, Legend, BoxSelectTool
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
@@ -202,7 +202,7 @@ s_race_line = figure(title="Race Line",
 s_race_line.axis.visible = False
 # s_race_line.toolbar.autohide = True
 s_race_line.legend.click_policy = "hide"
-s_race_line.add_layout(Legend(), 'center')
+# s_race_line.add_layout(Legend(), 'center')
 
 last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1,
                                       color="blue")
@@ -211,6 +211,15 @@ best_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_lab
 
 laps_stored = []
 session_stored = None
+connection_status_stored = None
+
+
+def update_connection_info():
+    div_connection_info.text = "Connection: "
+    if app.gt7comm.is_connected():
+        div_connection_info.text += "🟢"
+    else:
+        div_connection_info.text += "🔴"
 
 
 @linear()
@@ -218,12 +227,17 @@ def update_lap_change(step):
     # time, x, y, z = from_csv(reader).next()
     global laps_stored
     global session_stored
+    global connection_status_stored
 
     laps = app.gt7comm.get_laps()
 
     if app.gt7comm.session != session_stored:
         update_tuning_info()
         session_stored = copy.copy(app.gt7comm.session)
+
+    if app.gt7comm.is_connected() != connection_status_stored:
+        update_connection_info()
+        connection_status_stored = copy.copy(app.gt7comm.is_connected())
 
     # This saves on cpu time, 99.9% of the time this is true
     if laps == laps_stored:
@@ -334,6 +348,7 @@ tuning_info = Div(width=200, height=100)
 
 div_last_lap = Div(width=200, height=200)
 div_best_lap = Div(width=200, height=200)
+div_connection_info = Div(width=200, height=200)
 
 
 
@@ -382,7 +397,7 @@ l1 = layout(children=[
     [f_speed, s_race_line],
     [f_throttle, div_last_lap, div_best_lap],
     [f_braking],
-    [f_coasting, tuning_info],
+    [f_coasting, layout(children=[tuning_info, div_connection_info])],
     # [p],
     [t_lap_times],
     [reset_button, save_button, select_title, select],
