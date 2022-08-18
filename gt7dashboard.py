@@ -77,18 +77,18 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     legends = ["Last Lap", "Best Lap", "Median Lap"]
 
     f_ticks = figure(title="Telemetry - Last, Best, Median", y_axis_label="Time / Diff", width=width,
-                     height=250, tooltips=TOOLTIPS)
+                     height=250, tooltips=TOOLTIPS, active_drag="box_zoom")
 
     f_speed = figure(title="Telemetry - Last, Best, Median", y_axis_label="Speed", width=width,
-                     height=250, tooltips=TOOLTIPS)
+                     height=250, tooltips=TOOLTIPS, active_drag="box_zoom")
 
     f_throttle = figure(x_range=f_speed.x_range, y_axis_label="Throttle", width=width,
-                        height=250, tooltips=TOOLTIPS)
+                        height=int(f_speed.height/2), tooltips=TOOLTIPS, active_drag="box_zoom")
     f_braking = figure(x_range=f_speed.x_range, y_axis_label="Braking", width=width,
-                       height=250, tooltips=TOOLTIPS)
+                       height=int(f_speed.height/2), tooltips=TOOLTIPS, active_drag="box_zoom")
 
     f_coasting = figure(x_range=f_speed.x_range, y_axis_label="Coasting", width=width,
-                        height=250, tooltips=TOOLTIPS)
+                        height=int(f_speed.height/2), tooltips=TOOLTIPS, active_drag="box_zoom")
 
     # f_speed.xaxis.visible = False
     f_speed.toolbar.autohide = True
@@ -215,11 +215,11 @@ connection_status_stored = None
 
 
 def update_connection_info():
-    div_connection_info.text = "Connection: "
+    div_connection_info.text = ""
     if app.gt7comm.is_connected():
-        div_connection_info.text += "🟢"
+        div_connection_info.text += "<p title='Connected'>🟢</p>"
     else:
-        div_connection_info.text += "🔴"
+        div_connection_info.text += "<p title='Disconnected'>🔴</p>"
 
 
 @linear()
@@ -346,9 +346,9 @@ save_button.on_click(reset_button_handler)
 
 tuning_info = Div(width=200, height=100)
 
-div_last_lap = Div(width=200, height=200)
-div_best_lap = Div(width=200, height=200)
-div_connection_info = Div(width=200, height=200)
+div_last_lap = Div(width=200, height=125)
+div_best_lap = Div(width=200, height=125)
+div_connection_info = Div(width=200, height=125)
 
 
 
@@ -394,12 +394,12 @@ def update_tuning_info():
 
 l1 = layout(children=[
     # [f_ticks], # TODO Have to calculate differences
-    [f_speed, s_race_line],
+    [f_speed, s_race_line, div_connection_info],
     [f_throttle, div_last_lap, div_best_lap],
     [f_braking],
-    [f_coasting, layout(children=[tuning_info, div_connection_info])],
+    [f_coasting],
     # [p],
-    [t_lap_times],
+    [t_lap_times, layout(children=[tuning_info])],
     [reset_button, save_button, select_title, select],
 ])
 
