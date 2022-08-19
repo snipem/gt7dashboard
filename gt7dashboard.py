@@ -72,6 +72,11 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     TOOLTIPS = [
         ("index", "$index"),
         ("value", "$y"),
+        ("Speed", "@speed kmh"),
+        ("Throttle", "@throttle%"),
+        ("Brake", "@brake%"),
+        ("Coast", "@coast%"),
+        ("Distance", "@distance m"),
     ]
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Best Lap", "Median Lap"]
