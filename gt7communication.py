@@ -121,6 +121,7 @@ class GT_Data:
         self.angular_velocity_z = struct.unpack('f', ddata[0x34:0x34 + 4])[0]  # angular velocity Z
 
         self.is_paused = bin(struct.unpack('B', ddata[0x8E:0x8E + 1])[0])[-2] == '1'
+        self.in_race = bin(struct.unpack('B', ddata[0x8E:0x8E + 1])[0])[-1] == '1'
 
         # struct.unpack('f', ddata[0x28:0x28+4])[0]					# rot ???
 
@@ -259,6 +260,9 @@ class GT7Communication(Thread):
             self.laps = laps
 
     def _log_data(self, data):
+
+        if not data.in_race:
+            return
 
         if data.is_paused:
             return
