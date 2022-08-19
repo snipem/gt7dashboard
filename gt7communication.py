@@ -147,6 +147,7 @@ class GT_Data:
 class Session():
     def __init__(self):
         # best lap overall
+        self.special_packet_time = 0
         self.best_lap=-1
         self.min_body_height=999999
         self.max_speed=0
@@ -197,11 +198,16 @@ class GT7Communication(Thread):
                     lstlap = struct.unpack('i', ddata[0x7C:0x7C + 4])[0]
                     curlap = struct.unpack('h', ddata[0x74:0x74 + 2])[0]
 
-                    if curlap > 0:
+                    if curlap == 0:
+                        self.session.special_packet_time = 0
+
+                    if curlap > 0 and self.last_data.in_race:
+
                         if curlap != prevlap:
                             # New lap
                             prevlap = curlap
 
+                            self.session.special_packet_time += lstlap - self.current_lap.LapTicks * 1000.0/60.0
 
                             self._log_lap()
                             if lstlap > 0:
@@ -319,6 +325,11 @@ class GT7Communication(Thread):
         self.current_lap.PositionsX.append(data.pos_x)
         self.current_lap.PositionsY.append(data.pos_y)
         self.current_lap.PositionsZ.append(data.pos_z)
+
+        # Adapted from https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13810797
+        self.current_lap.LapLiveTime = (self.current_lap.LapTicks * 1./60.) - (self.session.special_packet_time/1000.)
+
+        self.current_lap.DataTime.append(self.current_lap.LapLiveTime)
 
     def _log_lap(self):
         # Sett info we only now after crossing the line
