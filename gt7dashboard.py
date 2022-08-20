@@ -112,7 +112,7 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     sources = []
 
     time_diff_source = ColumnDataSource(data={})
-    f_time_diff.line(x="index", y='timediff', source=time_diff_source, legend_label="Time Diff", line_width=1, color="red", line_alpha=1)
+    f_time_diff.line(x="index", y='timedelta', source=time_diff_source, legend_label="Time Diff", line_width=1, color="red", line_alpha=1)
     sources.append(time_diff_source)
 
     for color, legend in zip(colors, legends):

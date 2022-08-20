@@ -55,59 +55,37 @@ def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
         return list(range(len(lap.DataSpeed)))
     pass
 
+def get_time_delta_dataframe_for_lap(lap: Lap, name: str):
+
+    lap_distance = get_x_axis_for_distance(lap)
+    lap_time = lap.DataTime
+
+    # Multiply to match datatype which is nanoseconds?
+    lap_time_ns = [item * 1000000000 for item in lap_time]
+
+    series = pd.Series(lap_distance, index=pd.TimedeltaIndex(data = lap_time_ns))
+
+    upsample = series.resample('10ms').asfreq()
+    interpolated_upsample = upsample.interpolate()
+
+    # Make distance to index and time to value, because we want to join on distance
+    inverted = pd.Series(interpolated_upsample.index.values, index=interpolated_upsample)
+
+    s1 = pd.Series(inverted.values.astype('int64'), name=name, index=inverted.index)
+
+    df1=DataFrame(data=s1)
+
+    return df1
+
 
 def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> DataFrame:
 
-    # TODO Make this pretty
+    df1 = get_time_delta_dataframe_for_lap(reference_lap, "reference")
+    df2 = get_time_delta_dataframe_for_lap(comparison_lap, "comparison")
 
-    best_lap_distance = get_x_axis_for_distance(reference_lap)
-    best_lap_time = reference_lap.DataTime
+    df = df1.join(df2, how='outer').sort_index().interpolate()
 
-    second_best_lap_distance = get_x_axis_for_distance(comparison_lap)
-    second_best_lap_time = comparison_lap.DataTime
-
-    second_best_lap_time_ns = [item * 1000000 for item in second_best_lap_time]
-    best_lap_time_ns = [item * 1000000 for item in best_lap_time]
-
-    best_series = pd.Series(best_lap_distance, index=pd.TimedeltaIndex(data = best_lap_time_ns))
-    second_best_series = pd.Series(second_best_lap_distance, index=pd.TimedeltaIndex(data = second_best_lap_time_ns))
-
-    # interpolated_x, interpolated_y = interpolate_missing_values(best_lap_time, best_lap_distance, interpolation_step=1)
-    best_upsample = best_series.resample('1ms').asfreq()
-    best_interpolated_upsample = best_upsample.interpolate()
-
-    second_best_upsample = second_best_series.resample('1ms').asfreq()
-    second_best_interpolated_upsample = second_best_upsample.interpolate()
-
-    inverted_best = pd.Series(best_interpolated_upsample.index.values, index=best_interpolated_upsample )
-    inverted_second_best = pd.Series(second_best_interpolated_upsample.index.values, index=second_best_interpolated_upsample )
-
-    try:
-        s1 = pd.Series(inverted_best.values.astype('int64'), name="reference", index=inverted_best.index)
-        s1.rename("i1")
-
-        s2 = pd.Series(inverted_second_best.values.astype('int64'), name="comparison", index=inverted_second_best.index)
-        s2.rename("i2")
-
-        df1=DataFrame(data=s1)
-        df2=DataFrame(data=s2)
-
-        # df = df1.loc[~df2.index.duplicated(keep='first')]
-
-        df = df1.join(df2, how='outer').sort_index().interpolate()
-
-        # df= pd.concat([df1,df2],axis=1)
-        # df = df.sort_index().interpolate()
-    except Exception as e:
-        print(e)
-
-    # df1 = pd.DataFrame(data=pd.Series(inverted_best.values.astype('int64'), index=inverted_best.index)) # convert to integer to interpolete timestamps
-    # df2 = pd.DataFrame(data=pd.Series(inverted_second_best.values.astype('int64'), index=inverted_second_best.index)) # convert to integer to interpolete timestamps
-    #
-    #
-    # # df = pd.concat([df1.reset_index(),df2.reset_index()], join='inner', axis=1)
-    # df = df1.reset_index().merge(df2.reset_index(), left_index=True, right_index=True)#.sort_index().interpolate()
-
+    df.reset_index(inplace = True)
 
     df['timedelta'] = df["reference"] - df["comparison"]
     return df
