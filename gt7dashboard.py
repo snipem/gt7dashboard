@@ -289,7 +289,9 @@ def update_speed_velocity_graph(laps: List[Lap]):
     last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
     best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
 
-    data_sources[0].data = calculate_time_diff_by_distance(best_lap, last_lap)
+    if len(best_lap.DataSpeed) > 0:
+        data_sources[0].data = calculate_time_diff_by_distance(best_lap, last_lap)
+
     data_sources[1].data = last_lap_data
     data_sources[2].data = best_lap_data
     data_sources[3].data = get_data_from_lap(median_lap, title="Median: %s" % last_lap.Title, distance_mode=True)
