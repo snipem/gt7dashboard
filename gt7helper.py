@@ -5,6 +5,9 @@ from statistics import StatisticsError
 from typing import Tuple, List
 
 from pathlib import Path
+
+import pandas as pd
+from pandas import DataFrame
 from scipy.signal import find_peaks
 from tabulate import tabulate
 
@@ -28,6 +31,31 @@ def calculate_remaining_fuel(fuel_start_lap: int, fuel_end_lap: int, lap_time: i
     time_remaining = laps_remaining * lap_time
 
     return fuel_consumed_per_lap, laps_remaining, time_remaining
+
+def calculate_time_diff_by_distance(best_lap_distance: List[int], best_lap_time: List[int], second_best_lap_distance: List[int], second_best_lap_time: List[int]) -> DataFrame:
+    second_best_lap_time_ns = [item * 1000000 for item in second_best_lap_time]
+    best_lap_time_ns = [item * 1000000 for item in best_lap_time]
+
+    best_series = pd.Series(best_lap_distance, index=pd.TimedeltaIndex(data = best_lap_time_ns))
+    second_best_series = pd.Series(second_best_lap_distance, index=pd.TimedeltaIndex(data = second_best_lap_time_ns))
+
+    # interpolated_x, interpolated_y = interpolate_missing_values(best_lap_time, best_lap_distance, interpolation_step=1)
+    best_upsample = best_series.resample('1ms').asfreq()
+    best_interpolated_upsample = best_upsample.interpolate()
+
+    second_best_upsample = second_best_series.resample('1ms').asfreq()
+    second_best_interpolated_upsample = second_best_upsample.interpolate()
+
+    inverted_best = pd.Series(best_interpolated_upsample.index.values, index=best_interpolated_upsample )
+    inverted_second_best = pd.Series(second_best_interpolated_upsample.index.values, index=second_best_interpolated_upsample )
+
+    df=pd.concat([
+        pd.Series(inverted_best.values.astype('int64'), index=inverted_best.index), # convert to integer to interpolete timestamps
+        pd.Series(inverted_second_best.values.astype('int64'), index=inverted_second_best.index) # convert to integer to interpolete timestamps
+    ],axis=1).sort_index().interpolate()
+
+    df['timedelta'] = df[0] - df[1]
+    return df
 
 
 def mark_if_matches_highest_or_lowest(value: float, highest: List[int], lowest: List[int], order: int, high_is_best=True) -> str:

@@ -6,7 +6,7 @@ import bokeh.application
 import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
-from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div, Legend, BoxSelectTool
+from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
@@ -53,6 +53,8 @@ def get_data_from_lap(lap: Lap, title: str, distance_mode: bool):
         'throttle': lap.DataThrottle,
         'brake': lap.DataBraking,
         'speed': lap.DataSpeed,
+        'time': lap.DataTime,
+        'tires': lap.DataTires,
         'ticks': list(range(len(lap.DataSpeed))),
         'coast': lap.DataCoasting,
         'raceline_y': lap.PositionsY,
@@ -88,12 +90,12 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
                      height=250, tooltips=TOOLTIPS, active_drag="box_zoom")
 
     f_throttle = figure(x_range=f_speed.x_range, y_axis_label="Throttle", width=width,
-                        height=int(f_speed.height/2), tooltips=TOOLTIPS, active_drag="box_zoom")
+                        height=int(f_speed.height / 2), tooltips=TOOLTIPS, active_drag="box_zoom")
     f_braking = figure(x_range=f_speed.x_range, y_axis_label="Braking", width=width,
-                       height=int(f_speed.height/2), tooltips=TOOLTIPS, active_drag="box_zoom")
+                       height=int(f_speed.height / 2), tooltips=TOOLTIPS, active_drag="box_zoom")
 
     f_coasting = figure(x_range=f_speed.x_range, y_axis_label="Coasting", width=width,
-                        height=int(f_speed.height/2), tooltips=TOOLTIPS, active_drag="box_zoom")
+                        height=int(f_speed.height / 2), tooltips=TOOLTIPS, active_drag="box_zoom")
 
     # f_speed.xaxis.visible = False
     f_speed.toolbar.autohide = True
@@ -190,6 +192,7 @@ f_ticks, f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle
 
 t_lap_times = DataTable(source=source, columns=columns)
 t_lap_times.width = 1000
+t_lap_times.min_height = 20
 
 ##### Race line
 
@@ -356,7 +359,6 @@ div_best_lap = Div(width=200, height=125)
 div_connection_info = Div(width=200, height=125)
 
 
-
 def bokeh_tuple_for_list_of_laps(lapfiles: List[LapFile]):
     tuples = []
     for lapfile in lapfiles:
@@ -381,12 +383,12 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
     table = table + "<tr><th>#</th><th>Peak</th><th>Position</th></tr>"
     for i, dx in enumerate(peak_speed_data_x):
         table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
-        i + 1, peak_speed_data_x[i], peak_speed_data_y[i])
+            i + 1, peak_speed_data_x[i], peak_speed_data_y[i])
 
     table = table + "<tr><th>#</th><th>Valley</th><th>Position</th></tr>"
     for i, dx in enumerate(valley_speed_data_x):
         table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
-        i + 1, valley_speed_data_x[i], valley_speed_data_y[i])
+            i + 1, valley_speed_data_x[i], valley_speed_data_y[i])
 
     table = table + """</table>"""
     div.text = table

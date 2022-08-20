@@ -1,7 +1,10 @@
 import unittest
 from statistics import StatisticsError
 
-from gt7helper import calculate_remaining_fuel, format_laps_to_table, milliseconds_to_difftime
+import pandas as pd
+
+from gt7helper import calculate_remaining_fuel, format_laps_to_table, milliseconds_to_difftime, \
+    calculate_time_diff_by_distance
 from gt7lap import Lap
 
 
@@ -63,8 +66,19 @@ class GTHelper(unittest.TestCase):
         print(result)
         self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
 
-
     def test_seconds_to_difftime(self):
         self.assertEqual('+0:16:40', milliseconds_to_difftime(500))
         self.assertEqual('', milliseconds_to_difftime(0))
         self.assertEqual('-1:40.000', milliseconds_to_difftime(-102))
+
+
+    def test_calculate_time_diff_by_distance(self):
+        best_lap_time = [0, 6, 12, 22, 45, 60]
+        best_lap_distance = [5, 10, 23, 100, 200, 220]
+
+        second_best_lap_time = [1, 4, 5, 20, 30, 70]
+        second_best_lap_distance = [5, 11, 14, 50, 120, 123]
+
+        df = calculate_time_diff_by_distance(best_lap_distance, best_lap_time, second_best_lap_distance, second_best_lap_time)
+
+        print(len(df))
