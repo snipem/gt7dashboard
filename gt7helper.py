@@ -32,7 +32,40 @@ def calculate_remaining_fuel(fuel_start_lap: int, fuel_end_lap: int, lap_time: i
 
     return fuel_consumed_per_lap, laps_remaining, time_remaining
 
-def calculate_time_diff_by_distance(best_lap_distance: List[int], best_lap_time: List[int], second_best_lap_distance: List[int], second_best_lap_time: List[int]) -> DataFrame:
+def get_x_axis_for_distance(lap: Lap) -> List:
+    x_axis = []
+    tick_time = 16.668 # https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13806131
+    for i, s in enumerate(lap.DataSpeed):
+        # distance traveled + (Speed in km/h / 3.6 / 1000 = mm / ms) * tick_time
+        if i == 0:
+            x_axis.append(0)
+            continue
+
+        x_axis.append(x_axis[i-1] + (lap.DataSpeed[i] / 3.6 / 1000) * tick_time)
+
+    return x_axis
+
+
+def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
+    if distance_mode:
+        # Calculate distance for x axis
+        return get_x_axis_for_distance(lap)
+    else:
+        # Use ticks as length, which is the length of any given data list
+        return list(range(len(lap.DataSpeed)))
+    pass
+
+
+def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> DataFrame:
+
+    # TODO Make this pretty
+
+    best_lap_distance = get_x_axis_for_distance(reference_lap)
+    best_lap_time = reference_lap.DataTime
+
+    second_best_lap_distance = get_x_axis_for_distance(comparison_lap)
+    second_best_lap_time = comparison_lap.DataTime
+
     second_best_lap_time_ns = [item * 1000000 for item in second_best_lap_time]
     best_lap_time_ns = [item * 1000000 for item in best_lap_time]
 

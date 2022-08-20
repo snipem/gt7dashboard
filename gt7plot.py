@@ -9,7 +9,7 @@ from bokeh.plotting.figure import Figure
 
 import pickle
 
-from gt7helper import none_ignoring_median, secondsToLaptime
+from gt7helper import none_ignoring_median, secondsToLaptime, get_x_axis_depending_on_mode
 from gt7lap import Lap
 
 def get_best_lap(laps: List[Lap]):
@@ -82,30 +82,6 @@ def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, col
 	f.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=color, line_alpha=0.5)
 	f.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=color)
 	return f
-
-
-def get_x_axis_for_distance(lap: Lap) -> List:
-	x_axis = []
-	tick_time = 16.668 # https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13806131
-	for i, s in enumerate(lap.DataSpeed):
-		# distance traveled + (Speed in km/h / 3.6 / 1000 = mm / ms) * tick_time
-		if i == 0:
-			x_axis.append(0)
-			continue
-
-		x_axis.append(x_axis[i-1] + (lap.DataSpeed[i] / 3.6 / 1000) * tick_time)
-
-	return x_axis
-
-
-def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
-	if distance_mode:
-		# Calculate distance for x axis
-		return get_x_axis_for_distance(lap)
-	else:
-		# Use ticks as length, which is the length of any given data list
-		return list(range(len(lap.DataSpeed)))
-	pass
 
 
 def get_session_layout(laps: List[Lap], distance_mode=True):
