@@ -55,15 +55,17 @@ def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
         return list(range(len(lap.DataSpeed)))
     pass
 
+
 def get_time_delta_dataframe_for_lap(lap: Lap, name: str):
 
     lap_distance = get_x_axis_for_distance(lap)
     lap_time = lap.DataTime
 
     # Multiply to match datatype which is nanoseconds?
-    lap_time_ns = [item * 1000000000 for item in lap_time]
+    lap_time_ms = [convert_seconds_to_milliseconds(item) for item in lap_time]
 
-    series = pd.Series(lap_distance, index=pd.TimedeltaIndex(data = lap_time_ns))
+    # FIXME: What does Timedelta want for input?
+    series = pd.Series(lap_distance, index=pd.TimedeltaIndex(data = lap_time_ms, unit="ms"))
 
     upsample = series.resample('10ms').asfreq()
     interpolated_upsample = upsample.interpolate()
@@ -74,7 +76,7 @@ def get_time_delta_dataframe_for_lap(lap: Lap, name: str):
     s1 = pd.Series(inverted.values.astype('int64'), name=name, index=inverted.index)
 
     df1=DataFrame(data=s1)
-
+    # returns a dataframe where index is distance travelled and first data field is time passed
     return df1
 
 
@@ -85,7 +87,9 @@ def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> 
 
     df = df1.join(df2, how='outer').sort_index().interpolate()
 
-    df.reset_index(inplace = True)
+    # After interpolation we can make the index a normal field and rename it
+    df.reset_index(inplace=True)
+    df = df.rename(columns={'index': 'distance'})
 
     df['timedelta'] = df["reference"] - df["comparison"]
     return df
@@ -183,6 +187,12 @@ def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
         headers=["#", "Time", "Diff", "Fuel", "FuCo", "fT", "T+B", "fB", "0T", "Spin"],
         floatfmt=".0f"
     ))
+
+def convert_seconds_to_milliseconds(seconds: int):
+    minutes = seconds // 60
+    remaining = seconds % 60
+
+    return minutes * 60000 + remaining * 1000
 
 def secondsToLaptime(seconds):
     remaining = seconds

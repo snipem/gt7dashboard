@@ -3,6 +3,7 @@ from statistics import StatisticsError
 
 import pandas as pd
 
+import gt7helper
 from gt7helper import calculate_remaining_fuel, format_laps_to_table, milliseconds_to_difftime, \
     calculate_time_diff_by_distance
 from gt7lap import Lap
@@ -71,9 +72,14 @@ class GTHelper(unittest.TestCase):
         self.assertEqual('', milliseconds_to_difftime(0))
         self.assertEqual('-1:40.000', milliseconds_to_difftime(-102))
 
+    def test_calculate_time_diff_by_distance_from_pickle(self):
+        laps = gt7helper.load_laps_from_pickle("data/laps_20-08-2022_21:46:22.pickle")
+
+        df = calculate_time_diff_by_distance(laps[1], laps[2])
+
+        print(len(df))
 
     def test_calculate_time_diff_by_distance(self):
-
         best_lap = Lap()
         best_lap.DataTime = [0, 2, 6, 12, 22, 45, 60, 70]
         best_lap.DataSpeed = [0, 50, 55, 100, 120, 30, 20, 50]
@@ -85,3 +91,10 @@ class GTHelper(unittest.TestCase):
         df = calculate_time_diff_by_distance(best_lap, second_best_lap)
 
         print(len(df))
+
+
+    def test_convert_seconds_to_milliseconds(self):
+        seconds = 10000
+        ms = gt7helper.convert_seconds_to_milliseconds(seconds)
+        s_s = gt7helper.secondsToLaptime(seconds / 1000)
+        print(ms, s_s)
