@@ -75,12 +75,12 @@ class GTHelper(unittest.TestCase):
     def test_calculate_time_diff_by_distance(self):
 
         best_lap = Lap()
-        best_lap.DataTime = [0, 6, 12, 22, 45, 60, 70]
-        best_lap.DataSpeed = [50, 55, 100, 120, 30, 20, 50]
+        best_lap.DataTime = [0, 2, 6, 12, 22, 45, 60, 70]
+        best_lap.DataSpeed = [0, 50, 55, 100, 120, 30, 20, 50]
 
         second_best_lap = Lap()
-        second_best_lap.DataTime = [1, 4, 5, 20, 30, 70, 75]
-        second_best_lap.DataSpeed = [40, 35, 90, 85, 50, 20, 5]
+        second_best_lap.DataTime = [0, 1, 4, 5, 20, 30, 70, 75]
+        second_best_lap.DataSpeed = [0, 40, 35, 90, 85, 50, 20, 5]
 
         df = calculate_time_diff_by_distance(best_lap, second_best_lap)
 

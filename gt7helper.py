@@ -82,12 +82,34 @@ def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> 
     inverted_best = pd.Series(best_interpolated_upsample.index.values, index=best_interpolated_upsample )
     inverted_second_best = pd.Series(second_best_interpolated_upsample.index.values, index=second_best_interpolated_upsample )
 
-    df=pd.concat([
-        pd.Series(inverted_best.values.astype('int64'), index=inverted_best.index), # convert to integer to interpolete timestamps
-        pd.Series(inverted_second_best.values.astype('int64'), index=inverted_second_best.index) # convert to integer to interpolete timestamps
-    ],axis=1).sort_index().interpolate()
+    try:
+        s1 = pd.Series(inverted_best.values.astype('int64'), name="reference", index=inverted_best.index)
+        s1.rename("i1")
 
-    df['timedelta'] = df[0] - df[1]
+        s2 = pd.Series(inverted_second_best.values.astype('int64'), name="comparison", index=inverted_second_best.index)
+        s2.rename("i2")
+
+        df1=DataFrame(data=s1)
+        df2=DataFrame(data=s2)
+
+        # df = df1.loc[~df2.index.duplicated(keep='first')]
+
+        df = df1.join(df2, how='outer').sort_index().interpolate()
+
+        # df= pd.concat([df1,df2],axis=1)
+        # df = df.sort_index().interpolate()
+    except Exception as e:
+        print(e)
+
+    # df1 = pd.DataFrame(data=pd.Series(inverted_best.values.astype('int64'), index=inverted_best.index)) # convert to integer to interpolete timestamps
+    # df2 = pd.DataFrame(data=pd.Series(inverted_second_best.values.astype('int64'), index=inverted_second_best.index)) # convert to integer to interpolete timestamps
+    #
+    #
+    # # df = pd.concat([df1.reset_index(),df2.reset_index()], join='inner', axis=1)
+    # df = df1.reset_index().merge(df2.reset_index(), left_index=True, right_index=True)#.sort_index().interpolate()
+
+
+    df['timedelta'] = df["reference"] - df["comparison"]
     return df
 
 

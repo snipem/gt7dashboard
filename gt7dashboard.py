@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import List
+from typing import List, Tuple
 
 import bokeh.application
 import pandas as pd
@@ -8,13 +8,13 @@ from bokeh.driving import linear
 from bokeh.layouts import layout
 from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div
 from bokeh.models.widgets import Tabs, Panel
-from bokeh.plotting import curdoc
+from bokeh.plotting import curdoc, Figure
 from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
 import gt7communication
 from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
-    list_lap_files_from_path, LapFile
+    list_lap_files_from_path, LapFile, calculate_time_diff_by_distance
 from gt7lap import Lap
 from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap
 
@@ -83,11 +83,11 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Best Lap", "Median Lap"]
 
-    f_ticks = figure(title="Telemetry - Last, Best, Median", y_axis_label="Time / Diff", width=width,
+    f_speed = figure(y_axis_label="Speed", width=width,
                      height=250, tooltips=TOOLTIPS, active_drag="box_zoom")
 
-    f_speed = figure(title="Telemetry - Last, Best, Median", y_axis_label="Speed", width=width,
-                     height=250, tooltips=TOOLTIPS, active_drag="box_zoom")
+    f_time_diff = figure(title="Telemetry - Last, Best, Median", y_axis_label="Time / Diff", width=width,
+                         height=int(f_speed.height / 2), tooltips=TOOLTIPS, active_drag="box_zoom")
 
     f_throttle = figure(x_range=f_speed.x_range, y_axis_label="Throttle", width=width,
                         height=int(f_speed.height / 2), tooltips=TOOLTIPS, active_drag="box_zoom")
@@ -111,12 +111,14 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
 
     sources = []
 
+    time_diff_source = ColumnDataSource(data={})
+    f_time_diff.line(x="index", y='timediff', source=time_diff_source, legend_label="Time Diff", line_width=1, color="red", line_alpha=1)
+    sources.append(time_diff_source)
+
     for color, legend in zip(colors, legends):
         source = ColumnDataSource(data={})
         sources.append(source)
 
-        f_ticks.line(x='distance', y='ticks', source=source, legend_label=legend, line_width=1, color=color,
-                     line_alpha=1)
         f_speed.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color,
                      line_alpha=1)
         f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color,
@@ -133,7 +135,7 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(laps: List[Lap], dis
     f_braking.legend.click_policy = f_speed.legend.click_policy
     f_coasting.legend.click_policy = f_speed.legend.click_policy
 
-    return f_ticks, f_speed, f_throttle, f_braking, f_coasting, sources
+    return f_time_diff, f_speed, f_throttle, f_braking, f_coasting, sources
 
 
 p = figure(plot_width=1000, plot_height=600)
@@ -187,7 +189,7 @@ columns = [
     TableColumn(field='tyrespinning', title='Tire Spin', formatter=formatter)
 ]
 
-f_ticks, f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap(
+f_time_diff, f_speed, f_throttle, f_braking, f_coasting, data_sources = get_throttle_velocity_diagram_for_best_lap_and_last_lap(
     [], True, 1000)
 
 t_lap_times = DataTable(source=source, columns=columns)
@@ -287,9 +289,10 @@ def update_speed_velocity_graph(laps: List[Lap]):
     last_lap_data = get_data_from_lap(last_lap, title="Last: %s" % last_lap.Title, distance_mode=True)
     best_lap_data = get_data_from_lap(best_lap, title="Best: %s" % last_lap.Title, distance_mode=True)
 
-    data_sources[0].data = last_lap_data
-    data_sources[1].data = best_lap_data
-    data_sources[2].data = get_data_from_lap(median_lap, title="Median: %s" % last_lap.Title, distance_mode=True)
+    data_sources[0].data = calculate_time_diff_by_distance(best_lap, last_lap)
+    data_sources[1].data = last_lap_data
+    data_sources[2].data = best_lap_data
+    data_sources[3].data = get_data_from_lap(median_lap, title="Median: %s" % last_lap.Title, distance_mode=True)
 
     last_lap_race_line.data_source.data = last_lap_data
     best_lap_race_line.data_source.data = best_lap_data
@@ -400,7 +403,7 @@ def update_tuning_info():
 
 
 l1 = layout(children=[
-    # [f_ticks], # TODO Have to calculate differences
+    [f_time_diff], # TODO Have to calculate differences
     [f_speed, s_race_line, div_connection_info],
     [f_throttle, div_last_lap, div_best_lap],
     [f_braking],
