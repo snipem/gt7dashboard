@@ -73,6 +73,7 @@ def get_time_delta_dataframe_for_lap(lap: Lap, name: str):
     # Make distance to index and time to value, because we want to join on distance
     inverted = pd.Series(interpolated_upsample.index.values, index=interpolated_upsample)
 
+    # Flip around, we have to convert timedelta back to integer to do this
     s1 = pd.Series(inverted.values.astype('int64'), name=name, index=inverted.index)
 
     df1=DataFrame(data=s1)
@@ -87,9 +88,16 @@ def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> 
 
     df = df1.join(df2, how='outer').sort_index().interpolate()
 
-    # After interpolation we can make the index a normal field and rename it
+    # After interpolation, we can make the index a normal field and rename it
     df.reset_index(inplace=True)
     df = df.rename(columns={'index': 'distance'})
+
+    # Convert integer timestamps back to timestamp format
+    s_reference_timestamped=pd.to_timedelta(getattr(df, "reference"))
+    s_comparison_timestamped=pd.to_timedelta(getattr(df, "comparison"))
+
+    df["reference"] = s_reference_timestamped
+    df["comparison"] = s_comparison_timestamped
 
     df['timedelta'] = df["reference"] - df["comparison"]
     return df
