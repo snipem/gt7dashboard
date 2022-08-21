@@ -99,7 +99,7 @@ def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> 
     df["reference"] = s_reference_timestamped
     df["comparison"] = s_comparison_timestamped
 
-    df['timedelta'] = df["reference"] - df["comparison"]
+    df['timedelta'] = df["comparison"] - df["reference"]
     return df
 
 
