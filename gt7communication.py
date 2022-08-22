@@ -161,6 +161,7 @@ class Session():
 class GT7Communication(Thread):
     def __init__(self, playstation_ip):
         Thread.__init__(self)
+        self._shall_restart = False
         self.session = Session()
         self.laps = []
         # Always quit with the main process
@@ -174,65 +175,78 @@ class GT7Communication(Thread):
         self.dataExample = []
 
     def run(self):
-        # self.connect()
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind(('0.0.0.0', self.ReceivePort))
-        self._send_hb(s)
-        s.settimeout(10)
-        prevlap = -1
-        pktid = 0
-        pknt = 0
         while True:
+            s = None
             try:
-                data, address = s.recvfrom(4096)
-                pknt = pknt + 1
-                ddata = salsa20_dec(data)
-                if len(ddata) > 0 and struct.unpack('i', ddata[0x70:0x70 + 4])[0] > pktid:
+                self._shall_restart = False
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.bind(('0.0.0.0', self.ReceivePort))
+                self._send_hb(s)
+                s.settimeout(10)
+                prevlap = -1
+                pktid = 0
+                pknt = 0
+                while not self._shall_restart:
+                    try:
+                        data, address = s.recvfrom(4096)
+                        pknt = pknt + 1
+                        ddata = salsa20_dec(data)
+                        if len(ddata) > 0 and struct.unpack('i', ddata[0x70:0x70 + 4])[0] > pktid:
 
-                    self.last_data = GT_Data(ddata)
-                    self._last_data_received = time.time()
+                            self.last_data = GT_Data(ddata)
+                            self._last_data_received = time.time()
 
-                    pktid = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
+                            pktid = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
 
-                    bstlap = struct.unpack('i', ddata[0x78:0x78 + 4])[0]
-                    lstlap = struct.unpack('i', ddata[0x7C:0x7C + 4])[0]
-                    curlap = struct.unpack('h', ddata[0x74:0x74 + 2])[0]
+                            bstlap = struct.unpack('i', ddata[0x78:0x78 + 4])[0]
+                            lstlap = struct.unpack('i', ddata[0x7C:0x7C + 4])[0]
+                            curlap = struct.unpack('h', ddata[0x74:0x74 + 2])[0]
 
-                    if curlap == 0:
-                        self.session.special_packet_time = 0
+                            if curlap == 0:
+                                self.session.special_packet_time = 0
 
-                    if curlap > 0 and self.last_data.in_race:
+                            if curlap > 0 and self.last_data.in_race:
 
-                        if curlap != prevlap:
-                            # New lap
-                            prevlap = curlap
+                                if curlap != prevlap:
+                                    # New lap
+                                    prevlap = curlap
 
-                            self.session.special_packet_time += lstlap - self.current_lap.LapTicks * 1000.0/60.0
+                                    self.session.special_packet_time += lstlap - self.current_lap.LapTicks * 1000.0/60.0
 
-                            self._log_lap()
-                            if lstlap > 0:
-                                self.laps.insert(0, self.current_lap)
+                                    self._log_lap()
+                                    if lstlap > 0:
+                                        self.laps.insert(0, self.current_lap)
 
-                            self.session.best_lap = bstlap
+                                    self.session.best_lap = bstlap
 
-                            self.current_lap = Lap()
-                            self.current_lap.FuelAtStart = self.last_data.current_fuel
-                            # trackLap(lstlap, curlap, bstlap)
-                    else:
-                        curLapTime = 0
-                        # Reset lap
-                        self.current_lap = Lap()
+                                    self.current_lap = Lap()
+                                    self.current_lap.FuelAtStart = self.last_data.current_fuel
+                                    # trackLap(lstlap, curlap, bstlap)
+                            else:
+                                curLapTime = 0
+                                # Reset lap
+                                self.current_lap = Lap()
 
-                    self._log_data(self.last_data)
+                            self._log_data(self.last_data)
 
-                    if pknt > 100:
+                            if pknt > 100:
+                                self._send_hb(s)
+                                pknt = 0
+                    except Exception as e:
+                        # Handler for package exceptions
+                        print(traceback.format_exc())
                         self._send_hb(s)
                         pknt = 0
+
             except Exception as e:
+                # Handler for general socket exceptions
                 print(traceback.format_exc())
-                self._send_hb(s)
-                pknt = 0
-                pass
+                s.close()
+                # Wait before reconnect
+                time.sleep(5)
+
+    def restart(self):
+        self._shall_restart = True
 
     def is_connected(self) -> bool:
         return self._last_data_received > 0 and (time.time() - self._last_data_received) <= 1

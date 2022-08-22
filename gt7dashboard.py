@@ -181,6 +181,14 @@ if not hasattr(app, "gt7comm"):
         app.gt7comm.load_laps(load_laps_from_pickle(load_laps_path), replace_other_laps=True)
 
     app.gt7comm.start()
+else:
+    # Reuse existing thread
+    if not app.gt7comm.is_connected():
+        print("Restarting gt7communcation")
+        app.gt7comm.restart()
+    else:
+        # Existing thread has connection, proceed
+        pass
 
 source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=app.gt7comm.session.best_lap))
 
