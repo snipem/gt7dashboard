@@ -16,7 +16,7 @@ import gt7communication
 from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
     list_lap_files_from_path, LapFile, calculate_time_diff_by_distance
 from gt7lap import Lap
-from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap
+from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap, get_brake_points
 
 
 def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.DataFrame:
@@ -315,6 +315,22 @@ def update_speed_velocity_graph(laps: List[Lap]):
 
     last_lap_race_line.data_source.data = last_lap_data
     best_lap_race_line.data_source.data = best_lap_data
+
+    # Update breakpoints
+    # FIXME Is slow right now
+    # if len(last_lap.DataBraking) > 0:
+    #     update_break_points(last_lap, s_race_line, "blue")
+
+    # if len(best_lap.DataBraking) > 0:
+    #     update_break_points(best_lap, s_race_line, "magenta")
+
+
+def update_break_points(lap: Lap, race_line: Figure, color: str):
+    brake_points_x, brake_points_y = get_brake_points(lap)
+
+    for i, _ in enumerate(brake_points_x):
+        race_line.scatter(brake_points_x[i], brake_points_y[i], marker="circle", size=10, fill_color=color)
+
 
 
 def update_time_table(laps: List[Lap]):
