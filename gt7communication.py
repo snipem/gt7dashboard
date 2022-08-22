@@ -302,6 +302,7 @@ class GT7Communication(Thread):
         self.current_lap.DataBraking.append(data.brake)
         self.current_lap.DataThrottle.append(data.throttle)
         self.current_lap.DataSpeed.append(data.carSpeed)
+        self.current_lap.DataRPM.append(data.rpm)
 
         deltaDivisor = data.carSpeed
         if data.carSpeed == 0:

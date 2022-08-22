@@ -21,6 +21,7 @@ class Lap:
         self.DataCoasting = []
         self.DataSpeed = []
         self.DataTime = []
+        self.DataRPM = []
         self.FuelAtStart = 0
         self.FuelConsumed = -1
 
