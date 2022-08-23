@@ -324,6 +324,8 @@ def update_speed_velocity_graph(laps: List[Lap]):
     last_lap_race_line.data_source.data = last_lap_data
     best_lap_race_line.data_source.data = best_lap_data
 
+    s_race_line.legend.visible=False
+
     # Update breakpoints
     # FIXME Is slow right now
     # if len(last_lap.DataBraking) > 0:
