@@ -327,12 +327,14 @@ def update_speed_velocity_graph(laps: List[Lap]):
     s_race_line.legend.visible=False
 
     # Update breakpoints
-    # FIXME Is slow right now
-    # if len(last_lap.DataBraking) > 0:
-    #     update_break_points(last_lap, s_race_line, "blue")
+    # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
+    brake_points_enabled = os.environ.get("GT7_ADD_BRAKEPOINTS") == "true"
 
-    # if len(best_lap.DataBraking) > 0:
-    #     update_break_points(best_lap, s_race_line, "magenta")
+    if brake_points_enabled and len(last_lap.DataBraking) > 0:
+        update_break_points(last_lap, s_race_line, "blue")
+
+    if brake_points_enabled and len(best_lap.DataBraking) > 0:
+        update_break_points(best_lap, s_race_line, "magenta")
 
 
 def update_break_points(lap: Lap, race_line: Figure, color: str):
