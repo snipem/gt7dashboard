@@ -21,6 +21,7 @@ gt7dashboard is a live dashboard for Gran Turismo 7. Based on the recent discove
 * List off all recent laps with additional metrics, measured in percentage * 1000 for better visiuals
 * Ability to Save current laps and reset all laps
 * Additional "Race view" with only the laps
+* Optional Brake Points (slow) when setting `GT7_ADD_BRAKEPOINTS=true`
 
 ## How to run
 
