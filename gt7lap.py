@@ -33,3 +33,9 @@ class Lap:
             self.FullThrottleTicks,
             self.FullBrakeTicks,
             self.NoThrottleNoBrakeTicks))
+
+    def format(self):
+        return ('Lap %2d, %s (%d Ticks)' % (
+            self.Number,
+            self.Title,
+            len(self.DataSpeed)))

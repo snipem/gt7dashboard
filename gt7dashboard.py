@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import List
+from typing import List, Tuple
 
 import bokeh.application
 import pandas as pd
@@ -19,20 +19,20 @@ from gt7lap import Lap
 from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap, get_brake_points
 
 
-def pd_data_frame_from_lap(laps: List[Lap], best_lap: int) -> pd.core.frame.DataFrame:
+def pd_data_frame_from_lap(laps: List[Lap], best_lap_time: int) -> pd.core.frame.DataFrame:
     df = pd.DataFrame()
     for i, lap in enumerate(laps):
         time_diff = ""
-        if best_lap == lap.LapTime:
+        if best_lap_time == lap.LapTime:
             # lap_color = 35 # magenta
             # TODO add some formatting
             pass
-        elif lap.LapTime < best_lap:
+        elif lap.LapTime < best_lap_time:
             # LapTime cannot be smaller than bestlap, bestlap is always the smallest.
             # This can only mean that lap.LapTime is from an earlier race on a different track
             time_diff = "-"
-        elif best_lap > 0:
-            time_diff = secondsToLaptime(-1 * (best_lap / 1000 - lap.LapTime / 1000))
+        elif best_lap_time > 0:
+            time_diff = secondsToLaptime(-1 * (best_lap_time / 1000 - lap.LapTime / 1000))
 
         df_add = pd.DataFrame([{'number': lap.Number,
                                 'time': secondsToLaptime(lap.LapTime / 1000),
@@ -67,7 +67,7 @@ def get_data_from_lap(lap: Lap, distance_mode: bool):
     return data
 
 
-def get_throttle_velocity_diagram_for_best_lap_and_last_lap(width: int) -> tuple[
+def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> tuple[
     Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
     tooltips = [
         ("index", "$index"),
@@ -87,7 +87,7 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(width: int) -> tuple
         ("comparison", "@comparison"),
     ]
     colors = ["blue", "magenta", "green"]
-    legends = ["Last Lap", "Best Lap", "Median Lap"]
+    legends = ["Last Lap", "Reference Lap", "Median Lap"]
 
     f_speed = figure(title="Last, Best, Median", y_axis_label="Speed", width=width,
                      height=250, tooltips=tooltips, active_drag="box_zoom")
@@ -158,25 +158,30 @@ def update_connection_info():
         div_connection_info.text += "<p title='Disconnected'>🔴</p>"
 
 
+def update_reference_lap_select(laps):
+    reference_lap_select.options = [tuple(('-1', "Best Lap"))] + bokeh_tuple_for_list_of_laps(laps)
+
+
 @linear()
 def update_lap_change(step):
     # time, x, y, z = from_csv(reader).next()
-    global laps_stored
-    global session_stored
-    global connection_status_stored
+    global g_laps_stored
+    global g_session_stored
+    global g_connection_status_stored
+    global g_telemetry_update_needed
 
     laps = app.gt7comm.get_laps()
 
-    if app.gt7comm.session != session_stored:
+    if app.gt7comm.session != g_session_stored:
         update_tuning_info()
-        session_stored = copy.copy(app.gt7comm.session)
+        g_session_stored = copy.copy(app.gt7comm.session)
 
-    if app.gt7comm.is_connected() != connection_status_stored:
+    if app.gt7comm.is_connected() != g_connection_status_stored:
         update_connection_info()
-        connection_status_stored = copy.copy(app.gt7comm.is_connected())
+        g_connection_status_stored = copy.copy(app.gt7comm.is_connected())
 
     # This saves on cpu time, 99.9% of the time this is true
-    if laps == laps_stored:
+    if laps == g_laps_stored and not g_telemetry_update_needed:
         return
 
     if len(laps) > 0:
@@ -185,45 +190,60 @@ def update_lap_change(step):
         update_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
 
         if len(laps) > 1:
-            best_lap = get_best_lap(laps)
-            update_speed_peak_and_valley_diagram(div_best_lap, best_lap, "Best Lap")
+            reference_lap = get_last_reference_median_lap(laps)[1]
+            update_speed_peak_and_valley_diagram(div_reference_lap, reference_lap, "Reference Lap")
 
     update_time_table(laps)
+    update_reference_lap_select(laps)
     update_speed_velocity_graph(laps)
 
-    laps_stored = laps.copy()
+    g_laps_stored = laps.copy()
+    g_telemetry_update_needed = False
 
-
-def update_speed_velocity_graph(laps: List[Lap]):
+def get_last_reference_median_lap(laps: List[Lap]):
     if len(laps) == 0:  # Show nothing
         last_lap = Lap()
-        best_lap = Lap()
+        reference_lap = Lap()
         median_lap = Lap()
     elif len(laps) == 1:  # Only show last lap
         last_lap = laps[0]
-        best_lap = Lap()  # Use empty lap for best
+        reference_lap = Lap()  # Use empty lap for best
         median_lap = Lap()  # Use empty lap for median
     elif len(laps) == 2:  # Only show last and best lap
         last_lap = laps[0]
-        best_lap = get_best_lap(laps)
+        if not g_reference_lap_selected:
+            reference_lap = get_best_lap(laps)
+        else:
+            reference_lap = g_reference_lap_selected
         median_lap = Lap()  # Use empty lap for median
     else:  # Fill all laps
         last_lap = laps[0]
-        best_lap = get_best_lap(laps)
+        if not g_reference_lap_selected:
+            reference_lap = get_best_lap(laps)
+        else:
+            reference_lap = g_reference_lap_selected
         median_lap = get_median_lap(laps)
 
-    last_lap_data = get_data_from_lap(last_lap, distance_mode=True)
-    best_lap_data = get_data_from_lap(best_lap, distance_mode=True)
+    return last_lap, reference_lap, median_lap
 
-    if len(best_lap.DataSpeed) > 0:
-        data_sources[0].data = calculate_time_diff_by_distance(best_lap, last_lap)
+
+
+def update_speed_velocity_graph(laps: List[Lap]):
+
+    last_lap, reference_lap, median_lap = get_last_reference_median_lap(laps)
+
+    last_lap_data = get_data_from_lap(last_lap, distance_mode=True)
+    reference_lap_data = get_data_from_lap(reference_lap, distance_mode=True)
+
+    if len(reference_lap.DataSpeed) > 0:
+        data_sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
     data_sources[1].data = last_lap_data
-    data_sources[2].data = best_lap_data
+    data_sources[2].data = reference_lap_data
     data_sources[3].data = get_data_from_lap(median_lap, distance_mode=True)
 
     last_lap_race_line.data_source.data = last_lap_data
-    best_lap_race_line.data_source.data = best_lap_data
+    reference_lap_race_line.data_source.data = reference_lap_data
 
     s_race_line.legend.visible = False
 
@@ -234,8 +254,8 @@ def update_speed_velocity_graph(laps: List[Lap]):
     if brake_points_enabled and len(last_lap.DataBraking) > 0:
         update_break_points(last_lap, s_race_line, "blue")
 
-    if brake_points_enabled and len(best_lap.DataBraking) > 0:
-        update_break_points(best_lap, s_race_line, "magenta")
+    if brake_points_enabled and len(reference_lap.DataBraking) > 0:
+        update_break_points(reference_lap, s_race_line, "magenta")
 
 
 def update_break_points(lap: Lap, race_line: Figure, color: str):
@@ -248,13 +268,13 @@ def update_break_points(lap: Lap, race_line: Figure, color: str):
 def update_time_table(laps: List[Lap]):
     print("Adding %d laps to table" % len(laps))
     t_lap_times.source.data = ColumnDataSource.from_df(
-        pd_data_frame_from_lap(laps, best_lap=app.gt7comm.session.best_lap))
+        pd_data_frame_from_lap(laps, best_lap_time=app.gt7comm.session.best_lap))
     t_lap_times.trigger('source', t_lap_times.source, t_lap_times.source)
 
 
 def reset_button_handler(event):
     print("reset button clicked")
-    div_best_lap.text = ""
+    div_reference_lap.text = ""
     div_last_lap.text = ""
     app.gt7comm.reset()
 
@@ -274,10 +294,31 @@ def load_laps_handler(attr, old, new):
     app.gt7comm.load_laps(load_laps_from_pickle(new), replace_other_laps=True)
 
 
-def bokeh_tuple_for_list_of_laps(lapfiles: List[LapFile]):
+def load_reference_lap_handler(attr, old, new):
+    global g_reference_lap_selected
+    global reference_lap_select
+    global g_telemetry_update_needed
+    global g_telemetry_update_needed
+
+    if int(new) == -1:
+        # Set no reference lap
+        g_reference_lap_selected = None
+    else:
+        g_reference_lap_selected = g_laps_stored[int(new)]
+        print("Loading %s" % g_laps_stored[int(new)])
+
+    g_telemetry_update_needed = True
+
+def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
     tuples = []
     for lapfile in lapfiles:
         tuples.append(tuple((lapfile.path, lapfile.__str__())))
+    return tuples
+
+def bokeh_tuple_for_list_of_laps(laps: List[Lap]):
+    tuples = []
+    for i, lap in enumerate(laps):
+        tuples.append(tuple((str(i), lap.format())))
     return tuples
 
 
@@ -342,7 +383,16 @@ else:
         # Existing thread has connection, proceed
         pass
 
-source = ColumnDataSource(pd_data_frame_from_lap([], best_lap=app.gt7comm.session.best_lap))
+source = ColumnDataSource(pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap))
+
+g_laps_stored = []
+g_session_stored = None
+g_connection_status_stored = None
+g_reference_lap_selected = None
+g_telemetry_update_needed = False
+
+stored_lap_files = bokeh_tuple_for_list_of_lapfiles(list_lap_files_from_path("data"))
+
 
 # FIXME Not working correctly
 template = """<div style="color:<%= 
@@ -367,7 +417,7 @@ columns = [
 ]
 
 f_time_diff, f_speed, f_throttle, f_braking, f_coasting, data_sources = \
-    get_throttle_velocity_diagram_for_best_lap_and_last_lap(width=1000)
+    get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
 t_lap_times = DataTable(source=source, columns=columns)
 t_lap_times.width = 1000
@@ -393,17 +443,15 @@ s_race_line.legend.click_policy = "hide"
 
 last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1,
                                       color="blue")
-best_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Best Lap", line_width=1,
-                                      color="magenta")
-
-laps_stored = []
-session_stored = None
-connection_status_stored = None
-stored_lap_files = bokeh_tuple_for_list_of_laps(list_lap_files_from_path("data"))
+reference_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Reference Lap", line_width=1,
+                                           color="magenta")
 
 select_title = Paragraph(text="Load Laps:", align="center")
 select = Select(value="laps", options=stored_lap_files)
 select.on_change("value", load_laps_handler)
+
+reference_lap_select = Select(value="laps", options=stored_lap_files)
+reference_lap_select.on_change("value", load_reference_lap_handler)
 
 manual_log_button = Button(label="Log Lap Now")
 manual_log_button.on_click(log_lap_button_handler)
@@ -417,13 +465,13 @@ save_button.on_click(reset_button_handler)
 tuning_info = Div(width=200, height=100)
 
 div_last_lap = Div(width=200, height=125)
-div_best_lap = Div(width=200, height=125)
+div_reference_lap = Div(width=200, height=125)
 div_connection_info = Div(width=200, height=125)
 
 l1 = layout(children=[
-    [f_time_diff, manual_log_button],
+    [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
     [f_speed, s_race_line, div_connection_info],
-    [f_throttle, div_last_lap, div_best_lap],
+    [f_throttle, div_last_lap, div_reference_lap],
     [f_braking],
     [f_coasting],
     [t_lap_times, layout(children=[tuning_info])],

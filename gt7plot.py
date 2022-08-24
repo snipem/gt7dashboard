@@ -55,6 +55,8 @@ def get_median_lap(laps: List[Lap]) -> Lap:
 	for val in vars(laps[0]):
 		attributes = []
 		for lap in laps:
+			if val == "options":
+				continue
 			attr = getattr(lap, val)
 			# FIXME why is it sometimes string AND int?
 			if not isinstance(attr, str) and attr != "" and attr != []:
