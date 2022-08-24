@@ -259,6 +259,11 @@ def reset_button_handler(event):
     app.gt7comm.reset()
 
 
+def log_lap_button_handler(event):
+    app.gt7comm.finish_lap(manual=True)
+    print("Added a lap manually to the list of laps: %s" % app.gt7comm.laps[0])
+
+
 def save_button_handler(event):
     path = save_laps_to_pickle(app.gt7comm.laps)
     print("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
@@ -400,10 +405,13 @@ select_title = Paragraph(text="Load Laps:", align="center")
 select = Select(value="laps", options=stored_lap_files)
 select.on_change("value", load_laps_handler)
 
-reset_button = Button(label="Save")
+manual_log_button = Button(label="Log Lap Now")
+manual_log_button.on_click(log_lap_button_handler)
+
+reset_button = Button(label="Save Laps")
 reset_button.on_click(save_button_handler)
 
-save_button = Button(label="Reset")
+save_button = Button(label="Reset Laps")
 save_button.on_click(reset_button_handler)
 
 tuning_info = Div(width=200, height=100)
@@ -413,7 +421,7 @@ div_best_lap = Div(width=200, height=125)
 div_connection_info = Div(width=200, height=125)
 
 l1 = layout(children=[
-    [f_time_diff],
+    [f_time_diff, manual_log_button],
     [f_speed, s_race_line, div_connection_info],
     [f_throttle, div_last_lap, div_best_lap],
     [f_braking],

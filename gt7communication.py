@@ -212,16 +212,10 @@ class GT7Communication(Thread):
                                     prevlap = curlap
 
                                     self.session.special_packet_time += lstlap - self.current_lap.LapTicks * 1000.0/60.0
-
-                                    self._log_lap()
-                                    if lstlap > 0:
-                                        self.laps.insert(0, self.current_lap)
-
                                     self.session.best_lap = bstlap
 
-                                    self.current_lap = Lap()
-                                    self.current_lap.FuelAtStart = self.last_data.current_fuel
-                                    # trackLap(lstlap, curlap, bstlap)
+                                    self.finish_lap()
+
                             else:
                                 curLapTime = 0
                                 # Reset lap
@@ -346,8 +340,11 @@ class GT7Communication(Thread):
 
         self.current_lap.DataTime.append(self.current_lap.LapLiveTime)
 
-    def _log_lap(self):
-        # Sett info we only now after crossing the line
+    def finish_lap(self, manual=False):
+        """
+        Finishes a lap with info we only know after crossing the line after each lap
+        """
+
         self.current_lap.LapTime = self.last_data.last_lap
         self.current_lap.RemainingFuel = self.last_data.current_fuel
         self.current_lap.FuelAtEnd = self.last_data.current_fuel
@@ -356,7 +353,24 @@ class GT7Communication(Thread):
         self.current_lap.Title = secondsToLaptime(self.current_lap.LapTime / 1000)
         self.current_lap.Number = self.last_data.current_lap - 1  # Is not counting the same way as the time table
 
+        # Manual laps have no time assigned, so take last lap time tick
+        if manual:
+            self.current_lap.LapTime = self.current_lap.DataTime[-1:][0]
+
+        # Race is not in 0th lap, which is before starting the race.
+        # We will only persist those laps that have crossed the starting line at least once
+        # TODO Correct this comment, this is about Laptime not lap numbers
+        if self.current_lap.LapTime > 0:
+            self.laps.insert(0, self.current_lap)
+
+
+        self.current_lap = Lap()
+        self.current_lap.FuelAtStart = self.last_data.current_fuel
+
     def reset(self):
+        """
+        Resets the current lap, all stored laps and the current session.
+        """
         self.current_lap = Lap()
         self.session = Session()
         self.last_data = GT_Data(None)
