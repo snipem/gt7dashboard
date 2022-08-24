@@ -1,5 +1,3 @@
-import itertools
-import statistics
 import sys
 from typing import List
 
@@ -9,70 +7,9 @@ from bokeh.plotting.figure import Figure
 
 import pickle
 
-from gt7helper import none_ignoring_median, secondsToLaptime, get_x_axis_depending_on_mode
+from gt7helper import get_x_axis_depending_on_mode, get_brake_points, \
+	get_best_lap, get_median_lap
 from gt7lap import Lap
-
-def get_best_lap(laps: List[Lap]):
-	if len(laps) == 0:
-		return None
-
-	return sorted(laps, key=lambda x: x.LapTime, reverse=False)[0]
-
-def get_brake_points(lap):
-	x = []
-	y = []
-	for i, b in enumerate(lap.DataBraking):
-		if i>0:
-			if lap.DataBraking[i-1] == 0 and lap.DataBraking[i] > 0:
-				x.append(lap.PositionsZ[i])
-				y.append(lap.PositionsX[i])
-
-	return x, y
-
-def filter_max_min_laps(laps: List[Lap], max_lap_time = -1, min_lap_time = -1) -> List[Lap]:
-	if max_lap_time > 0:
-		laps = list(filter(lambda l: l.LapTime <= max_lap_time, laps))
-
-	if min_lap_time > 0:
-		laps = list(filter(lambda l: l.LapTime >= min_lap_time, laps))
-
-	return laps
-
-def get_median_lap(laps: List[Lap]) -> Lap:
-
-	if len(laps) == 0:
-		raise Exception("Lap list does not contain any laps")
-
-	# Filter out too long laps, like box laps etc, use 10 Seconds of the best lap as a threshhold
-	best_lap = get_best_lap(laps)
-	ten_seconds = 10000
-	laps = filter_max_min_laps(laps, best_lap.LapTime + ten_seconds, best_lap.LapTime-ten_seconds)
-
-	median_lap = Lap()
-	if len(laps) == 0:
-		return median_lap
-
-	for val in vars(laps[0]):
-		attributes = []
-		for lap in laps:
-			if val == "options":
-				continue
-			attr = getattr(lap, val)
-			# FIXME why is it sometimes string AND int?
-			if not isinstance(attr, str) and attr != "" and attr != []:
-				attributes.append(getattr(lap, val))
-		if len(attributes) == 0:
-			continue
-		if isinstance(getattr(laps[0], val), list):
-			median_attribute = [none_ignoring_median(k) for k in itertools.zip_longest(*attributes, fillvalue=None)]
-		else:
-			median_attribute = statistics.median(attributes)
-		setattr(median_lap, val, median_attribute)
-
-	median_lap.Title = "Median (%d Laps): %s" % (len(laps), secondsToLaptime(median_lap.LapTime / 1000))
-
-	return median_lap
-
 
 def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, color: str, width: int) -> Figure:
 	x_axis = get_x_axis_depending_on_mode(lap, distance_mode)

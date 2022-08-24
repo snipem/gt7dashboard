@@ -17,7 +17,7 @@ import gt7helper
 from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
     list_lap_files_from_path, LapFile, calculate_time_diff_by_distance
 from gt7lap import Lap
-from gt7plot import get_x_axis_depending_on_mode, get_best_lap, get_median_lap, get_brake_points
+from gt7plot import get_x_axis_depending_on_mode, get_brake_points
 
 
 def pd_data_frame_from_lap(laps: List[Lap], best_lap_time: int) -> pd.core.frame.DataFrame:
