@@ -98,3 +98,6 @@ class GTHelper(unittest.TestCase):
         ms = gt7helper.convert_seconds_to_milliseconds(seconds)
         s_s = gt7helper.secondsToLaptime(seconds / 1000)
         print(ms, s_s)
+
+    def test_get_last_reference_median_lap(self):
+        gt7helper.get_last_reference_median_lap(laps, None)

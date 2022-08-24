@@ -13,6 +13,7 @@ from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
 import gt7communication
+import gt7helper
 from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
     list_lap_files_from_path, LapFile, calculate_time_diff_by_distance
 from gt7lap import Lap
@@ -89,10 +90,10 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Reference Lap", "Median Lap"]
 
-    f_speed = figure(title="Last, Best, Median", y_axis_label="Speed", width=width,
+    f_speed = figure(title="Last, Reference, Median", y_axis_label="Speed", width=width,
                      height=250, tooltips=tooltips, active_drag="box_zoom")
 
-    f_time_diff = figure(title="Time Diff - Last, Best", x_range=f_speed.x_range, y_axis_label="Time / Diff",
+    f_time_diff = figure(title="Time Diff - Last, Reference", x_range=f_speed.x_range, y_axis_label="Time / Diff",
                          width=width,
                          height=int(f_speed.height / 2), tooltips=tooltips_timedelta, active_drag="box_zoom")
 
@@ -169,6 +170,7 @@ def update_lap_change(step):
     global g_session_stored
     global g_connection_status_stored
     global g_telemetry_update_needed
+    global g_reference_lap_selected
 
     laps = app.gt7comm.get_laps()
 
@@ -190,7 +192,7 @@ def update_lap_change(step):
         update_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
 
         if len(laps) > 1:
-            reference_lap = get_last_reference_median_lap(laps)[1]
+            reference_lap = gt7helper.get_last_reference_median_lap(laps, reference_lap_selected=g_reference_lap_selected)[1]
             update_speed_peak_and_valley_diagram(div_reference_lap, reference_lap, "Reference Lap")
 
     update_time_table(laps)
@@ -200,37 +202,10 @@ def update_lap_change(step):
     g_laps_stored = laps.copy()
     g_telemetry_update_needed = False
 
-def get_last_reference_median_lap(laps: List[Lap]):
-    if len(laps) == 0:  # Show nothing
-        last_lap = Lap()
-        reference_lap = Lap()
-        median_lap = Lap()
-    elif len(laps) == 1:  # Only show last lap
-        last_lap = laps[0]
-        reference_lap = Lap()  # Use empty lap for best
-        median_lap = Lap()  # Use empty lap for median
-    elif len(laps) == 2:  # Only show last and best lap
-        last_lap = laps[0]
-        if not g_reference_lap_selected:
-            reference_lap = get_best_lap(laps)
-        else:
-            reference_lap = g_reference_lap_selected
-        median_lap = Lap()  # Use empty lap for median
-    else:  # Fill all laps
-        last_lap = laps[0]
-        if not g_reference_lap_selected:
-            reference_lap = get_best_lap(laps)
-        else:
-            reference_lap = g_reference_lap_selected
-        median_lap = get_median_lap(laps)
-
-    return last_lap, reference_lap, median_lap
-
-
 
 def update_speed_velocity_graph(laps: List[Lap]):
 
-    last_lap, reference_lap, median_lap = get_last_reference_median_lap(laps)
+    last_lap, reference_lap, median_lap = gt7helper.get_last_reference_median_lap(laps, reference_lap_selected=g_reference_lap_selected)
 
     last_lap_data = get_data_from_lap(last_lap, distance_mode=True)
     reference_lap_data = get_data_from_lap(reference_lap, distance_mode=True)
@@ -298,16 +273,16 @@ def load_reference_lap_handler(attr, old, new):
     global g_reference_lap_selected
     global reference_lap_select
     global g_telemetry_update_needed
-    global g_telemetry_update_needed
 
     if int(new) == -1:
         # Set no reference lap
         g_reference_lap_selected = None
     else:
         g_reference_lap_selected = g_laps_stored[int(new)]
-        print("Loading %s" % g_laps_stored[int(new)])
+        print("Loading %s as reference" % g_laps_stored[int(new)].format())
 
     g_telemetry_update_needed = True
+    update_lap_change()
 
 def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
     tuples = []
