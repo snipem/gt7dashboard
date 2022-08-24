@@ -89,10 +89,10 @@ def get_throttle_velocity_diagram_for_best_lap_and_last_lap(width: int) -> tuple
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Best Lap", "Median Lap"]
 
-    f_speed = figure(y_axis_label="Speed", width=width,
+    f_speed = figure(title="Last, Best, Median", y_axis_label="Speed", width=width,
                      height=250, tooltips=tooltips, active_drag="box_zoom")
 
-    f_time_diff = figure(title="Telemetry - Last, Best, Median", x_range=f_speed.x_range, y_axis_label="Time / Diff",
+    f_time_diff = figure(title="Time Diff - Last, Best", x_range=f_speed.x_range, y_axis_label="Time / Diff",
                          width=width,
                          height=int(f_speed.height / 2), tooltips=tooltips_timedelta, active_drag="box_zoom")
 
