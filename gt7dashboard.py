@@ -425,7 +425,7 @@ select_title = Paragraph(text="Load Laps:", align="center")
 select = Select(value="laps", options=stored_lap_files)
 select.on_change("value", load_laps_handler)
 
-reference_lap_select = Select(value="laps", options=stored_lap_files)
+reference_lap_select = Select(value="laps")
 reference_lap_select.on_change("value", load_reference_lap_handler)
 
 manual_log_button = Button(label="Log Lap Now")
