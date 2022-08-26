@@ -5,6 +5,7 @@ import gt7communication
 from gt7lap import Lap
 
 
+@unittest.skip("Works only with real game running")
 class GT7CommunicationTest(unittest.TestCase):
     def test_run(self):
         gt7comm = gt7communication.GT7Communication("192.168.178.120")
@@ -12,6 +13,7 @@ class GT7CommunicationTest(unittest.TestCase):
         gt7comm.daemon = False
         gt7comm.start()
         car_data = gt7comm.get_last_data()
+        self.assertTrue(gt7comm.is_connected())
         # is always 85
         self.assertEqual(85, car_data.water_temp)
 

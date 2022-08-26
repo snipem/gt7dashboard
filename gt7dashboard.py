@@ -1,9 +1,8 @@
 import copy
 import os
-from typing import List, Tuple
+from typing import List
 
 import bokeh.application
-import pandas as pd
 from bokeh.driving import linear
 from bokeh.layouts import layout
 from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div
@@ -14,59 +13,9 @@ from bokeh.plotting.figure import Figure
 
 import gt7communication
 import gt7helper
-from gt7helper import secondsToLaptime, get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
-    list_lap_files_from_path, LapFile, calculate_time_diff_by_distance
+from gt7helper import get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
+    list_lap_files_from_path, calculate_time_diff_by_distance
 from gt7lap import Lap
-from gt7plot import get_x_axis_depending_on_mode, get_brake_points
-
-
-def pd_data_frame_from_lap(laps: List[Lap], best_lap_time: int) -> pd.core.frame.DataFrame:
-    df = pd.DataFrame()
-    for i, lap in enumerate(laps):
-        time_diff = ""
-        if best_lap_time == lap.LapTime:
-            # lap_color = 35 # magenta
-            # TODO add some formatting
-            pass
-        elif lap.LapTime < best_lap_time:
-            # LapTime cannot be smaller than bestlap, bestlap is always the smallest.
-            # This can only mean that lap.LapTime is from an earlier race on a different track
-            time_diff = "-"
-        elif best_lap_time > 0:
-            time_diff = secondsToLaptime(-1 * (best_lap_time / 1000 - lap.LapTime / 1000))
-
-        df_add = pd.DataFrame([{'number': lap.Number,
-                                'time': secondsToLaptime(lap.LapTime / 1000),
-                                'diff': time_diff,
-                                'fuelconsumed': "%d" % lap.FuelConsumed,
-                                'fullthrottle': "%d" % (lap.FullThrottleTicks / lap.LapTicks * 1000),
-                                'throttleandbreak': "%d" % (lap.ThrottleAndBrakesTicks / lap.LapTicks * 1000),
-                                'fullbreak': "%d" % (lap.FullBrakeTicks / lap.LapTicks * 1000),
-                                'nothrottle': "%d" % (lap.NoThrottleNoBrakeTicks / lap.LapTicks * 1000),
-                                'tyrespinning': "%d" % (lap.TiresSpinningTicks / lap.LapTicks * 1000),
-                                }], index=[i])
-        df = pd.concat([df, df_add])
-
-    return df
-
-
-def get_data_from_lap(lap: Lap, distance_mode: bool):
-    data = {
-        'throttle': lap.DataThrottle,
-        'brake': lap.DataBraking,
-        'speed': lap.DataSpeed,
-        'time': lap.DataTime,
-        'tires': lap.DataTires,
-        'ticks': list(range(len(lap.DataSpeed))),
-        'coast': lap.DataCoasting,
-        'raceline_y': lap.PositionsY,
-        'raceline_x': lap.PositionsX,
-        'raceline_z': lap.PositionsZ,
-        'distance': get_x_axis_depending_on_mode(lap, distance_mode),
-    }
-
-    return data
-
 
 def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> tuple[
     Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
@@ -160,7 +109,7 @@ def update_connection_info():
 
 
 def update_reference_lap_select(laps):
-    reference_lap_select.options = [tuple(('-1', "Best Lap"))] + bokeh_tuple_for_list_of_laps(laps)
+    reference_lap_select.options = [tuple(('-1', "Best Lap"))] + gt7helper.bokeh_tuple_for_list_of_laps(laps)
 
 
 @linear()
@@ -192,8 +141,10 @@ def update_lap_change(step):
         update_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
 
         if len(laps) > 1:
-            reference_lap = gt7helper.get_last_reference_median_lap(laps, reference_lap_selected=g_reference_lap_selected)[1]
-            update_speed_peak_and_valley_diagram(div_reference_lap, reference_lap, "Reference Lap")
+            reference_lap = \
+            gt7helper.get_last_reference_median_lap(laps, reference_lap_selected=g_reference_lap_selected)[1]
+            if reference_lap:
+                update_speed_peak_and_valley_diagram(div_reference_lap, reference_lap, "Reference Lap")
 
     update_time_table(laps)
     update_reference_lap_select(laps)
@@ -204,18 +155,18 @@ def update_lap_change(step):
 
 
 def update_speed_velocity_graph(laps: List[Lap]):
+    last_lap, reference_lap, median_lap = gt7helper.get_last_reference_median_lap(laps,
+                                                                                  reference_lap_selected=g_reference_lap_selected)
 
-    last_lap, reference_lap, median_lap = gt7helper.get_last_reference_median_lap(laps, reference_lap_selected=g_reference_lap_selected)
-
-    last_lap_data = get_data_from_lap(last_lap, distance_mode=True)
-    reference_lap_data = get_data_from_lap(reference_lap, distance_mode=True)
+    last_lap_data = gt7helper.get_data_from_lap(last_lap, distance_mode=True)
+    reference_lap_data = gt7helper.get_data_from_lap(reference_lap, distance_mode=True)
 
     if len(reference_lap.DataSpeed) > 0:
         data_sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
     data_sources[1].data = last_lap_data
     data_sources[2].data = reference_lap_data
-    data_sources[3].data = get_data_from_lap(median_lap, distance_mode=True)
+    data_sources[3].data = gt7helper.get_data_from_lap(median_lap, distance_mode=True)
 
     last_lap_race_line.data_source.data = last_lap_data
     reference_lap_race_line.data_source.data = reference_lap_data
@@ -234,7 +185,7 @@ def update_speed_velocity_graph(laps: List[Lap]):
 
 
 def update_break_points(lap: Lap, race_line: Figure, color: str):
-    brake_points_x, brake_points_y = get_brake_points(lap)
+    brake_points_x, brake_points_y = gt7helper.get_brake_points(lap)
 
     for i, _ in enumerate(brake_points_x):
         race_line.scatter(brake_points_x[i], brake_points_y[i], marker="circle", size=10, fill_color=color)
@@ -243,7 +194,7 @@ def update_break_points(lap: Lap, race_line: Figure, color: str):
 def update_time_table(laps: List[Lap]):
     print("Adding %d laps to table" % len(laps))
     t_lap_times.source.data = ColumnDataSource.from_df(
-        pd_data_frame_from_lap(laps, best_lap_time=app.gt7comm.session.best_lap))
+        gt7helper.pd_data_frame_from_lap(laps, best_lap_time=app.gt7comm.session.best_lap))
     t_lap_times.trigger('source', t_lap_times.source, t_lap_times.source)
 
 
@@ -283,18 +234,6 @@ def load_reference_lap_handler(attr, old, new):
 
     g_telemetry_update_needed = True
     update_lap_change()
-
-def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
-    tuples = []
-    for lapfile in lapfiles:
-        tuples.append(tuple((lapfile.path, lapfile.__str__())))
-    return tuples
-
-def bokeh_tuple_for_list_of_laps(laps: List[Lap]):
-    tuples = []
-    for i, lap in enumerate(laps):
-        tuples.append(tuple((str(i), lap.format())))
-    return tuples
 
 
 def update_speed_peak_and_valley_diagram(div, lap, title):
@@ -358,7 +297,7 @@ else:
         # Existing thread has connection, proceed
         pass
 
-source = ColumnDataSource(pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap))
+source = ColumnDataSource(gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap))
 
 g_laps_stored = []
 g_session_stored = None
@@ -366,8 +305,7 @@ g_connection_status_stored = None
 g_reference_lap_selected = None
 g_telemetry_update_needed = False
 
-stored_lap_files = bokeh_tuple_for_list_of_lapfiles(list_lap_files_from_path("data"))
-
+stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(list_lap_files_from_path("data"))
 
 # FIXME Not working correctly
 template = """<div style="color:<%= 

@@ -351,7 +351,8 @@ class GT7Communication(Thread):
         self.current_lap.FuelConsumed = self.current_lap.FuelAtStart - self.current_lap.FuelAtEnd
         self.current_lap.LapTime = self.current_lap.LapTime
         self.current_lap.Title = secondsToLaptime(self.current_lap.LapTime / 1000)
-        self.current_lap.Number = self.last_data.current_lap - 1  # Is not counting the same way as the time table
+        self.current_lap.Number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game time table
+        self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
 
         # Manual laps have no time assigned, so take last lap time tick
         if manual:
