@@ -2,12 +2,11 @@ import pickle
 import unittest
 
 import gt7helper
-from gt7helper import calculate_remaining_fuel, format_laps_to_table, milliseconds_to_difftime, \
-    calculate_time_diff_by_distance
+from gt7helper import calculate_remaining_fuel, format_laps_to_table, calculate_time_diff_by_distance
 from gt7lap import Lap
 
 
-class GTHelper(unittest.TestCase):
+class TestHelper(unittest.TestCase):
     def test_calculate_remaining_fuel(self):
         fuel_consumed_per_lap, laps_remaining, time_remaining = calculate_remaining_fuel(100, 80, 10000)
         self.assertEqual(fuel_consumed_per_lap, 20)
@@ -65,17 +64,14 @@ class GTHelper(unittest.TestCase):
         print(result)
         self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
 
-    def test_seconds_to_difftime(self):
-        self.assertEqual('+0:16:40', milliseconds_to_difftime(500))
-        self.assertEqual('', milliseconds_to_difftime(0))
-        self.assertEqual('-1:40.000', milliseconds_to_difftime(-102))
-
     def test_calculate_time_diff_by_distance_from_pickle(self):
-        laps = gt7helper.load_laps_from_pickle("data/laps_20-08-2022_21:46:22.pickle")
+        laps = gt7helper.load_laps_from_pickle("test_data/time_diff.pickle")
 
         df = calculate_time_diff_by_distance(laps[1], laps[2])
 
-        print(len(df))
+        # Check for common length but also for columns to exist
+        self.assertEqual(len(df.distance), len(df.comparison))
+        self.assertEqual(len(df.distance), len(df.reference))
 
     def test_calculate_time_diff_by_distance(self):
         best_lap = Lap()
@@ -96,10 +92,10 @@ class GTHelper(unittest.TestCase):
         s_s = gt7helper.secondsToLaptime(seconds / 1000)
         print(ms, s_s)
 
+
 class TestLastReferenceMedian(unittest.TestCase):
 
     def setUp(self):
-
         self.l_fast = Lap()
         self.l_fast.LapTime = 100
         self.l_fast.DataSpeed = [200]
@@ -141,30 +137,35 @@ class TestLastReferenceMedian(unittest.TestCase):
         self.assertIsNone(median, Lap)
 
     def test_three_laps(self):
-        last, reference, median = gt7helper.get_last_reference_median_lap([self.l_slow, self.l_fast, self.l_middle], None)
+        last, reference, median = gt7helper.get_last_reference_median_lap([self.l_slow, self.l_fast, self.l_middle],
+                                                                          None)
         self.assertEqual(self.l_slow, last)
         self.assertEqual(self.l_fast, reference)
         self.assertIsInstance(median, Lap)
 
     def test_two_three_with_reference(self):
-        last, reference, median = gt7helper.get_last_reference_median_lap([self.l_slow, self.l_fast, self.l_middle], self.l_reference)
+        last, reference, median = gt7helper.get_last_reference_median_lap([self.l_slow, self.l_fast, self.l_middle],
+                                                                          self.l_reference)
         self.assertEqual(self.l_slow, last)
         self.assertEqual(self.l_reference, reference)
         self.assertIsInstance(median, Lap)
 
     def test_fastest_is_latest(self):
-        last, reference, median = gt7helper.get_last_reference_median_lap([self.l_fast, self.l_slow, self.l_middle], None)
+        last, reference, median = gt7helper.get_last_reference_median_lap([self.l_fast, self.l_slow, self.l_middle],
+                                                                          None)
         self.assertEqual(self.l_fast, last)
         self.assertEqual(self.l_fast, reference)
         self.assertIsInstance(median, Lap)
 
     def test_reference_slower_than_latest(self):
-        last, reference, median = gt7helper.get_last_reference_median_lap([self.l_reference, self.l_slow, self.l_middle], self.l_fast)
+        last, reference, median = gt7helper.get_last_reference_median_lap(
+            [self.l_reference, self.l_slow, self.l_middle], self.l_fast)
         self.assertEqual(self.l_reference, last)
         self.assertEqual(self.l_fast, reference)
         self.assertIsInstance(median, Lap)
 
-class TestBrakePoints(unittest.TestCase):
+
+class TestLaps(unittest.TestCase):
     def setUp(self):
         # Single Lap
         self.Lap = Lap()  # P1            #P2

@@ -124,7 +124,7 @@ def mark_if_matches_highest_or_lowest(value: float, highest: List[int], lowest: 
     return value
 
 
-def format_laps_to_table(laps: List[Lap], bestlap: int) -> str:
+def format_laps_to_table(laps: List[Lap], bestlap: float) -> str:
     highest = [0, 0, 0, 0, 0]
     lowest = [999999, 999999, 999999, 999999, 999999]
 
@@ -204,21 +204,6 @@ def secondsToLaptime(seconds):
     minutes = seconds // 60
     remaining = seconds % 60
     return '{:01.0f}:{:06.3f}'.format(minutes, remaining)
-
-
-def milliseconds_to_difftime(milliseconds: int):
-    if milliseconds > 0:
-        prefix = "+"
-    else:
-        prefix = "-"
-        milliseconds = milliseconds * -1
-
-    delta = str(timedelta(milliseconds=int(milliseconds)))
-
-    if milliseconds == 0:
-        return ""
-
-    return prefix + delta
 
 
 def find_speed_peaks_and_valleys(lap: Lap, width: int = 100) -> tuple[list[int], list[int]]:
