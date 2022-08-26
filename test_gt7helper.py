@@ -132,13 +132,13 @@ class TestLastReferenceMedian(unittest.TestCase):
         last, reference, median = gt7helper.get_last_reference_median_lap([self.l_slow, self.l_fast], None)
         self.assertEqual(self.l_slow, last)
         self.assertEqual(self.l_fast, reference)
-        self.assertIsInstance(median, Lap)
+        self.assertIsNone(median, Lap)
 
     def test_two_laps_with_reference(self):
         last, reference, median = gt7helper.get_last_reference_median_lap([self.l_slow, self.l_fast], self.l_reference)
         self.assertEqual(self.l_slow, last)
         self.assertEqual(self.l_reference, reference)
-        self.assertIsInstance(median, Lap)
+        self.assertIsNone(median, Lap)
 
     def test_three_laps(self):
         last, reference, median = gt7helper.get_last_reference_median_lap([self.l_slow, self.l_fast, self.l_middle], None)

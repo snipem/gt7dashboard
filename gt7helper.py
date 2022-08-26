@@ -331,28 +331,17 @@ def human_readable_size(size, decimal_places=3):
 
 
 def get_last_reference_median_lap(laps: List[Lap], reference_lap_selected: Lap) -> Tuple[Lap, Lap, Lap]:
-    # FIXME Code is horrible
-    if len(laps) == 0:  # Show nothing
-        last_lap = None
-        reference_lap = None
-        median_lap = None
-    elif len(laps) == 1:  # Only show last lap
+    last_lap = None
+    reference_lap = None
+    median_lap = None
+
+    if len(laps) > 0:  # Only show last lap
         last_lap = laps[0]
-        reference_lap = None  # Use empty lap for best
-        median_lap = None  # Use empty lap for median
-    elif len(laps) == 2:  # Only show last and best lap
-        last_lap = laps[0]
-        if not reference_lap_selected:
-            reference_lap = get_best_lap(laps)
-        else:
-            reference_lap = reference_lap_selected
-        median_lap = None  # Use empty lap for median
-    else:  # Fill all laps
-        last_lap = laps[0]
-        if not reference_lap_selected:
-            reference_lap = get_best_lap(laps)
-        else:
-            reference_lap = reference_lap_selected
+
+    if len(laps) >= 2 and not reference_lap_selected:
+        reference_lap = get_best_lap(laps)
+
+    if len(laps) >= 3:
         median_lap = get_median_lap(laps)
 
     if reference_lap_selected:
