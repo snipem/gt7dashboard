@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD [ "bokeh", "serve", "gt7dashboard.py" ]
+CMD [ "bokeh", "serve", "." ]

@@ -1,0 +1,12 @@
+div.bk-data-table:last-child {
+    font-size: 22pt;
+    /* padding:1em; */
+
+}
+div.bk-data-table:last-child div.slick-cell div {
+    /*padding-top: 1px;*/
+    /*padding-right: 1px;*/
+    /*padding-bottom: 1px;*/
+    /*padding-left: 1px;*/
+    /*padding: 2em;*/
+}

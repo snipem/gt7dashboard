@@ -13,7 +13,7 @@ deps:
 	pip3 install -r requirements.txt
 
 serve:
-	GT7_PLAYSTATION_IP=192.168.178.120 bokeh serve gt7dashboard.py
+	GT7_PLAYSTATION_IP=192.168.178.120 bokeh serve .
 
 deploy:
 	git push

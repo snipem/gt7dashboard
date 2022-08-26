@@ -161,7 +161,7 @@ def update_speed_velocity_graph(laps: List[Lap]):
     last_lap_data = gt7helper.get_data_from_lap(last_lap, distance_mode=True)
     reference_lap_data = gt7helper.get_data_from_lap(reference_lap, distance_mode=True)
 
-    if len(reference_lap.DataSpeed) > 0:
+    if reference_lap and len(reference_lap.DataSpeed) > 0:
         data_sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
     data_sources[1].data = last_lap_data
@@ -332,7 +332,8 @@ columns = [
 f_time_diff, f_speed, f_throttle, f_braking, f_coasting, data_sources = \
     get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
-t_lap_times = DataTable(source=source, columns=columns)
+t_lap_times = DataTable(source=source, columns=columns, index_position=None)
+t_lap_times.autosize_mode = "fit_columns"
 t_lap_times.width = 1000
 t_lap_times.min_height = 20
 
@@ -391,13 +392,14 @@ l1 = layout(children=[
     [reset_button, save_button, select_title, select],
 ])
 
-l2 = layout([[reset_button, save_button], [t_lap_times]], sizing_mode='fixed')
+l2 = layout([[reset_button, save_button], [t_lap_times]], sizing_mode='stretch_width')
 
 tab1 = Panel(child=l1, title="Get Faster")
 tab2 = Panel(child=l2, title="Race")
 tabs = Tabs(tabs=[tab1, tab2])
 
 curdoc().add_root(tabs)
+curdoc().title = "GT7 Dashboard"
 
 # This will only trigger once per lap, but we check every second if anything happened
 curdoc().add_periodic_callback(update_lap_change, 1000)

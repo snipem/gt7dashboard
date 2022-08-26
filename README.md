@@ -26,7 +26,7 @@ gt7dashboard is a live dashboard for Gran Turismo 7. Based on the recent discove
 ## How to run
 
 1. `pip3 install -r requirements.txt` to install Python dependencies (once)
-2. `GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS> bokeh serve gt7dashboard.py`
+2. `GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS> bokeh serve .` (when inside the folder)
 
 ## Docker
 
