@@ -112,17 +112,17 @@ def trackLap(lstlap, curlap, bestlap):
 		return
 
 	remainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
-	currentLap.FuelAtEnd = remainingFuel
-	currentLap.FuelConsumed = currentLap.FuelAtStart - currentLap.FuelAtEnd
-	currentLap.LapTime = lstlap
-	currentLap.Title = secondsToLaptime(lstlap / 1000)
-	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
+	currentLap.fuel_at_end = remainingFuel
+	currentLap.fuel_consumed = currentLap.fuel_at_start - currentLap.fuel_at_end
+	currentLap.lap_finish_time = lstlap
+	currentLap.title = secondsToLaptime(lstlap / 1000)
+	currentLap.number = curlap - 1  # Is not counting the same way as the time table
 	file_object.write('\n %s, %2d, %1.f, %4d, %4d, %4d' % (
-	'{:>9}'.format(currentLap.Title), curlap,
-	currentLap.FuelAtEnd,
-	currentLap.FullThrottleTicks,
-	currentLap.FullBrakeTicks,
-	currentLap.NoThrottleNoBrakeTicks))
+	'{:>9}'.format(currentLap.title), curlap,
+	currentLap.fuel_at_end,
+	currentLap.full_throttle_ticks,
+	currentLap.full_brake_ticks,
+	currentLap.no_throttle_and_no_brake_ticks))
 	# Add lap and reset lap
 	laps.insert(0, currentLap)
 	# plot_session_analysis(laps) # TODO maybe plot this to a second file
@@ -145,7 +145,7 @@ def trackLap(lstlap, curlap, bestlap):
 		thread1.start()
 
 	currentLap = Lap()
-	currentLap.FuelAtStart = remainingFuel
+	currentLap.fuel_at_start = remainingFuel
 
 
 minBodyHeight = 9999999
@@ -175,7 +175,7 @@ def trackTick(ddata):
 		printAt('{:1.0f}'.format(remainingFuel), 43, 17, alwaysvisible=True)
 
 		if len(laps) > 0:
-			fuel_consumed_per_lap, fuel_laps_remaining, fuel_time_remaining = calculate_remaining_fuel(laps[0].FuelAtStart, laps[0].FuelAtEnd, laps[0].LapTime)
+			fuel_consumed_per_lap, fuel_laps_remaining, fuel_time_remaining = calculate_remaining_fuel(laps[0].fuel_at_start, laps[0].fuel_at_end, laps[0].lap_finish_time)
 			fuel_laps_remaining=fuel_laps_remaining-1 # Substract current lap
 			printAt('Fuel/Lap:', 43, 25, alwaysvisible=True)
 			printAt('Laps remaining:', 43, 45, alwaysvisible=True)
@@ -193,8 +193,8 @@ def trackTick(ddata):
 
 		printAt('{:6.0f}'.format(maxSpeed), 43, 95, alwaysvisible=True)
 		printAt('{:6.0f}'.format(minBodyHeight), 44, 95, alwaysvisible=True)
-		printAt('{:6.0f}'.format(currentLap.TiresOverheatedTicks/currentLap.LapTicks*1000), 45, 95, alwaysvisible=True)
-		printAt('{:6.0f}'.format(currentLap.TiresSpinningTicks/currentLap.LapTicks*1000), 46, 95, alwaysvisible=True)
+		printAt('{:6.0f}'.format(currentLap.tires_overheated_ticks / currentLap.lap_ticks * 1000), 45, 95, alwaysvisible=True)
+		printAt('{:6.0f}'.format(currentLap.tires_spinning_ticks / currentLap.lap_ticks * 1000), 46, 95, alwaysvisible=True)
 
 	isPaused = bin(struct.unpack('B', ddata[0x8E:0x8E+1])[0])[-2] == '1'
 
@@ -214,18 +214,18 @@ def trackTick(ddata):
 		maxSpeed = currentSpeed
 
 	if currentThrottle == 100:
-		currentLap.FullThrottleTicks += 1
+		currentLap.full_throttle_ticks += 1
 
 	if currentBrake == 100:
-		currentLap.FullBrakeTicks += 1
+		currentLap.full_brake_ticks += 1
 
 	if currentBrake == 0 and currentThrottle == 0:
-		currentLap.NoThrottleNoBrakeTicks += 1
+		currentLap.no_throttle_and_no_brake_ticks += 1
 
 	if currentBrake > 0 and currentThrottle > 0:
-		currentLap.ThrottleAndBrakesTicks += 1
+		currentLap.throttle_and_brake_ticks += 1
 
-	currentLap.LapTicks += 1
+	currentLap.lap_ticks += 1
 
 	fl_tire_temp = struct.unpack('f', ddata[0x60:0x60+4])[0]
 	fr_tire_temp = struct.unpack('f', ddata[0x64:0x64+4])[0]
@@ -234,7 +234,7 @@ def trackTick(ddata):
 	rr_tire_temp = struct.unpack('f', ddata[0x6C:0x6C+4])[0]
 
 	if fl_tire_temp > 100 or fr_tire_temp > 100 or rl_tire_temp > 100 or rr_tire_temp > 100:
-		currentLap.TiresOverheatedTicks += 1
+		currentLap.tires_overheated_ticks += 1
 
 	global deltaFL
 	global deltaFR
@@ -242,9 +242,9 @@ def trackTick(ddata):
 	global deltaRR
 	global carSpeed
 
-	currentLap.DataBraking.append(currentBrake)
-	currentLap.DataThrottle.append(currentThrottle)
-	currentLap.DataSpeed.append(carSpeed)
+	currentLap.data_braking.append(currentBrake)
+	currentLap.data_throttle.append(currentThrottle)
+	currentLap.data_speed.append(carSpeed)
 
 	deltaDivisor = carSpeed
 	if carSpeed == 0:
@@ -256,11 +256,11 @@ def trackTick(ddata):
 	deltaRR = tyreSpeedRR / deltaDivisor
 
 	if deltaFL > 1.1 or deltaFR > 1.1 or deltaRL > 1.1 or deltaRR > 1.1:
-		currentLap.TiresSpinningTicks += 1
+		currentLap.tires_spinning_ticks += 1
 
-	currentLap.DataTires.append(deltaFL+deltaFR+deltaRL+deltaRR)
+	currentLap.data_tires.append(deltaFL + deltaFR + deltaRL + deltaRR)
 
-	# if not currentLap.LapTicks % 10 == 0:
+	# if not currentLap.lap_ticks % 10 == 0:
 	# 	return
 
 	## Log Position
@@ -268,9 +268,9 @@ def trackTick(ddata):
 	y = struct.unpack('f', ddata[0x08:0x08+4])[0]
 	z = struct.unpack('f', ddata[0x0C:0x0C+4])[0]
 
-	currentLap.PositionsX.append(x)
-	currentLap.PositionsY.append(y)
-	currentLap.PositionsZ.append(z)
+	currentLap.data_position_x.append(x)
+	currentLap.data_position_y.append(y)
+	currentLap.data_position_z.append(z)
 
 	# Store some magic numbers for analysis
 	# currentLap.Magic0x94.append(struct.unpack('f', ddata[0x94:0x94+4])[0])

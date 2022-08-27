@@ -18,8 +18,8 @@ def get_throttle_velocity_diagram(lap: Lap, distance_mode: bool, title: str, col
 		("value", "$y"),
 	]
 	f = figure(title="Speed/Throttle - "+title, x_axis_label="Distance", y_axis_label="Value", width=width, height=500, tooltips=TOOLTIPS)
-	f.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=color, line_alpha=0.5)
-	f.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=color)
+	f.line(x_axis, lap.data_throttle, legend_label=lap.title, line_width=1, color=color, line_alpha=0.5)
+	f.line(x_axis, lap.data_speed, legend_label=lap.title, line_width=1, color=color)
 	return f
 
 
@@ -60,11 +60,11 @@ def get_session_layout(laps: List[Lap], distance_mode=True):
 
 		x_axis = get_x_axis_depending_on_mode(lap, distance_mode)
 
-		braking_diagram.line(x_axis,lap.DataBraking, legend_label=lap.Title, line_width=1, color=colors[idx])
-		throttle_diagram.line(x_axis, lap.DataThrottle, legend_label=lap.Title, line_width=1, color=colors[idx])
-		speed_diagram.line(x_axis, lap.DataSpeed, legend_label=lap.Title, line_width=1, color=colors[idx])
-		s_tire_slip.line(x_axis, lap.DataTires, legend_label=lap.Title, line_width=1, color=colors[idx])
-		s_race_line.line(lap.PositionsZ, lap.PositionsX, legend_label=lap.Title, line_width=1, color=colors[idx])
+		braking_diagram.line(x_axis, lap.data_braking, legend_label=lap.title, line_width=1, color=colors[idx])
+		throttle_diagram.line(x_axis, lap.data_throttle, legend_label=lap.title, line_width=1, color=colors[idx])
+		speed_diagram.line(x_axis, lap.data_speed, legend_label=lap.title, line_width=1, color=colors[idx])
+		s_tire_slip.line(x_axis, lap.data_tires, legend_label=lap.title, line_width=1, color=colors[idx])
+		s_race_line.line(lap.data_position_z, lap.data_position_x, legend_label=lap.title, line_width=1, color=colors[idx])
 
 		for i, _ in enumerate(brake_points_x):
 			s_race_line.scatter(brake_points_x[i], brake_points_y[i], marker="circle", size=10, fill_color=colors[idx])

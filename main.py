@@ -5,7 +5,16 @@ from typing import List
 import bokeh.application
 from bokeh.driving import linear
 from bokeh.layouts import layout
-from bokeh.models import Select, Paragraph, ColumnDataSource, TableColumn, DataTable, HTMLTemplateFormatter, Button, Div
+from bokeh.models import (
+    Select,
+    Paragraph,
+    ColumnDataSource,
+    TableColumn,
+    DataTable,
+    HTMLTemplateFormatter,
+    Button,
+    Div,
+)
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
@@ -13,12 +22,19 @@ from bokeh.plotting.figure import Figure
 
 import gt7communication
 import gt7helper
-from gt7helper import get_speed_peaks_and_valleys, load_laps_from_pickle, save_laps_to_pickle, \
-    list_lap_files_from_path, calculate_time_diff_by_distance
+from gt7helper import (
+    get_speed_peaks_and_valleys,
+    load_laps_from_pickle,
+    save_laps_to_pickle,
+    list_lap_files_from_path,
+    calculate_time_diff_by_distance,
+)
 from gt7lap import Lap
 
-def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> tuple[
-    Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
+
+def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
+    width: int,
+) -> tuple[Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
     tooltips = [
         ("index", "$index"),
         ("value", "$y"),
@@ -39,26 +55,60 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Reference Lap", "Median Lap"]
 
-    f_speed = figure(title="Last, Reference, Median", y_axis_label="Speed", width=width,
-                     height=250, tooltips=tooltips, active_drag="box_zoom")
+    f_speed = figure(
+        title="Last, Reference, Median",
+        y_axis_label="Speed",
+        width=width,
+        height=250,
+        tooltips=tooltips,
+        active_drag="box_zoom",
+    )
 
-    f_time_diff = figure(title="Time Diff - Last, Reference", x_range=f_speed.x_range, y_axis_label="Time / Diff",
-                         width=width,
-                         height=int(f_speed.height / 2), tooltips=tooltips_timedelta, active_drag="box_zoom")
+    f_time_diff = figure(
+        title="Time Diff - Last, Reference",
+        x_range=f_speed.x_range,
+        y_axis_label="Time / Diff",
+        width=width,
+        height=int(f_speed.height / 2),
+        tooltips=tooltips_timedelta,
+        active_drag="box_zoom",
+    )
 
-    f_throttle = figure(x_range=f_speed.x_range, y_axis_label="Throttle", width=width,
-                        height=int(f_speed.height / 2), tooltips=tooltips, active_drag="box_zoom")
-    f_braking = figure(x_range=f_speed.x_range, y_axis_label="Braking", width=width,
-                       height=int(f_speed.height / 2), tooltips=tooltips, active_drag="box_zoom")
+    f_throttle = figure(
+        x_range=f_speed.x_range,
+        y_axis_label="Throttle",
+        width=width,
+        height=int(f_speed.height / 2),
+        tooltips=tooltips,
+        active_drag="box_zoom",
+    )
+    f_braking = figure(
+        x_range=f_speed.x_range,
+        y_axis_label="Braking",
+        width=width,
+        height=int(f_speed.height / 2),
+        tooltips=tooltips,
+        active_drag="box_zoom",
+    )
 
-    f_coasting = figure(x_range=f_speed.x_range, y_axis_label="Coasting", width=width,
-                        height=int(f_speed.height / 2), tooltips=tooltips, active_drag="box_zoom")
+    f_coasting = figure(
+        x_range=f_speed.x_range,
+        y_axis_label="Coasting",
+        width=width,
+        height=int(f_speed.height / 2),
+        tooltips=tooltips,
+        active_drag="box_zoom",
+    )
 
     f_speed.toolbar.autohide = True
 
-    span_zero_time_diff = bokeh.models.Span(location=0,
-                                            dimension='width', line_color='black',
-                                            line_dash='dashed', line_width=1)
+    span_zero_time_diff = bokeh.models.Span(
+        location=0,
+        dimension="width",
+        line_color="black",
+        line_dash="dashed",
+        line_width=1,
+    )
     f_time_diff.add_layout(span_zero_time_diff)
 
     f_time_diff.toolbar.autohide = True
@@ -75,7 +125,14 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
     sources = []
 
     time_diff_source = ColumnDataSource(data={})
-    f_time_diff.line(x="distance", y='timedelta', source=time_diff_source, line_width=1, color="blue", line_alpha=1)
+    f_time_diff.line(
+        x="distance",
+        y="timedelta",
+        source=time_diff_source,
+        line_width=1,
+        color="blue",
+        line_alpha=1,
+    )
     f_time_diff.legend.visible = False
     sources.append(time_diff_source)
 
@@ -83,14 +140,42 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
         source = ColumnDataSource(data={})
         sources.append(source)
 
-        f_speed.line(x='distance', y='speed', source=source, legend_label=legend, line_width=1, color=color,
-                     line_alpha=1)
-        f_throttle.line(x='distance', y='throttle', source=source, legend_label=legend, line_width=1, color=color,
-                        line_alpha=1)
-        f_braking.line(x='distance', y='brake', source=source, legend_label=legend, line_width=1, color=color,
-                       line_alpha=1)
-        f_coasting.line(x='distance', y='coast', source=source, legend_label=legend, line_width=1, color=color,
-                        line_alpha=1)
+        f_speed.line(
+            x="distance",
+            y="speed",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
+        f_throttle.line(
+            x="distance",
+            y="throttle",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
+        f_braking.line(
+            x="distance",
+            y="brake",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
+        f_coasting.line(
+            x="distance",
+            y="coast",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
 
     f_speed.legend.click_policy = "hide"
     f_throttle.legend.click_policy = f_speed.legend.click_policy
@@ -109,7 +194,9 @@ def update_connection_info():
 
 
 def update_reference_lap_select(laps):
-    reference_lap_select.options = [tuple(('-1', "Best Lap"))] + gt7helper.bokeh_tuple_for_list_of_laps(laps)
+    reference_lap_select.options = [
+        tuple(("-1", "Best Lap"))
+    ] + gt7helper.bokeh_tuple_for_list_of_laps(laps)
 
 
 @linear()
@@ -127,33 +214,40 @@ def update_fuel_map(step):
     else:
         g_stored_fuel_map = last_lap
 
-
     # TODO Add real live data during a lap
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
 
-    div_fuel_map.text += "<table><tr>" \
-                        "<th title='The fuel level relative to the current one'>Fuel Lvl.</th>" \
-                        "<th title='Fuel consumed'>Fuel Cons.</th>" \
-                        "<th title='Laps remaining with this setting'>Laps Rem.</th>" \
-                        "<th title='Time remaining with this setting' >Time Rem.</th>" \
-                        "<th title='Time Diff to last lap with this setting'>Time Diff</th></tr>" \
-
+    div_fuel_map.text = (
+        "<table><tr>"
+        "<th title='The fuel level relative to the current one'>Fuel Lvl.</th>"
+        "<th title='Fuel consumed'>Fuel Cons.</th>"
+        "<th title='Laps remaining with this setting'>Laps Rem.</th>"
+        "<th title='Time remaining with this setting' >Time Rem.</th>"
+        "<th title='Time Diff to last lap with this setting'>Time Diff</th></tr>"
+    )
     for fuel_map in fuel_maps:
-        div_fuel_map.text += "<tr id='fuel_map_row_%d'>" \
-                             "<td style='text-align:center'>%d</td>" \
-                             "<td style='text-align:center'>%d</td>" \
-                             "<td style='text-align:center'>%.1f</td>" \
-                             "<td style='text-align:center'>%s</td>" \
-                             "<td style='text-align:center'>%s</td>" \
-                             "</tr>" % (fuel_map.mixture_setting,
-                                        fuel_map.mixture_setting,
-                                        fuel_map.fuel_consumed_per_lap,
-                                        fuel_map.laps_remaining_on_current_fuel,
-                                        gt7helper.seconds_to_laptime(fuel_map.time_remaining_on_current_fuel / 1000),
-                                        gt7helper.seconds_to_laptime(fuel_map.lap_time_diff / 1000))\
-
+        div_fuel_map.text += (
+            "<tr id='fuel_map_row_%d'>"
+            "<td style='text-align:center'>%d</td>"
+            "<td style='text-align:center'>%d</td>"
+            "<td style='text-align:center'>%.1f</td>"
+            "<td style='text-align:center'>%s</td>"
+            "<td style='text-align:center'>%s</td>"
+            "</tr>"
+            % (
+                fuel_map.mixture_setting,
+                fuel_map.mixture_setting,
+                fuel_map.fuel_consumed_per_lap,
+                fuel_map.laps_remaining_on_current_fuel,
+                gt7helper.seconds_to_lap_time(
+                    fuel_map.time_remaining_on_current_fuel / 1000
+                ),
+                gt7helper.seconds_to_lap_time(fuel_map.lap_time_diff / 1000),
+            )
+        )
     div_fuel_map.text += "</table>"
-    div_fuel_map.text += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.FuelAtEnd
+    div_fuel_map.text += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.fuel_at_end
+
 
 @linear()
 def update_lap_change(step):
@@ -184,10 +278,13 @@ def update_lap_change(step):
         update_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
 
         if len(laps) > 1:
-            reference_lap = \
-            gt7helper.get_last_reference_median_lap(laps, reference_lap_selected=g_reference_lap_selected)[1]
+            reference_lap = gt7helper.get_last_reference_median_lap(
+                laps, reference_lap_selected=g_reference_lap_selected
+            )[1]
             if reference_lap:
-                update_speed_peak_and_valley_diagram(div_reference_lap, reference_lap, "Reference Lap")
+                update_speed_peak_and_valley_diagram(
+                    div_reference_lap, reference_lap, "Reference Lap"
+                )
 
     update_time_table(laps)
     update_reference_lap_select(laps)
@@ -198,13 +295,14 @@ def update_lap_change(step):
 
 
 def update_speed_velocity_graph(laps: List[Lap]):
-    last_lap, reference_lap, median_lap = gt7helper.get_last_reference_median_lap(laps,
-                                                                                  reference_lap_selected=g_reference_lap_selected)
+    last_lap, reference_lap, median_lap = gt7helper.get_last_reference_median_lap(
+        laps, reference_lap_selected=g_reference_lap_selected
+    )
 
     last_lap_data = gt7helper.get_data_from_lap(last_lap, distance_mode=True)
     reference_lap_data = gt7helper.get_data_from_lap(reference_lap, distance_mode=True)
 
-    if reference_lap and len(reference_lap.DataSpeed) > 0:
+    if reference_lap and len(reference_lap.data_speed) > 0:
         data_sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
     data_sources[1].data = last_lap_data
@@ -220,10 +318,10 @@ def update_speed_velocity_graph(laps: List[Lap]):
     # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
     brake_points_enabled = os.environ.get("GT7_ADD_BRAKEPOINTS") == "true"
 
-    if brake_points_enabled and len(last_lap.DataBraking) > 0:
+    if brake_points_enabled and len(last_lap.data_braking) > 0:
         update_break_points(last_lap, s_race_line, "blue")
 
-    if brake_points_enabled and len(reference_lap.DataBraking) > 0:
+    if brake_points_enabled and len(reference_lap.data_braking) > 0:
         update_break_points(reference_lap, s_race_line, "magenta")
 
 
@@ -231,14 +329,23 @@ def update_break_points(lap: Lap, race_line: Figure, color: str):
     brake_points_x, brake_points_y = gt7helper.get_brake_points(lap)
 
     for i, _ in enumerate(brake_points_x):
-        race_line.scatter(brake_points_x[i], brake_points_y[i], marker="circle", size=10, fill_color=color)
+        race_line.scatter(
+            brake_points_x[i],
+            brake_points_y[i],
+            marker="circle",
+            size=10,
+            fill_color=color,
+        )
 
 
 def update_time_table(laps: List[Lap]):
     print("Adding %d laps to table" % len(laps))
     t_lap_times.source.data = ColumnDataSource.from_df(
-        gt7helper.pd_data_frame_from_lap(laps, best_lap_time=app.gt7comm.session.best_lap))
-    t_lap_times.trigger('source', t_lap_times.source, t_lap_times.source)
+        gt7helper.pd_data_frame_from_lap(
+            laps, best_lap_time=app.gt7comm.session.best_lap
+        )
+    )
+    t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
 
 def reset_button_handler(event):
@@ -282,19 +389,30 @@ def load_reference_lap_handler(attr, old, new):
 def update_speed_peak_and_valley_diagram(div, lap, title):
     table = """<table>"""
 
-    peak_speed_data_x, peak_speed_data_y, valley_speed_data_x, valley_speed_data_y = get_speed_peaks_and_valleys(lap)
+    (
+        peak_speed_data_x,
+        peak_speed_data_y,
+        valley_speed_data_x,
+        valley_speed_data_y,
+    ) = get_speed_peaks_and_valleys(lap)
 
-    table += "<tr><th colspan=\"3\">%s - %s</th></tr>" % (title, lap.Title)
+    table += '<tr><th colspan="3">%s - %s</th></tr>' % (title, lap.title)
 
     table = table + "<tr><th>#</th><th>Peak</th><th>Position</th></tr>"
     for i, dx in enumerate(peak_speed_data_x):
         table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
-            i + 1, peak_speed_data_x[i], peak_speed_data_y[i])
+            i + 1,
+            peak_speed_data_x[i],
+            peak_speed_data_y[i],
+        )
 
     table = table + "<tr><th>#</th><th>Valley</th><th>Position</th></tr>"
     for i, dx in enumerate(valley_speed_data_x):
         table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
-            i + 1, valley_speed_data_x[i], valley_speed_data_y[i])
+            i + 1,
+            valley_speed_data_x[i],
+            valley_speed_data_y[i],
+        )
 
     table = table + """</table>"""
     div.text = table
@@ -302,7 +420,10 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
 def update_tuning_info():
     tuning_info.text = """<p>Max Speed: <b>%d</b> kmh</p>
-    <p>Min Body Height: <b>%d</b> mm</p>""" % (app.gt7comm.session.max_speed, app.gt7comm.session.min_body_height)
+    <p>Min Body Height: <b>%d</b> mm</p>""" % (
+        app.gt7comm.session.max_speed,
+        app.gt7comm.session.min_body_height,
+    )
 
 
 p = figure(plot_width=1000, plot_height=600)
@@ -328,7 +449,9 @@ if not hasattr(app, "gt7comm"):
     app.gt7comm = gt7communication.GT7Communication(playstation_ip)
 
     if load_laps_path:
-        app.gt7comm.load_laps(load_laps_from_pickle(load_laps_path), replace_other_laps=True)
+        app.gt7comm.load_laps(
+            load_laps_from_pickle(load_laps_path), replace_other_laps=True
+        )
 
     app.gt7comm.start()
 else:
@@ -340,7 +463,9 @@ else:
         # Existing thread has connection, proceed
         pass
 
-source = ColumnDataSource(gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap))
+source = ColumnDataSource(
+    gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
+)
 
 g_laps_stored = []
 g_session_stored = None
@@ -349,7 +474,9 @@ g_reference_lap_selected = None
 g_stored_fuel_map = None
 g_telemetry_update_needed = False
 
-stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(list_lap_files_from_path("data"))
+stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
+    list_lap_files_from_path("data")
+)
 
 # FIXME Not working correctly
 template = """<div style="color:<%= 
@@ -363,46 +490,62 @@ template = """<div style="color:<%=
 formatter = HTMLTemplateFormatter(template=template)
 
 columns = [
-    TableColumn(field='number', title='#', formatter=formatter),
-    TableColumn(field='time', title='Time', formatter=formatter),
-    TableColumn(field='diff', title='Diff', formatter=formatter),
-    TableColumn(field='fuelconsumed', title='Fuel Consumed', formatter=formatter),
-    TableColumn(field='fullthrottle', title='Full Throttle', formatter=formatter),
-    TableColumn(field='fullbreak', title='Full Break', formatter=formatter),
-    TableColumn(field='nothrottle', title='No Throttle', formatter=formatter),
-    TableColumn(field='tyrespinning', title='Tire Spin', formatter=formatter)
+    TableColumn(field="number", title="#", formatter=formatter),
+    TableColumn(field="time", title="Time", formatter=formatter),
+    TableColumn(field="diff", title="Diff", formatter=formatter),
+    TableColumn(field="fuelconsumed", title="Fuel Consumed", formatter=formatter),
+    TableColumn(field="fullthrottle", title="Full Throttle", formatter=formatter),
+    TableColumn(field="fullbreak", title="Full Break", formatter=formatter),
+    TableColumn(field="nothrottle", title="No Throttle", formatter=formatter),
+    TableColumn(field="tyrespinning", title="Tire Spin", formatter=formatter),
 ]
 
-f_time_diff, f_speed, f_throttle, f_braking, f_coasting, data_sources = \
-    get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
+(
+    f_time_diff,
+    f_speed,
+    f_throttle,
+    f_braking,
+    f_coasting,
+    data_sources,
+) = get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
-t_lap_times = DataTable(source=source, columns=columns, index_position=None, css_classes=["lap_times_table"])
+t_lap_times = DataTable(
+    source=source, columns=columns, index_position=None, css_classes=["lap_times_table"]
+)
 t_lap_times.autosize_mode = "fit_columns"
 t_lap_times.width = 1000
 t_lap_times.min_height = 20
 
 # Race line
 
-RACE_LINE_TOOLTIPS = [
-    ("index", "$index"),
-    ("Breakpoint", "")
-]
+RACE_LINE_TOOLTIPS = [("index", "$index"), ("Breakpoint", "")]
 
 race_line_width = 250
 speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
-s_race_line = figure(title="Race Line",
-                     x_axis_label="z", y_axis_label="x", width=race_line_width, height=race_line_width,
-                     tooltips=RACE_LINE_TOOLTIPS)
+s_race_line = figure(
+    title="Race Line",
+    x_axis_label="z",
+    y_axis_label="x",
+    width=race_line_width,
+    height=race_line_width,
+    tooltips=RACE_LINE_TOOLTIPS,
+)
 s_race_line.axis.visible = False
 # s_race_line.toolbar.autohide = True
 s_race_line.legend.click_policy = "hide"
 # s_race_line.add_layout(Legend(), 'center')
 
-last_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1,
-                                      color="blue")
-reference_lap_race_line = s_race_line.line(x="raceline_z", y="raceline_x", legend_label="Reference Lap", line_width=1,
-                                           color="magenta")
+last_lap_race_line = s_race_line.line(
+    x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1, color="blue"
+)
+reference_lap_race_line = s_race_line.line(
+    x="raceline_z",
+    y="raceline_x",
+    legend_label="Reference Lap",
+    line_width=1,
+    color="magenta",
+)
 
 select_title = Paragraph(text="Load Laps:", align="center")
 select = Select(value="laps", options=stored_lap_files)
@@ -428,17 +571,25 @@ div_connection_info = Div(width=200, height=125)
 
 div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
 
-l1 = layout(children=[
-    [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
-    [f_speed, s_race_line, div_connection_info],
-    [f_throttle, div_last_lap, div_reference_lap],
-    [f_braking],
-    [f_coasting],
-    [layout(children=[[t_lap_times, div_fuel_map]]), layout(children=[tuning_info])],
-    [reset_button, save_button, select_title, select],
-])
+l1 = layout(
+    children=[
+        [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
+        [f_speed, s_race_line, div_connection_info],
+        [f_throttle, div_last_lap, div_reference_lap],
+        [f_braking],
+        [f_coasting],
+        [
+            layout(children=[[t_lap_times, div_fuel_map]]),
+            layout(children=[tuning_info]),
+        ],
+        [reset_button, save_button, select_title, select],
+    ]
+)
 
-l2 = layout([[reset_button, save_button], [t_lap_times], [div_fuel_map]], sizing_mode='stretch_width')
+l2 = layout(
+    [[reset_button, save_button], [t_lap_times], [div_fuel_map]],
+    sizing_mode="stretch_width",
+)
 
 tab1 = Panel(child=l1, title="Get Faster")
 tab2 = Panel(child=l2, title="Race")
