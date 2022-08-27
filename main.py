@@ -117,7 +117,9 @@ def update_fuel_map(step):
     global g_stored_fuel_map
 
     if len(app.gt7comm.laps) == 0:
+        div_fuel_map.text = ""
         return
+
     last_lap = app.gt7comm.laps[0]
 
     if last_lap == g_stored_fuel_map:
@@ -147,8 +149,8 @@ def update_fuel_map(step):
                                         fuel_map.mixture_setting,
                                         fuel_map.fuel_consumed_per_lap,
                                         fuel_map.laps_remaining_on_current_fuel,
-                                        gt7helper.secondsToLaptime(fuel_map.time_remaining_on_current_fuel / 1000),
-                                        gt7helper.secondsToLaptime(fuel_map.lap_time_diff / 1000))\
+                                        gt7helper.seconds_to_laptime(fuel_map.time_remaining_on_current_fuel / 1000),
+                                        gt7helper.seconds_to_laptime(fuel_map.lap_time_diff / 1000))\
 
     div_fuel_map.text += "</table>"
     div_fuel_map.text += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.FuelAtEnd

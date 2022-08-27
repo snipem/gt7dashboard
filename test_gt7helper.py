@@ -100,7 +100,7 @@ class TestHelper(unittest.TestCase):
     def test_convert_seconds_to_milliseconds(self):
         seconds = 10000
         ms = gt7helper.convert_seconds_to_milliseconds(seconds)
-        s_s = gt7helper.secondsToLaptime(seconds / 1000)
+        s_s = gt7helper.seconds_to_laptime(seconds / 1000)
         print(ms, s_s)
 
 

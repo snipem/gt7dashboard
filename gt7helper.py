@@ -2,7 +2,7 @@ import itertools
 import os
 import pickle
 import statistics
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import StatisticsError
 from typing import Tuple, List
@@ -16,12 +16,13 @@ from gt7lap import Lap
 
 
 def save_laps(laps: List[Lap]):
-    with open('data/all_laps.pickle', 'wb') as f:
+    with open("data/all_laps.pickle", "wb") as f:
         pickle.dump(laps, f)
 
 
-def calculate_remaining_fuel(fuel_start_lap: int, fuel_end_lap: int, lap_time: int) -> Tuple[
-    int, float, float]:
+def calculate_remaining_fuel(
+        fuel_start_lap: int, fuel_end_lap: int, lap_time: int
+) -> Tuple[int, float, float]:
     # no fuel consumed
     if fuel_start_lap == fuel_end_lap:
         return 0, -1, -1
@@ -65,31 +66,37 @@ def get_time_delta_dataframe_for_lap(lap: Lap, name: str):
     # Multiply to match datatype which is nanoseconds?
     lap_time_ms = [convert_seconds_to_milliseconds(item) for item in lap_time]
 
-    series = pd.Series(lap_distance, index=pd.TimedeltaIndex(data=lap_time_ms, unit="ms"))
+    series = pd.Series(
+        lap_distance, index=pd.TimedeltaIndex(data=lap_time_ms, unit="ms")
+    )
 
-    upsample = series.resample('10ms').asfreq()
+    upsample = series.resample("10ms").asfreq()
     interpolated_upsample = upsample.interpolate()
 
     # Make distance to index and time to value, because we want to join on distance
-    inverted = pd.Series(interpolated_upsample.index.values, index=interpolated_upsample)
+    inverted = pd.Series(
+        interpolated_upsample.index.values, index=interpolated_upsample
+    )
 
     # Flip around, we have to convert timedelta back to integer to do this
-    s1 = pd.Series(inverted.values.astype('int64'), name=name, index=inverted.index)
+    s1 = pd.Series(inverted.values.astype("int64"), name=name, index=inverted.index)
 
     df1 = DataFrame(data=s1)
     # returns a dataframe where index is distance travelled and first data field is time passed
     return df1
 
 
-def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> DataFrame:
+def calculate_time_diff_by_distance(
+        reference_lap: Lap, comparison_lap: Lap
+) -> DataFrame:
     df1 = get_time_delta_dataframe_for_lap(reference_lap, "reference")
     df2 = get_time_delta_dataframe_for_lap(comparison_lap, "comparison")
 
-    df = df1.join(df2, how='outer').sort_index().interpolate()
+    df = df1.join(df2, how="outer").sort_index().interpolate()
 
     # After interpolation, we can make the index a normal field and rename it
     df.reset_index(inplace=True)
-    df = df.rename(columns={'index': 'distance'})
+    df = df.rename(columns={"index": "distance"})
 
     # Convert integer timestamps back to timestamp format
     s_reference_timestamped = pd.to_timedelta(getattr(df, "reference"))
@@ -98,12 +105,13 @@ def calculate_time_diff_by_distance(reference_lap: Lap, comparison_lap: Lap) -> 
     df["reference"] = s_reference_timestamped
     df["comparison"] = s_comparison_timestamped
 
-    df['timedelta'] = df["comparison"] - df["reference"]
+    df["timedelta"] = df["comparison"] - df["reference"]
     return df
 
 
-def mark_if_matches_highest_or_lowest(value: float, highest: List[int], lowest: List[int], order: int,
-                                      high_is_best=True) -> str:
+def mark_if_matches_highest_or_lowest(
+        value: float, highest: List[int], lowest: List[int], order: int, high_is_best=True
+) -> str:
     green = 32
     red = 31
     reset = 0
@@ -121,7 +129,7 @@ def mark_if_matches_highest_or_lowest(value: float, highest: List[int], lowest: 
     if value == lowest[order]:
         return "\x1b[1;%dm%0.f\x1b[1;%dm" % (low, value, reset)
 
-    return value
+    return "%0.f" % value
 
 
 def format_laps_to_table(laps: List[Lap], bestlap: float) -> str:
@@ -136,60 +144,74 @@ def format_laps_to_table(laps: List[Lap], bestlap: float) -> str:
 
         if bestlap == lap.LapTime:
             lap_color = 35  # magenta
-        elif lap.LapTime < bestlap:  # LapTime cannot be smaller than bestlap, bestlap is always the smallest. This can only mean that lap.LapTime is from an earlier race on a different track
+        elif lap.LapTime < bestlap:
+            # LapTime cannot be smaller than bestlap, bestlap is always the smallest.
+            # This can only mean that lap.LapTime is from an earlier race on a different track
             time_diff = "-"
         elif bestlap > 0:
-            time_diff = secondsToLaptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
+            time_diff = seconds_to_laptime(-1 * (bestlap / 1000 - lap.LapTime / 1000))
 
-        ftTicks = lap.FullThrottleTicks / lap.LapTicks * 1000
-        tbTicks = lap.ThrottleAndBrakesTicks / lap.LapTicks * 1000
-        fbTicks = lap.FullBrakeTicks / lap.LapTicks * 1000
-        ntTicks = lap.NoThrottleNoBrakeTicks / lap.LapTicks * 1000
-        tiTicks = lap.TiresSpinningTicks / lap.LapTicks * 1000
+        ft_ticks = lap.FullThrottleTicks / lap.LapTicks * 1000
+        tb_ticks = lap.ThrottleAndBrakesTicks / lap.LapTicks * 1000
+        fb_ticks = lap.FullBrakeTicks / lap.LapTicks * 1000
+        nt_ticks = lap.NoThrottleNoBrakeTicks / lap.LapTicks * 1000
+        ti_ticks = lap.TiresSpinningTicks / lap.LapTicks * 1000
 
-        listOfTicks = [ftTicks, tbTicks, fbTicks, ntTicks, tiTicks]
+        list_of_ticks = [ft_ticks, tb_ticks, fb_ticks, nt_ticks, ti_ticks]
 
-        for i, value in enumerate(listOfTicks):
-            if listOfTicks[i] > highest[i]:
-                highest[i] = listOfTicks[i]
+        for i, value in enumerate(list_of_ticks):
+            if list_of_ticks[i] > highest[i]:
+                highest[i] = list_of_ticks[i]
 
-            if listOfTicks[i] <= lowest[i]:
-                lowest[i] = listOfTicks[i]
+            if list_of_ticks[i] <= lowest[i]:
+                lowest[i] = list_of_ticks[i]
 
-        table.append([
-            # Number
-            "\x1b[1;%dm%d" % (lap_color, lap.Number),
-            # Timing
-            secondsToLaptime(lap.LapTime / 1000),
-            time_diff,
-            lap.FuelAtEnd,
-            lap.FuelConsumed,
-            # Ticks
-            ftTicks,
-            tbTicks,
-            fbTicks,
-            ntTicks,
-            tiTicks
-        ])
+        table.append(
+            [
+                # Number
+                "\x1b[1;%dm%d" % (lap_color, lap.Number),
+                # Timing
+                seconds_to_laptime(lap.LapTime / 1000),
+                time_diff,
+                lap.FuelAtEnd,
+                lap.FuelConsumed,
+                # Ticks
+                ft_ticks,
+                tb_ticks,
+                fb_ticks,
+                nt_ticks,
+                ti_ticks,
+            ]
+        )
 
     for i, entry in enumerate(table):
         for k, val in enumerate(table[i]):
             if k == 5:
-                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 0, high_is_best=True)
+                table[i][k] = mark_if_matches_highest_or_lowest(
+                    table[i][k], highest, lowest, 0, high_is_best=True
+                )
             elif k == 6:
-                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 1, high_is_best=False)
+                table[i][k] = mark_if_matches_highest_or_lowest(
+                    table[i][k], highest, lowest, 1, high_is_best=False
+                )
             elif k == 7:
-                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 2, high_is_best=True)
+                table[i][k] = mark_if_matches_highest_or_lowest(
+                    table[i][k], highest, lowest, 2, high_is_best=True
+                )
             elif k == 8:
-                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 3, high_is_best=False)
+                table[i][k] = mark_if_matches_highest_or_lowest(
+                    table[i][k], highest, lowest, 3, high_is_best=False
+                )
             elif k == 9:
-                table[i][k] = mark_if_matches_highest_or_lowest(table[i][k], highest, lowest, 4, high_is_best=False)
+                table[i][k] = mark_if_matches_highest_or_lowest(
+                    table[i][k], highest, lowest, 4, high_is_best=False
+                )
 
-    return (tabulate(
+    return tabulate(
         table,
         headers=["#", "Time", "Diff", "Fuel", "FuCo", "fT", "T+B", "fB", "0T", "Spin"],
-        floatfmt=".0f"
-    ))
+        floatfmt=".0f",
+    )
 
 
 def convert_seconds_to_milliseconds(seconds: int):
@@ -199,19 +221,20 @@ def convert_seconds_to_milliseconds(seconds: int):
     return minutes * 60000 + remaining * 1000
 
 
-def secondsToLaptime(seconds):
+def seconds_to_laptime(seconds):
     prefix = ""
     if seconds < 0:
         prefix = "-"
-        seconds*=-1
+        seconds *= -1
 
-    remaining = seconds
     minutes = seconds // 60
     remaining = seconds % 60
-    return prefix+'{:01.0f}:{:06.3f}'.format(minutes, remaining)
+    return prefix + "{:01.0f}:{:06.3f}".format(minutes, remaining)
 
 
-def find_speed_peaks_and_valleys(lap: Lap, width: int = 100) -> tuple[list[int], list[int]]:
+def find_speed_peaks_and_valleys(
+        lap: Lap, width: int = 100
+) -> tuple[list[int], list[int]]:
     inv_data_speed = [i * -1 for i in lap.DataSpeed]
     peaks, whatisthis = find_peaks(lap.DataSpeed, width=width)
     valleys, whatisthis = find_peaks(inv_data_speed, width=width)
@@ -235,7 +258,12 @@ def get_speed_peaks_and_valleys(lap: Lap):
         valley_speed_data_x.append(lap.DataSpeed[v])
         valley_speed_data_y.append(v)
 
-    return peak_speed_data_x, peak_speed_data_y, valley_speed_data_x, valley_speed_data_y
+    return (
+        peak_speed_data_x,
+        peak_speed_data_y,
+        valley_speed_data_x,
+        valley_speed_data_y,
+    )
 
 
 def none_ignoring_median(data):
@@ -245,9 +273,9 @@ def none_ignoring_median(data):
     When the number of data points is even, the median is interpolated by
     taking the average of the two middle values:
 
-    >>> median([1, 3, None, 5])
+    >>> none_ignoring_median([1, 3, None, 5])
     3
-    >>> median([1, 3, 5, None, 7])
+    >>> none_ignoring_median([1, 3, 5, None, 7])
     4.0
 
     """
@@ -291,14 +319,14 @@ def list_lap_files_from_path(root: str):
 
 
 def load_laps_from_pickle(path: str) -> List[Lap]:
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         return pickle.load(f)
 
 
 def save_laps_to_pickle(laps: List[Lap]) -> str:
     storage_folder = "data"
-    LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
-    dt = datetime.now(tz=LOCAL_TIMEZONE)
+    local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
+    dt = datetime.now(tz=local_timezone)
     str_date_time = dt.strftime("%d-%m-%Y_%H:%M:%S")
     print("Current timestamp", str_date_time)
     storage_filename = "laps_%s.pickle" % str_date_time
@@ -306,21 +334,23 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
 
     path = storage_folder + "/" + storage_filename
 
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         pickle.dump(laps, f)
 
     return path
 
 
 def human_readable_size(size, decimal_places=3):
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size < 1024.0:
             break
         size /= 1024.0
     return f"{size:.{decimal_places}f} {unit}"
 
 
-def get_last_reference_median_lap(laps: List[Lap], reference_lap_selected: Lap) -> Tuple[Lap, Lap, Lap]:
+def get_last_reference_median_lap(
+        laps: List[Lap], reference_lap_selected: Lap
+) -> Tuple[Lap, Lap, Lap]:
     last_lap = None
     reference_lap = None
     median_lap = None
@@ -354,7 +384,9 @@ def get_median_lap(laps: List[Lap]) -> Lap:
     # Filter out too long laps, like box laps etc, use 10 Seconds of the best lap as a threshhold
     best_lap = get_best_lap(laps)
     ten_seconds = 10000
-    laps = filter_max_min_laps(laps, best_lap.LapTime + ten_seconds, best_lap.LapTime - ten_seconds)
+    laps = filter_max_min_laps(
+        laps, best_lap.LapTime + ten_seconds, best_lap.LapTime - ten_seconds
+    )
 
     median_lap = Lap()
     if len(laps) == 0:
@@ -372,12 +404,18 @@ def get_median_lap(laps: List[Lap]) -> Lap:
         if len(attributes) == 0:
             continue
         if isinstance(getattr(laps[0], val), list):
-            median_attribute = [none_ignoring_median(k) for k in itertools.zip_longest(*attributes, fillvalue=None)]
+            median_attribute = [
+                none_ignoring_median(k)
+                for k in itertools.zip_longest(*attributes, fillvalue=None)
+            ]
         else:
             median_attribute = statistics.median(attributes)
         setattr(median_lap, val, median_attribute)
 
-    median_lap.Title = "Median (%d Laps): %s" % (len(laps), secondsToLaptime(median_lap.LapTime / 1000))
+    median_lap.Title = "Median (%d Laps): %s" % (
+        len(laps),
+        seconds_to_laptime(median_lap.LapTime / 1000),
+    )
 
     return median_lap
 
@@ -404,7 +442,9 @@ def filter_max_min_laps(laps: List[Lap], max_lap_time=-1, min_lap_time=-1) -> Li
     return laps
 
 
-def pd_data_frame_from_lap(laps: List[Lap], best_lap_time: int) -> pd.core.frame.DataFrame:
+def pd_data_frame_from_lap(
+        laps: List[Lap], best_lap_time: int
+) -> pd.DataFrame:
     df = pd.DataFrame()
     for i, lap in enumerate(laps):
         time_diff = ""
@@ -417,18 +457,30 @@ def pd_data_frame_from_lap(laps: List[Lap], best_lap_time: int) -> pd.core.frame
             # This can only mean that lap.LapTime is from an earlier race on a different track
             time_diff = "-"
         elif best_lap_time > 0:
-            time_diff = secondsToLaptime(-1 * (best_lap_time / 1000 - lap.LapTime / 1000))
+            time_diff = seconds_to_laptime(
+                -1 * (best_lap_time / 1000 - lap.LapTime / 1000)
+            )
 
-        df_add = pd.DataFrame([{'number': lap.Number,
-                                'time': secondsToLaptime(lap.LapTime / 1000),
-                                'diff': time_diff,
-                                'fuelconsumed': "%d" % lap.FuelConsumed,
-                                'fullthrottle': "%d" % (lap.FullThrottleTicks / lap.LapTicks * 1000),
-                                'throttleandbreak': "%d" % (lap.ThrottleAndBrakesTicks / lap.LapTicks * 1000),
-                                'fullbreak': "%d" % (lap.FullBrakeTicks / lap.LapTicks * 1000),
-                                'nothrottle': "%d" % (lap.NoThrottleNoBrakeTicks / lap.LapTicks * 1000),
-                                'tyrespinning': "%d" % (lap.TiresSpinningTicks / lap.LapTicks * 1000),
-                                }], index=[i])
+        df_add = pd.DataFrame(
+            [
+                {
+                    "number": lap.Number,
+                    "time": seconds_to_laptime(lap.LapTime / 1000),
+                    "diff": time_diff,
+                    "fuelconsumed": "%d" % lap.FuelConsumed,
+                    "fullthrottle": "%d"
+                                    % (lap.FullThrottleTicks / lap.LapTicks * 1000),
+                    "throttleandbreak": "%d"
+                                        % (lap.ThrottleAndBrakesTicks / lap.LapTicks * 1000),
+                    "fullbreak": "%d" % (lap.FullBrakeTicks / lap.LapTicks * 1000),
+                    "nothrottle": "%d"
+                                  % (lap.NoThrottleNoBrakeTicks / lap.LapTicks * 1000),
+                    "tyrespinning": "%d"
+                                    % (lap.TiresSpinningTicks / lap.LapTicks * 1000),
+                }
+            ],
+            index=[i],
+        )
         df = pd.concat([df, df_add])
 
     return df
@@ -440,17 +492,17 @@ def get_data_from_lap(lap: Lap, distance_mode: bool):
         lap = Lap()
 
     data = {
-        'throttle': lap.DataThrottle,
-        'brake': lap.DataBraking,
-        'speed': lap.DataSpeed,
-        'time': lap.DataTime,
-        'tires': lap.DataTires,
-        'ticks': list(range(len(lap.DataSpeed))),
-        'coast': lap.DataCoasting,
-        'raceline_y': lap.PositionsY,
-        'raceline_x': lap.PositionsX,
-        'raceline_z': lap.PositionsZ,
-        'distance': get_x_axis_depending_on_mode(lap, distance_mode),
+        "throttle": lap.DataThrottle,
+        "brake": lap.DataBraking,
+        "speed": lap.DataSpeed,
+        "time": lap.DataTime,
+        "tires": lap.DataTires,
+        "ticks": list(range(len(lap.DataSpeed))),
+        "coast": lap.DataCoasting,
+        "raceline_y": lap.PositionsY,
+        "raceline_x": lap.PositionsX,
+        "raceline_z": lap.PositionsZ,
+        "distance": get_x_axis_depending_on_mode(lap, distance_mode),
     }
 
     return data
@@ -469,12 +521,14 @@ def bokeh_tuple_for_list_of_laps(laps: List[Lap]):
         tuples.append(tuple((str(i), lap.format())))
     return tuples
 
+
 class FuelMap:
-    """ A Fuel Map with calculated attributes of the fuel setting
+    """A Fuel Map with calculated attributes of the fuel setting
 
     Attributes:
             fuel_consumed_per_lap   The amount of fuel consumed per lap with this fuel map
     """
+
     def __init__(self, mixture_setting, power_percentage, consumption_percentage):
         """
         Create a Fuel Map that is relative to the base setting
@@ -493,38 +547,51 @@ class FuelMap:
         self.lap_time_diff = 0
         self.lap_time_expected = 0
 
-
-
     def __str__(self):
-        return ("%d\t\t %d%%\t\t\t %d%%\t%d\t%.1f\t%s\t%s"
-                % (self.mixture_setting, self.power_percentage * 100, self.consumption_percentage * 100, self.fuel_consumed_per_lap,
-                   self.laps_remaining_on_current_fuel, secondsToLaptime(self.time_remaining_on_current_fuel / 1000), secondsToLaptime(self.lap_time_diff / 1000)))
+        return "%d\t\t %d%%\t\t\t %d%%\t%d\t%.1f\t%s\t%s" % (
+            self.mixture_setting,
+            self.power_percentage * 100,
+            self.consumption_percentage * 100,
+            self.fuel_consumed_per_lap,
+            self.laps_remaining_on_current_fuel,
+            seconds_to_laptime(self.time_remaining_on_current_fuel / 1000),
+            seconds_to_laptime(self.lap_time_diff / 1000),
+        )
+
 
 def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[FuelMap]:
     # Relative Setting, Laps to Go, Time to Go, Assumed Diff in Lap Times
-    fuel_consumed_per_lap, laps_remaining, time_remaining = calculate_remaining_fuel(lap.FuelAtStart, lap.FuelAtEnd, lap.LapTime)
+    fuel_consumed_per_lap, laps_remaining, time_remaining = calculate_remaining_fuel(
+        lap.FuelAtStart, lap.FuelAtEnd, lap.LapTime
+    )
     i = -5
 
-    # Source: https://www.gtplanet.net/forum/threads/test-results-fuel-mixture-settings-and-other-fuel-saving-techniques.369387/
-    FUEL_CONSUMPTION_PER_LEVEL_CHANGE = 8
-    POWER_PER_LEVEL_CHANGE = 4
+    # Source:
+    # https://www.gtplanet.net/forum/threads/test-results-fuel-mixture-settings-and-other-fuel-saving-techniques.369387/
+    fuel_consumption_per_level_change = 8
+    power_per_level_change = 4
 
-    rfls = []
+    relative_fuel_maps = []
 
     while i <= 5:
-        rfl = FuelMap(mixture_setting=i,
-                      power_percentage=(100-i*POWER_PER_LEVEL_CHANGE)/100,
-                      consumption_percentage=(100-i*FUEL_CONSUMPTION_PER_LEVEL_CHANGE)/100,
-                      )
+        relative_fuel_map = FuelMap(
+            mixture_setting=i,
+            power_percentage=(100 - i * power_per_level_change) / 100,
+            consumption_percentage=(100 - i * fuel_consumption_per_level_change) / 100,
+        )
 
-        rfl.fuel_consumed_per_lap = fuel_consumed_per_lap * rfl.consumption_percentage
-        rfl.laps_remaining_on_current_fuel = laps_remaining + laps_remaining * (1 - rfl.consumption_percentage)
+        relative_fuel_map.fuel_consumed_per_lap = fuel_consumed_per_lap * relative_fuel_map.consumption_percentage
+        relative_fuel_map.laps_remaining_on_current_fuel = laps_remaining + laps_remaining * (
+                1 - relative_fuel_map.consumption_percentage
+        )
 
-        rfl.time_remaining_on_current_fuel = time_remaining + time_remaining * (1 - rfl.consumption_percentage)
-        rfl.lap_time_diff = lap.LapTime * (1 - rfl.power_percentage)
-        rfl.lap_time_expected = lap.LapTime + rfl.lap_time_diff
+        relative_fuel_map.time_remaining_on_current_fuel = time_remaining + time_remaining * (
+                1 - relative_fuel_map.consumption_percentage
+        )
+        relative_fuel_map.lap_time_diff = lap.LapTime * (1 - relative_fuel_map.power_percentage)
+        relative_fuel_map.lap_time_expected = lap.LapTime + relative_fuel_map.lap_time_diff
 
-        rfls.append(rfl)
+        relative_fuel_maps.append(relative_fuel_map)
         i += 1
 
-    return rfls
+    return relative_fuel_maps

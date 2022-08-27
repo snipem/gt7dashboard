@@ -8,7 +8,7 @@ from typing import List
 
 from salsa20 import Salsa20_xor
 
-from gt7helper import secondsToLaptime
+from gt7helper import seconds_to_laptime
 from gt7lap import Lap
 
 
@@ -349,7 +349,7 @@ class GT7Communication(Thread):
         self.current_lap.FuelAtEnd = self.last_data.current_fuel
         self.current_lap.FuelConsumed = self.current_lap.FuelAtStart - self.current_lap.FuelAtEnd
         self.current_lap.LapTime = self.current_lap.LapTime
-        self.current_lap.Title = secondsToLaptime(self.current_lap.LapTime / 1000)
+        self.current_lap.Title = seconds_to_laptime(self.current_lap.LapTime / 1000)
         self.current_lap.Number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game time table
         self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
 
