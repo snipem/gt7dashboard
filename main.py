@@ -129,14 +129,12 @@ def update_fuel_map(step):
     # TODO Add real live data during a lap
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
 
-    div_fuel_map.text = "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.FuelAtEnd
-
     div_fuel_map.text += "<table><tr>" \
-                        "<th>Fuel Lvl.</th>" \
-                        "<th>Fuel Consumed</th>" \
-                        "<th>Laps Remaining</th>" \
-                        "<th>Time Reamingin</th>" \
-                        "<th>Time Diff</th></tr>" \
+                        "<th title='The fuel level relative to the current one'>Fuel Lvl.</th>" \
+                        "<th title='Fuel consumed'>Fuel Cons.</th>" \
+                        "<th title='Laps remaining with this setting'>Laps Rem.</th>" \
+                        "<th title='Time remaining with this setting' >Time Rem.</th>" \
+                        "<th title='Time Diff to last lap with this setting'>Time Diff</th></tr>" \
 
     for fuel_map in fuel_maps:
         div_fuel_map.text += "<tr id='fuel_map_row_%d'>" \
@@ -153,6 +151,7 @@ def update_fuel_map(step):
                                         gt7helper.secondsToLaptime(fuel_map.lap_time_diff / 1000))\
 
     div_fuel_map.text += "</table>"
+    div_fuel_map.text += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.FuelAtEnd
 
 @linear()
 def update_lap_change(step):
@@ -433,7 +432,7 @@ l1 = layout(children=[
     [f_throttle, div_last_lap, div_reference_lap],
     [f_braking],
     [f_coasting],
-    [t_lap_times, layout(children=[tuning_info, div_fuel_map])],
+    [layout(children=[[t_lap_times, div_fuel_map]]), layout(children=[tuning_info])],
     [reset_button, save_button, select_title, select],
 ])
 
