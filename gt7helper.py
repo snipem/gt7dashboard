@@ -200,10 +200,15 @@ def convert_seconds_to_milliseconds(seconds: int):
 
 
 def secondsToLaptime(seconds):
+    prefix = ""
+    if seconds < 0:
+        prefix = "-"
+        seconds*=-1
+
     remaining = seconds
     minutes = seconds // 60
     remaining = seconds % 60
-    return '{:01.0f}:{:06.3f}'.format(minutes, remaining)
+    return prefix+'{:01.0f}:{:06.3f}'.format(minutes, remaining)
 
 
 def find_speed_peaks_and_valleys(lap: Lap, width: int = 100) -> tuple[list[int], list[int]]:

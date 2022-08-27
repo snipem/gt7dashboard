@@ -113,6 +113,48 @@ def update_reference_lap_select(laps):
 
 
 @linear()
+def update_fuel_map(step):
+    global g_stored_fuel_map
+
+    if len(app.gt7comm.laps) == 0:
+        return
+    last_lap = app.gt7comm.laps[0]
+
+    if last_lap == g_stored_fuel_map:
+        return
+    else:
+        g_stored_fuel_map = last_lap
+
+
+    # TODO Add real live data during a lap
+    fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
+
+    div_fuel_map.text = "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.FuelAtEnd
+
+    div_fuel_map.text += "<table><tr>" \
+                        "<th>Fuel Lvl.</th>" \
+                        "<th>Fuel Consumed</th>" \
+                        "<th>Laps Remaining</th>" \
+                        "<th>Time Reamingin</th>" \
+                        "<th>Time Diff</th></tr>" \
+
+    for fuel_map in fuel_maps:
+        div_fuel_map.text += "<tr id='fuel_map_row_%d'>" \
+                             "<td style='text-align:center'>%d</td>" \
+                             "<td style='text-align:center'>%d</td>" \
+                             "<td style='text-align:center'>%.1f</td>" \
+                             "<td style='text-align:center'>%s</td>" \
+                             "<td style='text-align:center'>%s</td>" \
+                             "</tr>" % (fuel_map.mixture_setting,
+                                        fuel_map.mixture_setting,
+                                        fuel_map.fuel_consumed_per_lap,
+                                        fuel_map.laps_remaining_on_current_fuel,
+                                        gt7helper.secondsToLaptime(fuel_map.time_remaining_on_current_fuel / 1000),
+                                        gt7helper.secondsToLaptime(fuel_map.lap_time_diff / 1000))\
+
+    div_fuel_map.text += "</table>"
+
+@linear()
 def update_lap_change(step):
     # time, x, y, z = from_csv(reader).next()
     global g_laps_stored
@@ -303,6 +345,7 @@ g_laps_stored = []
 g_session_stored = None
 g_connection_status_stored = None
 g_reference_lap_selected = None
+g_stored_fuel_map = None
 g_telemetry_update_needed = False
 
 stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(list_lap_files_from_path("data"))
@@ -332,7 +375,7 @@ columns = [
 f_time_diff, f_speed, f_throttle, f_braking, f_coasting, data_sources = \
     get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
-t_lap_times = DataTable(source=source, columns=columns, index_position=None)
+t_lap_times = DataTable(source=source, columns=columns, index_position=None, css_classes=["lap_times_table"])
 t_lap_times.autosize_mode = "fit_columns"
 t_lap_times.width = 1000
 t_lap_times.min_height = 20
@@ -382,17 +425,19 @@ div_last_lap = Div(width=200, height=125)
 div_reference_lap = Div(width=200, height=125)
 div_connection_info = Div(width=200, height=125)
 
+div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
+
 l1 = layout(children=[
     [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
     [f_speed, s_race_line, div_connection_info],
     [f_throttle, div_last_lap, div_reference_lap],
     [f_braking],
     [f_coasting],
-    [t_lap_times, layout(children=[tuning_info])],
+    [t_lap_times, layout(children=[tuning_info, div_fuel_map])],
     [reset_button, save_button, select_title, select],
 ])
 
-l2 = layout([[reset_button, save_button], [t_lap_times]], sizing_mode='stretch_width')
+l2 = layout([[reset_button, save_button], [t_lap_times], [div_fuel_map]], sizing_mode='stretch_width')
 
 tab1 = Panel(child=l1, title="Get Faster")
 tab2 = Panel(child=l2, title="Race")
@@ -403,3 +448,4 @@ curdoc().title = "GT7 Dashboard"
 
 # This will only trigger once per lap, but we check every second if anything happened
 curdoc().add_periodic_callback(update_lap_change, 1000)
+curdoc().add_periodic_callback(update_fuel_map, 5000)

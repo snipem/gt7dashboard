@@ -1,7 +1,9 @@
-div.bk-data-table:last-child {
+div.lap_times_table:last-child {
     font-size: 22pt;
-    /* padding:1em; */
-
+}
+div.fuel_map:nth-of-type(1) {
+    /*for some reason it is the first of its type*/
+    font-size: 22pt;
 }
 div.bk-data-table:last-child div.slick-cell div {
     /*padding-top: 1px;*/
@@ -9,4 +11,8 @@ div.bk-data-table:last-child div.slick-cell div {
     /*padding-bottom: 1px;*/
     /*padding-left: 1px;*/
     /*padding: 2em;*/
+}
+
+tr#fuel_map_row_0 {
+    background-color: rgba(0,255,0,0.3);
 }
