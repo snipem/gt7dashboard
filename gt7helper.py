@@ -464,25 +464,38 @@ def bokeh_tuple_for_list_of_laps(laps: List[Lap]):
         tuples.append(tuple((str(i), lap.format())))
     return tuples
 
-class RelativeFuelMap:
+class FuelMap:
+    """ A Fuel Map with calculated attributes of the fuel setting
+
+    Attributes:
+            fuel_consumed_per_lap   The amount of fuel consumed per lap with this fuel map
+    """
     def __init__(self, mixture_setting, power_percentage, consumption_percentage):
+        """
+        Create a Fuel Map that is relative to the base setting
+
+        :param mixture_setting: Mixture Setting of the Fuel Map
+        :param power_percentage: Percentage of available power to the car relative to the base setting
+        :param consumption_percentage: Percentage of fuel consumption relative to the base setting
+        """
         self.mixture_setting = mixture_setting
         self.power_percentage = power_percentage
         self.consumption_percentage = consumption_percentage
 
         self.fuel_consumed_per_lap = 0
-        self.laps_remaining = 0
-        self.time_remaining = 0
+        self.laps_remaining_on_current_fuel = 0
+        self.time_remaining_on_current_fuel = 0
+        self.lap_time_diff = 0
         self.lap_time_expected = 0
 
 
 
     def __str__(self):
         return ("%d\t\t %d%%\t\t\t %d%%\t%d\t%.1f\t%s\t%s"
-                % (self.mixture_setting, self.power_percentage*100, self.consumption_percentage*100, self.fuel_consumed_per_lap,
-                   self.laps_remaining, secondsToLaptime(self.time_remaining / 1000), secondsToLaptime(self.lap_time_expected / 1000)))
+                % (self.mixture_setting, self.power_percentage * 100, self.consumption_percentage * 100, self.fuel_consumed_per_lap,
+                   self.laps_remaining_on_current_fuel, secondsToLaptime(self.time_remaining_on_current_fuel / 1000), secondsToLaptime(self.lap_time_diff / 1000)))
 
-def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[RelativeFuelMap]:
+def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[FuelMap]:
     # Relative Setting, Laps to Go, Time to Go, Assumed Diff in Lap Times
     fuel_consumed_per_lap, laps_remaining, time_remaining = calculate_remaining_fuel(lap.FuelAtStart, lap.FuelAtEnd, lap.LapTime)
     i = -5
@@ -493,20 +506,20 @@ def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[RelativeFu
 
     rfls = []
 
-
     while i <= 5:
-        rfl = RelativeFuelMap(mixture_setting=i,
-                              power_percentage=(100-i*POWER_PER_LEVEL_CHANGE)/100,
-                              consumption_percentage=(100-i*FUEL_CONSUMPTION_PER_LEVEL_CHANGE)/100,
-        )
+        rfl = FuelMap(mixture_setting=i,
+                      power_percentage=(100-i*POWER_PER_LEVEL_CHANGE)/100,
+                      consumption_percentage=(100-i*FUEL_CONSUMPTION_PER_LEVEL_CHANGE)/100,
+                      )
 
         rfl.fuel_consumed_per_lap = fuel_consumed_per_lap * rfl.consumption_percentage
-        rfl.laps_remaining = laps_remaining + laps_remaining * (1 - rfl.consumption_percentage)
+        rfl.laps_remaining_on_current_fuel = laps_remaining + laps_remaining * (1 - rfl.consumption_percentage)
 
-        rfl.time_remaining = time_remaining + time_remaining * (1 - rfl.consumption_percentage)
-        rfl.lap_time_expected = lap.LapTime + lap.LapTime * (1 - rfl.power_percentage)
+        rfl.time_remaining_on_current_fuel = time_remaining + time_remaining * (1 - rfl.consumption_percentage)
+        rfl.lap_time_diff = lap.LapTime * (1 - rfl.power_percentage)
+        rfl.lap_time_expected = lap.LapTime + rfl.lap_time_diff
 
         rfls.append(rfl)
-        i+=1
+        i += 1
 
     return rfls
