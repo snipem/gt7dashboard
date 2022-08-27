@@ -23,11 +23,22 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(laps_remaining, -1)
         self.assertEqual(time_remaining, -1)
 
+    def test_get_fuel_on_consumption_by_relative_fuel_levels(self):
+        fuel_lap = Lap()
+        fuel_lap.FuelAtStart = 100
+        fuel_lap.FuelAtEnd = 50
+        fuel_lap.LapTime = 1000
+        fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(fuel_lap)
+        self.assertEqual(11, len(fuel_maps))
+        print("\nFuelLvl	 Power%		    Fuel% Consum. LapsRem 	Time Rem Exp. Lap Time\n")
+        for fuel_map in fuel_maps:
+            print(fuel_map)
+
     def test_format_laps_to_table(self):
         lap1 = Lap()
         lap1.Number = 1
         lap1.LapTime = 11311000 / 1000
-        lap1.RemainingFuel = 90
+        lap1.FuelAtEnd = 90
         lap1.FullThrottleTicks = 10000
         lap1.ThrottleAndBrakesTicks = 500
         lap1.FullBrakeTicks = 10000
@@ -38,7 +49,7 @@ class TestHelper(unittest.TestCase):
         lap2 = Lap()
         lap2.Number = 2
         lap2.LapTime = 11110000 / 1000
-        lap2.RemainingFuel = 44
+        lap2.FuelAtEnd = 44
         lap2.FullThrottleTicks = 100
         lap2.ThrottleAndBrakesTicks = 750
         lap2.FullBrakeTicks = 1000
@@ -49,7 +60,7 @@ class TestHelper(unittest.TestCase):
         lap3 = Lap()
         lap3.Number = 3
         lap3.LapTime = 12114000 / 1000
-        lap3.RemainingFuel = 34
+        lap3.FuelAtEnd = 34
         lap3.FullThrottleTicks = 100
         lap3.ThrottleAndBrakesTicks = 10
         lap3.FullBrakeTicks = 1000

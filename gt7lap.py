@@ -1,6 +1,5 @@
 class Lap:
     def __init__(self):
-        self.RemainingFuel = -1
         self.DataTires = []
         self.PositionsX = []
         self.PositionsY = []
@@ -23,13 +22,14 @@ class Lap:
         self.DataTime = []
         self.DataRPM = []
         self.FuelAtStart = 0
+        self.FuelAtEnd = -1
         self.FuelConsumed = -1
 
     def __str__(self):
         return ('\n %s, %2d, %1.f, %4d, %4d, %4d' % (
             self.Title,
             self.Number,
-            self.RemainingFuel,
+            self.FuelAtEnd,
             self.FullThrottleTicks,
             self.FullBrakeTicks,
             self.NoThrottleNoBrakeTicks))

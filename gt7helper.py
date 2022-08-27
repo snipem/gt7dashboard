@@ -162,7 +162,7 @@ def format_laps_to_table(laps: List[Lap], bestlap: float) -> str:
             # Timing
             secondsToLaptime(lap.LapTime / 1000),
             time_diff,
-            lap.RemainingFuel,
+            lap.FuelAtEnd,
             lap.FuelConsumed,
             # Ticks
             ftTicks,
@@ -463,3 +463,50 @@ def bokeh_tuple_for_list_of_laps(laps: List[Lap]):
     for i, lap in enumerate(laps):
         tuples.append(tuple((str(i), lap.format())))
     return tuples
+
+class RelativeFuelMap:
+    def __init__(self, mixture_setting, power_percentage, consumption_percentage):
+        self.mixture_setting = mixture_setting
+        self.power_percentage = power_percentage
+        self.consumption_percentage = consumption_percentage
+
+        self.fuel_consumed_per_lap = 0
+        self.laps_remaining = 0
+        self.time_remaining = 0
+        self.lap_time_expected = 0
+
+
+
+    def __str__(self):
+        return ("%d\t\t %d%%\t\t\t %d%%\t%d\t%.1f\t%s\t%s"
+                % (self.mixture_setting, self.power_percentage*100, self.consumption_percentage*100, self.fuel_consumed_per_lap,
+                   self.laps_remaining, secondsToLaptime(self.time_remaining / 1000), secondsToLaptime(self.lap_time_expected / 1000)))
+
+def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[RelativeFuelMap]:
+    # Relative Setting, Laps to Go, Time to Go, Assumed Diff in Lap Times
+    fuel_consumed_per_lap, laps_remaining, time_remaining = calculate_remaining_fuel(lap.FuelAtStart, lap.FuelAtEnd, lap.LapTime)
+    i = -5
+
+    # Source: https://www.gtplanet.net/forum/threads/test-results-fuel-mixture-settings-and-other-fuel-saving-techniques.369387/
+    FUEL_CONSUMPTION_PER_LEVEL_CHANGE = 8
+    POWER_PER_LEVEL_CHANGE = 4
+
+    rfls = []
+
+
+    while i <= 5:
+        rfl = RelativeFuelMap(mixture_setting=i,
+                              power_percentage=(100-i*POWER_PER_LEVEL_CHANGE)/100,
+                              consumption_percentage=(100-i*FUEL_CONSUMPTION_PER_LEVEL_CHANGE)/100,
+        )
+
+        rfl.fuel_consumed_per_lap = fuel_consumed_per_lap * rfl.consumption_percentage
+        rfl.laps_remaining = laps_remaining + laps_remaining * (1 - rfl.consumption_percentage)
+
+        rfl.time_remaining = time_remaining + time_remaining * (1 - rfl.consumption_percentage)
+        rfl.lap_time_expected = lap.LapTime + lap.LapTime * (1 - rfl.power_percentage)
+
+        rfls.append(rfl)
+        i+=1
+
+    return rfls

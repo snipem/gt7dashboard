@@ -112,14 +112,14 @@ def trackLap(lstlap, curlap, bestlap):
 		return
 
 	remainingFuel = struct.unpack('f', ddata[0x44:0x44+4])[0]
-	currentLap.RemainingFuel = remainingFuel
-	currentLap.FuelConsumed = currentLap.FuelAtStart - currentLap.RemainingFuel
+	currentLap.FuelAtEnd = remainingFuel
+	currentLap.FuelConsumed = currentLap.FuelAtStart - currentLap.FuelAtEnd
 	currentLap.LapTime = lstlap
 	currentLap.Title = secondsToLaptime(lstlap / 1000)
 	currentLap.Number = curlap - 1  # Is not counting the same way as the time table
 	file_object.write('\n %s, %2d, %1.f, %4d, %4d, %4d' % (
 	'{:>9}'.format(currentLap.Title), curlap,
-	currentLap.RemainingFuel,
+	currentLap.FuelAtEnd,
 	currentLap.FullThrottleTicks,
 	currentLap.FullBrakeTicks,
 	currentLap.NoThrottleNoBrakeTicks))
@@ -175,7 +175,7 @@ def trackTick(ddata):
 		printAt('{:1.0f}'.format(remainingFuel), 43, 17, alwaysvisible=True)
 
 		if len(laps) > 0:
-			fuel_consumed_per_lap, fuel_laps_remaining, fuel_time_remaining = calculate_remaining_fuel(laps[0].FuelAtStart, laps[0].RemainingFuel, laps[0].LapTime)
+			fuel_consumed_per_lap, fuel_laps_remaining, fuel_time_remaining = calculate_remaining_fuel(laps[0].FuelAtStart, laps[0].FuelAtEnd, laps[0].LapTime)
 			fuel_laps_remaining=fuel_laps_remaining-1 # Substract current lap
 			printAt('Fuel/Lap:', 43, 25, alwaysvisible=True)
 			printAt('Laps remaining:', 43, 45, alwaysvisible=True)

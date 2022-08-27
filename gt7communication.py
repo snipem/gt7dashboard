@@ -346,7 +346,6 @@ class GT7Communication(Thread):
         """
 
         self.current_lap.LapTime = self.last_data.last_lap
-        self.current_lap.RemainingFuel = self.last_data.current_fuel
         self.current_lap.FuelAtEnd = self.last_data.current_fuel
         self.current_lap.FuelConsumed = self.current_lap.FuelAtStart - self.current_lap.FuelAtEnd
         self.current_lap.LapTime = self.current_lap.LapTime
