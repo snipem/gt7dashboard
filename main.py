@@ -11,7 +11,6 @@ from bokeh.models import (
     ColumnDataSource,
     TableColumn,
     DataTable,
-    HTMLTemplateFormatter,
     Button,
     Div,
 )
@@ -425,17 +424,6 @@ def update_tuning_info():
         app.gt7comm.session.min_body_height,
     )
 
-
-p = figure(plot_width=1000, plot_height=600)
-r1 = p.line([], [], color="green", line_width=2)
-r2 = p.line([], [], color="blue", line_width=2)
-r3 = p.line([], [], color="red", line_width=2)
-
-ds1 = r1.data_source
-ds2 = r2.data_source
-ds3 = r3.data_source
-
-# def on_server_loaded(server_context):
 app = bokeh.application.Application
 
 # Share the gt7comm connection between sessions by storing them as an application attribute
@@ -478,26 +466,15 @@ stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
     list_lap_files_from_path("data")
 )
 
-# FIXME Not working correctly
-template = """<div style="color:<%= 
-                (function colorfromint(){
-                    if (diff == "")
-                        {return('magenta')}
-                    }()) %>;"> 
-                <%= value %>
-            </div>
-            """
-formatter = HTMLTemplateFormatter(template=template)
-
 columns = [
-    TableColumn(field="number", title="#", formatter=formatter),
-    TableColumn(field="time", title="Time", formatter=formatter),
-    TableColumn(field="diff", title="Diff", formatter=formatter),
-    TableColumn(field="fuelconsumed", title="Fuel Consumed", formatter=formatter),
-    TableColumn(field="fullthrottle", title="Full Throttle", formatter=formatter),
-    TableColumn(field="fullbreak", title="Full Break", formatter=formatter),
-    TableColumn(field="nothrottle", title="No Throttle", formatter=formatter),
-    TableColumn(field="tyrespinning", title="Tire Spin", formatter=formatter),
+    TableColumn(field="number", title="#"),
+    TableColumn(field="time", title="Time"),
+    TableColumn(field="diff", title="Diff"),
+    TableColumn(field="fuelconsumed", title="Fuel Consumed"),
+    TableColumn(field="fullthrottle", title="Full Throttle"),
+    TableColumn(field="fullbreak", title="Full Break"),
+    TableColumn(field="nothrottle", title="No Throttle"),
+    TableColumn(field="tyrespinning", title="Tire Spin"),
 ]
 
 (
@@ -515,6 +492,7 @@ t_lap_times = DataTable(
 t_lap_times.autosize_mode = "fit_columns"
 t_lap_times.width = 1000
 t_lap_times.min_height = 20
+t_lap_times.min_width = 400
 
 # Race line
 
