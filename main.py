@@ -37,19 +37,19 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     tooltips = [
         ("index", "$index"),
         ("value", "$y"),
-        ("Speed", "@speed kmh"),
+        ("Speed", "@speed{0} kph"),
         ("Throttle", "@throttle%"),
         ("Brake", "@brake%"),
         ("Coast", "@coast%"),
-        ("Distance", "@distance m"),
+        ("Distance", "@distance{0} m"),
     ]
 
     tooltips_timedelta = [
         ("index", "$index"),
-        ("value", "$y"),
-        ("timedelta", "@timedelta"),
-        ("reference", "@reference"),
-        ("comparison", "@comparison"),
+        # ("value", "$y"),
+        ("timedelta", "@timedelta{0} ms"),
+        ("reference", "@reference{0} ms"),
+        ("comparison", "@comparison{0} ms"),
     ]
     colors = ["blue", "magenta", "green"]
     legends = ["Last Lap", "Reference Lap", "Median Lap"]
@@ -399,7 +399,7 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
     table = table + "<tr><th>#</th><th>Peak</th><th>Position</th></tr>"
     for i, dx in enumerate(peak_speed_data_x):
-        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
+        table = table + "<tr><td>%d.</td><td>%d kph</td><td>%d</td></tr>" % (
             i + 1,
             peak_speed_data_x[i],
             peak_speed_data_y[i],
@@ -407,7 +407,7 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
     table = table + "<tr><th>#</th><th>Valley</th><th>Position</th></tr>"
     for i, dx in enumerate(valley_speed_data_x):
-        table = table + "<tr><td>%d.</td><td>%d kmh</td><td>%d</td></tr>" % (
+        table = table + "<tr><td>%d.</td><td>%d kph</td><td>%d</td></tr>" % (
             i + 1,
             valley_speed_data_x[i],
             valley_speed_data_y[i],
@@ -418,7 +418,7 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
 
 def update_tuning_info():
-    tuning_info.text = """<p>Max Speed: <b>%d</b> kmh</p>
+    tuning_info.text = """<p>Max Speed: <b>%d</b> kph</p>
     <p>Min Body Height: <b>%d</b> mm</p>""" % (
         app.gt7comm.session.max_speed,
         app.gt7comm.session.min_body_height,
