@@ -1,3 +1,7 @@
+html {
+    background-color: white;
+}
+
 div.lap_times_table:last-child {
     font-size: 22pt;
 }

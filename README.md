@@ -4,23 +4,26 @@ gt7dashboard is a live dashboard for Gran Turismo 7. Based on the recent discove
 
 ## Features
 
-![image-20220816134203167](README.assets/image-20220816134203167.png)
+![image-20220816134448786](README.assets/screenshot.png)
 
-...
-
-![image-20220816134448786](README.assets/image-20220816134448786.png)
-
-* Speed/Distance Graph for Last Lap, Best Lap and Median Lap.
+* Time Diff Graph between Last Lap and Reference Lap
+  * *Under dashed line* is better and *over dashed line* is worse than Reference Lap
+  
+* Speed/Distance Graph for Last Lap, Reference Lap and Median Lap.
   * Median Lap is calculated by the median of all recent laps
+* Picker for Reference Lap
+  * Default is Best Lap
+
 * Throttle/Distance Graph
 * Braking/Distance Graph
 * Coasting/Distance Graph
 * Race Line Graph
-* Table of Speed Peaks and Valleys. Compared between best and last lap
+* Table of Speed Peaks and Valleys. Compared between reference and last lap
+* Relative Fuel Map for choosing the right Fuel Map setting in order to reach distance, remaining time and desired lap times
+* List off all recent laps with additional metrics, measured in percentage * 1000 for better readability
 * Additional data for tuning such as Max Speed and Min Body Height
-* List off all recent laps with additional metrics, measured in percentage * 1000 for better visiuals
 * Ability to Save current laps and reset all laps
-* Additional "Race view" with only the laps
+* Additional "Race view" with only lap view and fuel map in a bigger font size
 * Optional Brake Points (slow) when setting `GT7_ADD_BRAKEPOINTS=true`
 
 ## How to run
