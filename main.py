@@ -46,7 +46,6 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
 
     tooltips_timedelta = [
         ("index", "$index"),
-        # ("value", "$y"),
         ("timedelta", "@timedelta{0} ms"),
         ("reference", "@reference{0} ms"),
         ("comparison", "@comparison{0} ms"),
@@ -123,6 +122,9 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
 
     sources = []
 
+    # Set empty data for avoiding warnings about missing columns
+    dummy_data = gt7helper.get_data_from_lap(Lap(), distance_mode=True)
+
     time_diff_source = ColumnDataSource(data={})
     f_time_diff.line(
         x="distance",
@@ -132,11 +134,10 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
         color="blue",
         line_alpha=1,
     )
-    f_time_diff.legend.visible = False
     sources.append(time_diff_source)
 
     for color, legend in zip(colors, legends):
-        source = ColumnDataSource(data={})
+        source = ColumnDataSource(data=dummy_data)
         sources.append(source)
 
         f_speed.line(
@@ -216,7 +217,7 @@ def update_fuel_map(step):
     # TODO Add real live data during a lap
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
 
-    div_fuel_map.text = (
+    table = (
         "<table><tr>"
         "<th title='The fuel level relative to the current one'>Fuel Lvl.</th>"
         "<th title='Fuel consumed'>Fuel Cons.</th>"
@@ -225,7 +226,7 @@ def update_fuel_map(step):
         "<th title='Time Diff to last lap with this setting'>Time Diff</th></tr>"
     )
     for fuel_map in fuel_maps:
-        div_fuel_map.text += (
+        table += (
             "<tr id='fuel_map_row_%d'>"
             "<td style='text-align:center'>%d</td>"
             "<td style='text-align:center'>%d</td>"
@@ -244,8 +245,9 @@ def update_fuel_map(step):
                 gt7helper.seconds_to_lap_time(fuel_map.lap_time_diff / 1000),
             )
         )
-    div_fuel_map.text += "</table>"
-    div_fuel_map.text += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.fuel_at_end
+    table += "</table>"
+    table += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.fuel_at_end
+    div_fuel_map.text = table
 
 
 @linear()
@@ -312,6 +314,7 @@ def update_speed_velocity_graph(laps: List[Lap]):
     reference_lap_race_line.data_source.data = reference_lap_data
 
     s_race_line.legend.visible = False
+    s_race_line.axis.visible = False
 
     # Update breakpoints
     # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
@@ -418,7 +421,7 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
 
 def update_tuning_info():
-    tuning_info.text = """<p>Max Speed: <b>%d</b> kph</p>
+    div_tuning_info.text = """<p>Max Speed: <b>%d</b> kph</p>
     <p>Min Body Height: <b>%d</b> mm</p>""" % (
         app.gt7comm.session.max_speed,
         app.gt7comm.session.min_body_height,
@@ -490,14 +493,14 @@ t_lap_times = DataTable(
     source=source, columns=columns, index_position=None, css_classes=["lap_times_table"]
 )
 t_lap_times.autosize_mode = "fit_columns"
-t_lap_times.width = 1000
+# t_lap_times.width = 1000
 t_lap_times.min_height = 20
-t_lap_times.min_width = 400
+t_lap_times.min_width = 630
 
 # Race line
 
-RACE_LINE_TOOLTIPS = [("index", "$index"), ("Breakpoint", "")]
-
+race_line_tooltips = [("index", "$index"), ("Breakpoint", "")]
+dummy_data = gt7helper.get_data_from_lap(Lap(), distance_mode=True)
 race_line_width = 250
 speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
@@ -505,14 +508,13 @@ s_race_line = figure(
     title="Race Line",
     x_axis_label="z",
     y_axis_label="x",
+    match_aspect=True,
     width=race_line_width,
     height=race_line_width,
-    tooltips=RACE_LINE_TOOLTIPS,
+    active_drag="box_zoom",
+    tooltips=race_line_tooltips,
 )
-s_race_line.axis.visible = False
-# s_race_line.toolbar.autohide = True
-s_race_line.legend.click_policy = "hide"
-# s_race_line.add_layout(Legend(), 'center')
+s_race_line.toolbar.autohide = True
 
 last_lap_race_line = s_race_line.line(
     x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1, color="blue"
@@ -541,25 +543,24 @@ reset_button.on_click(save_button_handler)
 save_button = Button(label="Reset Laps")
 save_button.on_click(reset_button_handler)
 
-tuning_info = Div(width=200, height=100)
+div_tuning_info = Div(width=200, height=100)
 
 div_last_lap = Div(width=200, height=125)
 div_reference_lap = Div(width=200, height=125)
-div_connection_info = Div(width=200, height=125)
+div_connection_info = Div(width=30, height=30)
 
 div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
 
 l1 = layout(
     children=[
+        [div_connection_info],
         [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
-        [f_speed, s_race_line, div_connection_info],
-        [f_throttle, div_last_lap, div_reference_lap],
+        [f_speed, s_race_line],
+        [f_throttle, [[div_last_lap, div_reference_lap]]],
         [f_braking],
         [f_coasting],
-        [
-            layout(children=[[t_lap_times, div_fuel_map]]),
-            layout(children=[tuning_info]),
-        ],
+        [t_lap_times, div_fuel_map],
+        [div_tuning_info],
         [reset_button, save_button, select_title, select],
     ]
 )
