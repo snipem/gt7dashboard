@@ -6,7 +6,7 @@
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
       <env name="GT7_PLAYSTATION_IP" value="192.168.178.120" />
-      <env name="GT7_LOAD_LAPS_PATH" value="data/servertimediffnotshown.pickle" />
+      <env name="GT7_LOAD_LAPS_PATH" value="test_data/lago_maggiore.pickle" />
     </envs>
     <option name="SDK_HOME" value="/usr/local/bin/python3.9" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
