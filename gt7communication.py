@@ -334,17 +334,20 @@ class GT7Communication(Thread):
         Finishes a lap with info we only know after crossing the line after each lap
         """
 
-        self.current_lap.lap_finish_time = self.last_data.last_lap
+        if manual:
+            # Manual laps have no time assigned, so take current live time as lap finish time
+            self.current_lap.lap_finish_time = self.current_lap.lap_live_time
+        else:
+            # Regular finished laps (crossing the finish line in races or time trials)
+            # have their lap time stored in last_lap
+            self.current_lap.lap_finish_time = self.last_data.last_lap
+
         self.current_lap.fuel_at_end = self.last_data.current_fuel
         self.current_lap.fuel_consumed = self.current_lap.fuel_at_start - self.current_lap.fuel_at_end
         self.current_lap.lap_finish_time = self.current_lap.lap_finish_time
         self.current_lap.title = seconds_to_lap_time(self.current_lap.lap_finish_time / 1000)
         self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game time table
         self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
-
-        # Manual laps have no time assigned, so take last lap time tick
-        if manual:
-            self.current_lap.lap_finish_time = self.current_lap.data_time[-1:][0]
 
         # Race is not in 0th lap, which is before starting the race.
         # We will only persist those laps that have crossed the starting line at least once
