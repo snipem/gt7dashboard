@@ -336,7 +336,8 @@ class GT7Communication(Thread):
 
         if manual:
             # Manual laps have no time assigned, so take current live time as lap finish time
-            self.current_lap.lap_finish_time = self.current_lap.lap_live_time
+            # Finish time is tracked in seconds while live time is tracked in ms
+            self.current_lap.lap_finish_time = self.current_lap.lap_live_time * 1000
         else:
             # Regular finished laps (crossing the finish line in races or time trials)
             # have their lap time stored in last_lap
