@@ -1,0 +1,15 @@
+{% extends base %}
+
+{% block title %}GT7 Dashboard{% endblock %}
+
+{% block postamble %}
+  <style>
+    {% include 'styles.css' %}
+  </style>
+{% endblock %}
+
+{% block contents %}
+  <div class="content">
+    {{ super() }}
+  </div>
+{% endblock %}

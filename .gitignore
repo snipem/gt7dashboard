@@ -130,6 +130,5 @@ dmypy.json
 /data/
 
 .idea
-*.html
 
 session.csv
