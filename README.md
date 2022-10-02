@@ -61,6 +61,4 @@ There is a `Dockerfile` available. This is a sample `docker-compose` configurati
 
 ## Get Telemetry of a Demonstration lap or Replay
 
-Replays and demonstrations will also output telemetry data. Start the replay or demonstration and enjoy the data.
-
-Some demonstration data is cut short at the start. In the game this comes as a fast-forward effect at the start of the lap. Start the demonstration again, to get a proper lap.
+Since Update 1.23 telemetry data is no longer logged for replays.
