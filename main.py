@@ -537,11 +537,11 @@ reference_lap_select.on_change("value", load_reference_lap_handler)
 manual_log_button = Button(label="Log Lap Now")
 manual_log_button.on_click(log_lap_button_handler)
 
-reset_button = Button(label="Save Laps")
-reset_button.on_click(save_button_handler)
+save_button = Button(label="Save Laps")
+save_button.on_click(save_button_handler)
 
-save_button = Button(label="Reset Laps")
-save_button.on_click(reset_button_handler)
+reset_button = Button(label="Reset Laps")
+reset_button.on_click(reset_button_handler)
 
 div_tuning_info = Div(width=200, height=100)
 
