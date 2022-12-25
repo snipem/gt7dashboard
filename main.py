@@ -466,7 +466,7 @@ g_stored_fuel_map = None
 g_telemetry_update_needed = False
 
 stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
-    list_lap_files_from_path("data")
+    list_lap_files_from_path(os.path.join(os.getcwd(), "data"))
 )
 
 columns = [
