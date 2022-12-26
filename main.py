@@ -122,10 +122,7 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
 
     sources = []
 
-    # Set empty data for avoiding warnings about missing columns
-    dummy_data = gt7helper.get_data_from_lap(Lap(), distance_mode=True)
-
-    time_diff_source = ColumnDataSource(data={})
+    time_diff_source = ColumnDataSource(data={"distance": [], "timedelta": []})
     f_time_diff.line(
         x="distance",
         y="timedelta",
@@ -427,6 +424,7 @@ def update_tuning_info():
         app.gt7comm.session.min_body_height,
     )
 
+
 app = bokeh.application.Application
 
 # Share the gt7comm connection between sessions by storing them as an application attribute
@@ -453,6 +451,10 @@ else:
     else:
         # Existing thread has connection, proceed
         pass
+
+
+# Set empty data for avoiding warnings about missing columns
+dummy_data = gt7helper.get_data_from_lap(Lap(), distance_mode=True)
 
 source = ColumnDataSource(
     gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
@@ -500,7 +502,6 @@ t_lap_times.min_width = 630
 # Race line
 
 race_line_tooltips = [("index", "$index"), ("Breakpoint", "")]
-dummy_data = gt7helper.get_data_from_lap(Lap(), distance_mode=True)
 race_line_width = 250
 speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
@@ -517,7 +518,12 @@ s_race_line = figure(
 s_race_line.toolbar.autohide = True
 
 last_lap_race_line = s_race_line.line(
-    x="raceline_z", y="raceline_x", legend_label="Last Lap", line_width=1, color="blue"
+    x="raceline_z",
+    y="raceline_x",
+    legend_label="Last Lap",
+    line_width=1,
+    color="blue",
+    source=ColumnDataSource(data={"raceline_z": [], "raceline_x": []})
 )
 reference_lap_race_line = s_race_line.line(
     x="raceline_z",
@@ -525,6 +531,7 @@ reference_lap_race_line = s_race_line.line(
     legend_label="Reference Lap",
     line_width=1,
     color="magenta",
+    source=ColumnDataSource(data={"raceline_z": [], "raceline_x": []})
 )
 
 select_title = Paragraph(text="Load Laps:", align="center")
