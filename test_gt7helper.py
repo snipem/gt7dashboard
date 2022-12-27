@@ -1,5 +1,6 @@
 import pickle
 import unittest
+import os
 
 import gt7helper
 from gt7helper import calculate_remaining_fuel, format_laps_to_table, calculate_time_diff_by_distance
@@ -76,7 +77,8 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
 
     def test_calculate_time_diff_by_distance_from_pickle(self):
-        laps = gt7helper.load_laps_from_pickle("test_data/time_diff.pickle")
+        path = os.path.join(os.path.abspath(__file__), 'test_data', 'time_diff.pickle')
+        laps = gt7helper.load_laps_from_pickle(path)
 
         df = calculate_time_diff_by_distance(laps[1], laps[2])
 
@@ -237,7 +239,8 @@ class TestLaps(unittest.TestCase):
         self.assertEqual([3, 9, 11], peaks)
 
     def test_find_speed_peaks_and_valleys_real_data(self):
-        with open("test_data/peaks_and_valleys.pickle", 'rb') as f:
+        path = os.path.join(os.getcwd(), 'test_data', 'peaks_and_valleys.pickle')
+        with open(path, 'rb') as f:
             l = pickle.load(f)
 
         peaks, valleys = gt7helper.find_speed_peaks_and_valleys(l[1], width=100)
