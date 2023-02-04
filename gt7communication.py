@@ -11,12 +11,17 @@ from salsa20 import Salsa20_xor
 from gt7helper import seconds_to_lap_time
 from gt7lap import Lap
 
+from enum import Enum
+from collections import deque
+
+import logging
+log = logging.getLogger('bokeh')
 
 class GTData:
     def __init__(self, ddata):
         if not ddata:
             return
-
+        self.recvtime = time.time()
         self.package_id = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
         self.best_lap = struct.unpack('i', ddata[0x78:0x78 + 4])[0]
         self.last_lap = struct.unpack('i', ddata[0x7C:0x7C + 4])[0]
@@ -151,6 +156,12 @@ class Session():
     def __eq__(self, other):
         return other is not None and self.best_lap == other.best_lap and self.min_body_height == other.min_body_height and self.max_speed == other.max_speed
 
+class StreamState(Enum):
+    MENU = 0
+    PRERACE = 1
+    LIVE = 2
+    REPLAY = 3
+
 class GT7Communication(Thread):
     def __init__(self, playstation_ip):
         # Thread control
@@ -167,7 +178,58 @@ class GT7Communication(Thread):
         self.current_lap = Lap()
         self.session = Session()
         self.laps = []
+        self.data_history = deque(maxlen = 20)
         self.last_data = GTData(None)
+        self.state = None
+
+    def log_state(self, state):
+        match state:
+            case None:
+                log.info('Stream State: NONE')
+            case StreamState.MENU:
+                log.info('Stream State: MENU')
+            case StreamState.PRERACE:
+                log.info('Stream State: PRERACE')
+            case StreamState.LIVE:
+                log.info('Stream State: LIVE')
+            case StreamState.REPLAY:
+                log.info('Stream State: REPLAY')
+
+    def check_for_replay_start(self, data_history):
+        for index in range (0, len(data_history) - (1 + 5 + 1)):
+            if data_history[index].total_laps >= 0 and data_history[index + 1].total_laps < 0:
+                # no more than 5 data packets and 5 frames, usually 3 packets
+                for index_ in range(index + 2, index + 7):
+                    if data_history[index_].total_laps >= 0 and (data_history[index].recvtime - data_history[index_].recvtime) <= 5.0 / 60:
+                        for index__ in range (index + 1, len(data_history)):
+                            data_history.pop()
+                        return True
+        return False
+
+    def check_for_replay_end(self, data_history):
+        for index in range(0, len(data_history) - 1):
+            time_delta = data_history[index].recvtime - data_history[index + 1].recvtime
+            abs_rpm_delta = abs(data_history[index].rpm - data_history[index + 1].rpm)
+            abs_speed_delta = abs(data_history[index].car_speed - data_history[index + 1].car_speed)
+            if time_delta <= 1.0 / 30 and (abs_rpm_delta > 1000 or abs_speed_delta > 30):
+                log.info('time delta: ' + str(time_delta) + '; rpm delta: ' + str(abs_rpm_delta) + '; speed_delta: ' + str(abs_speed_delta))
+                for index_ in range (index + 1, len(data_history)):
+                    data_history.pop()
+                return True
+        return False
+
+    def check_for_menu(self, data_history):
+        for index in range(0, len(data_history)):
+            if data_history[index].total_laps >= 0:
+                break
+        if index >= 4:
+            for index_ in range(index + 1, len(data_history)):
+                if data_history[index_].total_laps < 0:
+                    return False
+            for index_ in range (index, len(data_history)):
+                    data_history.pop()
+            return True
+        return False
 
     def run(self):
         while True:
@@ -187,9 +249,9 @@ class GT7Communication(Thread):
                         package_nr = package_nr + 1
                         ddata = salsa20_dec(data)
                         if len(ddata) > 0 and struct.unpack('i', ddata[0x70:0x70 + 4])[0] > package_id:
-
                             self.last_data = GTData(ddata)
-                            self._last_time_data_received = time.time()
+                            self.data_history.appendleft(self.last_data)
+                            self._last_time_data_received = self.last_data.recvtime
 
                             package_id = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
 
@@ -199,6 +261,37 @@ class GT7Communication(Thread):
 
                             if curlap == 0:
                                 self.session.special_packet_time = 0
+
+                            raw_state = self.state
+                            if self.last_data.in_race:
+                                self.state = StreamState.LIVE
+                            else:
+                                match self.state:
+                                    case None:
+                                        if self.last_data.total_laps >= 0:
+                                            self.state = StreamState.PRERACE
+                                        else:
+                                            self.state = StreamState.MENU
+                                    case StreamState.MENU:
+                                        if self.last_data.total_laps >= 0:
+                                            self.state = StreamState.PRERACE
+                                    case StreamState.PRERACE:
+                                        if self.check_for_replay_start(self.data_history):
+                                            self.state = StreamState.REPLAY
+                                        elif self.check_for_menu(self.data_history):
+                                            self.state = StreamState.MENU
+                                    case StreamState.LIVE:
+                                        if self.check_for_replay_start(self.data_history):
+                                            self.state = StreamState.REPLAY
+                                        else:
+                                            self.state = StreamState.PRERACE
+                                    case StreamState.REPLAY:
+                                        if(self.check_for_replay_end(self.data_history)):
+                                            self.state = StreamState.PRERACE
+                                if self.state == StreamState.REPLAY:
+                                    self.last_data.in_race = True
+                            if(raw_state != self.state):
+                                self.log_state(self.state)
 
                             if curlap > 0 and self.last_data.in_race:
 
