@@ -211,8 +211,8 @@ class GT7Communication(Thread):
             time_delta = data_history[index].recvtime - data_history[index + 1].recvtime
             abs_rpm_delta = abs(data_history[index].rpm - data_history[index + 1].rpm)
             abs_speed_delta = abs(data_history[index].car_speed - data_history[index + 1].car_speed)
-            if time_delta <= 1.0 / 30 and (abs_rpm_delta > 1000 or abs_speed_delta > 30):
-                log.info('time delta: ' + str(time_delta) + '; rpm delta: ' + str(abs_rpm_delta) + '; speed_delta: ' + str(abs_speed_delta))
+            if time_delta <= 1.0 / 30 and (abs_rpm_delta > data_history[index + 1].rpm_rev_limiter * 0.1 or abs_speed_delta > data_history[index + 1].estimated_top_speed * 0.1):
+                log.info('Replay exit detected: time delta: %.4f s; rpm delta: %.2f (%.2f%%); speed delta: %.2f kph(%.2f%%)', time_delta, abs_rpm_delta, abs_rpm_delta * 100 / data_history[index + 1].rpm_rev_limiter, abs_speed_delta, abs_speed_delta * 100 / data_history[index + 1].estimated_top_speed)
                 for index_ in range (index + 1, len(data_history)):
                     data_history.pop()
                 return True
