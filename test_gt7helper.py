@@ -76,9 +76,9 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
 
     def test_calculate_time_diff_by_distance_from_pickle(self):
-        laps = gt7helper.load_laps_from_pickle("test_data/time_diff.pickle")
+        laps = gt7helper.load_laps_from_pickle("test_data/tsukuba_2laps_rain_first_is_best.pickle")
 
-        df = calculate_time_diff_by_distance(laps[1], laps[2])
+        df = calculate_time_diff_by_distance(laps[0], laps[1])
 
         # Check for common length but also for columns to exist
         self.assertEqual(len(df.distance), len(df.comparison))
@@ -237,10 +237,10 @@ class TestLaps(unittest.TestCase):
         self.assertEqual([3, 9, 11], peaks)
 
     def test_find_speed_peaks_and_valleys_real_data(self):
-        with open("test_data/peaks_and_valleys.pickle", 'rb') as f:
+        with open("test_data/tsukuba_2laps_rain_first_is_best.pickle", 'rb') as f:
             l = pickle.load(f)
 
         peaks, valleys = gt7helper.find_speed_peaks_and_valleys(l[1], width=100)
 
-        self.assertEqual([310, 1400, 2481, 3248, 3757, 4841], peaks)
-        self.assertEqual([449, 1647, 2675, 3361, 4105, 5030, 5322], valleys)
+        self.assertEqual([253, 1236, 2138, 3006, 4293], peaks)
+        self.assertEqual([565, 1746, 2387, 3380, 4808], valleys)
