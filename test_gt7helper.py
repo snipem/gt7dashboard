@@ -77,7 +77,7 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
 
     def test_calculate_time_diff_by_distance_from_pickle(self):
-        path = os.path.join(os.path.abspath(__file__), 'test_data', 'tsukuba_2laps_rain_first_is_best.pickle')
+        path = os.path.join(os.getcwd(), 'test_data', 'tsukuba_2laps_rain_first_is_best.pickle')
         laps = gt7helper.load_laps_from_pickle(path)
 
         df = calculate_time_diff_by_distance(laps[0], laps[1])
