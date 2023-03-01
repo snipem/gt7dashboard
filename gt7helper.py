@@ -16,7 +16,8 @@ from gt7lap import Lap
 
 
 def save_laps(laps: List[Lap]):
-    with open("data/all_laps.pickle", "wb") as f:
+    path = os.path.join(os.getcwd(), 'data', 'all_laps.pickle')
+    with open(path, "wb") as f:
         pickle.dump(laps, f)
 
 
@@ -327,12 +328,12 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
     storage_folder = "data"
     local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
     dt = datetime.now(tz=local_timezone)
-    str_date_time = dt.strftime("%d-%m-%Y_%H:%M:%S")
+    str_date_time = dt.strftime("%d-%m-%Y_%H.%M.%S")
     print("Current timestamp", str_date_time)
     storage_filename = "laps_%s.pickle" % str_date_time
     Path(storage_folder).mkdir(parents=True, exist_ok=True)
 
-    path = storage_folder + "/" + storage_filename
+    path = os.path.join(os.getcwd(), storage_folder, storage_filename)
 
     with open(path, "wb") as f:
         pickle.dump(laps, f)

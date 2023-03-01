@@ -1,4 +1,5 @@
 import sys
+import os
 from typing import List
 
 from bokeh.layouts import layout
@@ -107,8 +108,8 @@ def get_session_layout(laps: List[Lap], distance_mode=True):
 	return l
 
 def plot_session_analysis(laps: List[Lap], distance_mode=True, open_in_browser=True):
-
-	with open('data/new.pickle', 'wb') as f:
+	path = os.path.join(os.getcwd(), 'data', 'new.pickle')
+	with open(path, 'wb') as f:
 		pickle.dump(laps, f)
 
 	output_file(filename="analysis_latest.html")
