@@ -486,11 +486,63 @@ def pd_data_frame_from_lap(
 
     return df
 
+RACE_LINE_BRAKING_MODE = "RACE_LINE_BRAKING_MODE"
+RACE_LINE_THROTTLE_MODE = "RACE_LINE_THROTTLE_MODE"
+RACE_LINE_COASTING_MODE = "RACE_LINE_COASTING_MODE"
+
+def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
+
+    return_y = []
+    return_x = []
+    return_z = []
+
+    for i, _ in enumerate(lap.data_braking):
+
+        if mode == RACE_LINE_BRAKING_MODE:
+
+            if lap.data_braking[i] > lap.data_throttle[i]:
+                return_y.append(lap.data_position_y[i])
+                return_x.append(lap.data_position_x[i])
+                return_z.append(lap.data_position_z[i])
+            else:
+                return_y.append("NaN")
+                return_x.append("NaN")
+                return_z.append("NaN")
+
+        elif mode == RACE_LINE_THROTTLE_MODE:
+
+            if lap.data_braking[i] < lap.data_throttle[i]:
+                return_y.append(lap.data_position_y[i])
+                return_x.append(lap.data_position_x[i])
+                return_z.append(lap.data_position_z[i])
+            else:
+                return_y.append("NaN")
+                return_x.append("NaN")
+                return_z.append("NaN")
+
+        if mode == RACE_LINE_COASTING_MODE:
+
+            if lap.data_braking[i] == 0 and lap.data_throttle[i] == 0:
+                return_y.append(lap.data_position_y[i])
+                return_x.append(lap.data_position_x[i])
+                return_z.append(lap.data_position_z[i])
+            else:
+                return_y.append("NaN")
+                return_x.append("NaN")
+                return_z.append("NaN")
+
+    return return_y, return_x, return_z
+
+
 
 def get_data_from_lap(lap: Lap, distance_mode: bool):
     # Use empty lap if lap is none
     if not lap:
         lap = Lap()
+
+    raceline_y_throttle, raceline_x_throttle, raceline_z_throttle = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_THROTTLE_MODE)
+    raceline_y_braking, raceline_x_braking, raceline_z_braking = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_BRAKING_MODE)
+    raceline_y_coasting, raceline_x_coasting, raceline_z_coasting = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_COASTING_MODE)
 
     data = {
         "throttle": lap.data_throttle,
@@ -503,6 +555,19 @@ def get_data_from_lap(lap: Lap, distance_mode: bool):
         "raceline_y": lap.data_position_y,
         "raceline_x": lap.data_position_x,
         "raceline_z": lap.data_position_z,
+        # For a raceline when throttle is engaged
+        "raceline_y_throttle": raceline_y_throttle,
+        "raceline_x_throttle": raceline_x_throttle,
+        "raceline_z_throttle": raceline_z_throttle,
+        # For a raceline when braking is engaged
+        "raceline_y_braking": raceline_y_braking,
+        "raceline_x_braking": raceline_x_braking,
+        "raceline_z_braking": raceline_z_braking,
+        # For a raceline when neither throttle nor brake is engaged
+        "raceline_y_coasting": raceline_y_coasting,
+        "raceline_x_coasting": raceline_x_coasting,
+        "raceline_z_coasting": raceline_z_coasting,
+
         "distance": get_x_axis_depending_on_mode(lap, distance_mode),
     }
 
