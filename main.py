@@ -20,6 +20,7 @@ from bokeh.plotting import figure
 from bokeh.plotting.figure import Figure
 
 import gt7communication
+import gt7diagrams
 import gt7helper
 from gt7helper import (
     get_speed_peaks_and_valleys,
@@ -247,6 +248,30 @@ def update_fuel_map(step):
     div_fuel_map.text = table
 
 
+def update_race_lines(laps):
+    """
+    This function updates the race lines on the second tab with the amount of laps
+    that the race line tab can hold
+    """
+    global race_lines, race_lines_data
+
+    for i, lap in enumerate(laps[:len(race_lines)]):
+        print("Updating Race Line for Lap %d - %s" % (len(laps)-i, lap.title))
+
+        race_lines[i].title.text = "Lap - %d %s" % (len(laps)-i, lap.title)
+
+        lap_data = gt7helper.get_data_from_lap(lap, distance_mode=True)
+        race_lines_data[i][0].data_source.data = lap_data
+        race_lines_data[i][1].data_source.data = lap_data
+        race_lines_data[i][2].data_source.data = lap_data
+
+        race_lines[i].legend.visible = False
+        race_lines[i].axis.visible = False
+
+        # Fixme not working
+        race_lines[i].x_range = race_lines[0].x_range
+
+
 @linear()
 def update_lap_change(step):
     # time, x, y, z = from_csv(reader).next()
@@ -287,6 +312,8 @@ def update_lap_change(step):
     update_time_table(laps)
     update_reference_lap_select(laps)
     update_speed_velocity_graph(laps)
+    update_race_lines(laps)
+
 
     g_laps_stored = laps.copy()
     g_telemetry_update_needed = False
@@ -423,6 +450,7 @@ def update_tuning_info():
         app.gt7comm.session.max_speed,
         app.gt7comm.session.min_body_height,
     )
+
 
 
 app = bokeh.application.Application
@@ -572,14 +600,38 @@ l1 = layout(
     ]
 )
 
-l2 = layout(
+
+def get_race_lines_layout(number_of_race_lines):
+    i = 0
+    race_line_diagrams = []
+    race_lines_data = []
+
+    while i < number_of_race_lines:
+        s_race_line, throttle_line, breaking_line, coasting_line = gt7diagrams.get_throttle_braking_race_line_diagram(race_line_width=500)
+        race_line_diagrams.append(s_race_line)
+        race_lines_data.append([throttle_line, breaking_line, coasting_line])
+        i+=1
+
+    l = layout(children=[
+        [race_line_diagrams[0], race_line_diagrams[1], race_line_diagrams[2]],
+        [race_line_diagrams[3], race_line_diagrams[4], race_line_diagrams[5]],
+        [race_line_diagrams[6], race_line_diagrams[7], race_line_diagrams[8]],
+    ])
+
+    return l, race_line_diagrams, race_lines_data
+
+
+l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=9)
+
+l3 = layout(
     [[reset_button, save_button], [t_lap_times], [div_fuel_map]],
     sizing_mode="stretch_width",
 )
 
 tab1 = Panel(child=l1, title="Get Faster")
-tab2 = Panel(child=l2, title="Race")
-tabs = Tabs(tabs=[tab1, tab2])
+tab2 = Panel(child=l2, title="Race Lines")
+tab3 = Panel(child=l3, title="Race")
+tabs = Tabs(tabs=[tab1, tab2, tab3])
 
 curdoc().add_root(tabs)
 curdoc().title = "GT7 Dashboard"

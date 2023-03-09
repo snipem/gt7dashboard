@@ -4,7 +4,7 @@ from bokeh.plotting import figure
 
 def get_throttle_braking_race_line_diagram(race_line_width=250):
 
-    # TODO Make this work
+    # TODO Make this work, tooltips just show breakpoint
     race_line_tooltips = [("index", "$index"), ("Breakpoint", "")]
     s_race_line = figure(
         title="Race Line",
@@ -17,14 +17,13 @@ def get_throttle_braking_race_line_diagram(race_line_width=250):
         tooltips=race_line_tooltips,
     )
     s_race_line.toolbar.autohide = True
-    # FIXME: Does not work
-    s_race_line.legend.visible = False
 
     throttle_line = s_race_line.line(
         x="raceline_z_throttle",
         y="raceline_x_throttle",
         legend_label="Throttle",
         line_width=5,
+        alpha=0.85,
         color="green",
         source=ColumnDataSource(data={"raceline_z_throttle": [], "raceline_x_throttle": []})
     )
@@ -33,6 +32,7 @@ def get_throttle_braking_race_line_diagram(race_line_width=250):
         y="raceline_x_braking",
         legend_label="Braking",
         line_width=5,
+        alpha=0.85,
         color="red",
         source=ColumnDataSource(data={"raceline_z_braking": [], "raceline_x_braking": []})
     )
@@ -42,8 +42,12 @@ def get_throttle_braking_race_line_diagram(race_line_width=250):
         y="raceline_x_coasting",
         legend_label="Coasting",
         line_width=5,
+        alpha=0.85,
         color="blue",
         source=ColumnDataSource(data={"raceline_z_coasting": [], "raceline_x_coasting": []})
     )
+
+    # FIXME: Does not work
+    s_race_line.legend.visible = False
 
     return s_race_line, throttle_line, breaking_line, coasting_line
