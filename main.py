@@ -32,157 +32,6 @@ from gt7helper import (
 from gt7lap import Lap
 
 
-def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
-    width: int,
-) -> tuple[Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
-    tooltips = [
-        ("index", "$index"),
-        ("value", "$y"),
-        ("Speed", "@speed{0} kph"),
-        ("Throttle", "@throttle%"),
-        ("Brake", "@brake%"),
-        ("Coast", "@coast%"),
-        ("Distance", "@distance{0} m"),
-    ]
-
-    tooltips_timedelta = [
-        ("index", "$index"),
-        ("timedelta", "@timedelta{0} ms"),
-        ("reference", "@reference{0} ms"),
-        ("comparison", "@comparison{0} ms"),
-    ]
-    colors = ["blue", "magenta", "green"]
-    legends = ["Last Lap", "Reference Lap", "Median Lap"]
-
-    f_speed = figure(
-        title="Last, Reference, Median",
-        y_axis_label="Speed",
-        width=width,
-        height=250,
-        tooltips=tooltips,
-        active_drag="box_zoom",
-    )
-
-    f_time_diff = figure(
-        title="Time Diff - Last, Reference",
-        x_range=f_speed.x_range,
-        y_axis_label="Time / Diff",
-        width=width,
-        height=int(f_speed.height / 2),
-        tooltips=tooltips_timedelta,
-        active_drag="box_zoom",
-    )
-
-    f_throttle = figure(
-        x_range=f_speed.x_range,
-        y_axis_label="Throttle",
-        width=width,
-        height=int(f_speed.height / 2),
-        tooltips=tooltips,
-        active_drag="box_zoom",
-    )
-    f_braking = figure(
-        x_range=f_speed.x_range,
-        y_axis_label="Braking",
-        width=width,
-        height=int(f_speed.height / 2),
-        tooltips=tooltips,
-        active_drag="box_zoom",
-    )
-
-    f_coasting = figure(
-        x_range=f_speed.x_range,
-        y_axis_label="Coasting",
-        width=width,
-        height=int(f_speed.height / 2),
-        tooltips=tooltips,
-        active_drag="box_zoom",
-    )
-
-    f_speed.toolbar.autohide = True
-
-    span_zero_time_diff = bokeh.models.Span(
-        location=0,
-        dimension="width",
-        line_color="black",
-        line_dash="dashed",
-        line_width=1,
-    )
-    f_time_diff.add_layout(span_zero_time_diff)
-
-    f_time_diff.toolbar.autohide = True
-
-    f_throttle.xaxis.visible = False
-    f_throttle.toolbar.autohide = True
-
-    f_braking.xaxis.visible = False
-    f_braking.toolbar.autohide = True
-
-    f_coasting.xaxis.visible = False
-    f_coasting.toolbar.autohide = True
-
-    sources = []
-
-    time_diff_source = ColumnDataSource(data={"distance": [], "timedelta": []})
-    f_time_diff.line(
-        x="distance",
-        y="timedelta",
-        source=time_diff_source,
-        line_width=1,
-        color="blue",
-        line_alpha=1,
-    )
-    sources.append(time_diff_source)
-
-    for color, legend in zip(colors, legends):
-        source = ColumnDataSource(data=dummy_data)
-        sources.append(source)
-
-        f_speed.line(
-            x="distance",
-            y="speed",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-        )
-        f_throttle.line(
-            x="distance",
-            y="throttle",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-        )
-        f_braking.line(
-            x="distance",
-            y="brake",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-        )
-        f_coasting.line(
-            x="distance",
-            y="coast",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-        )
-
-    f_speed.legend.click_policy = "hide"
-    f_throttle.legend.click_policy = f_speed.legend.click_policy
-    f_braking.legend.click_policy = f_speed.legend.click_policy
-    f_coasting.legend.click_policy = f_speed.legend.click_policy
-
-    return f_time_diff, f_speed, f_throttle, f_braking, f_coasting, sources
-
-
 def update_connection_info():
     div_connection_info.text = ""
     if app.gt7comm.is_connected():
@@ -260,7 +109,7 @@ def update_race_lines(laps):
 
         race_lines[i].title.text = "Lap - %d %s" % (len(laps)-i, lap.title)
 
-        lap_data = gt7helper.get_data_from_lap(lap, distance_mode=True)
+        lap_data = gt7helper.get_data_dict_from_lap(lap, distance_mode=True)
         race_lines_data[i][0].data_source.data = lap_data
         race_lines_data[i][1].data_source.data = lap_data
         race_lines_data[i][2].data_source.data = lap_data
@@ -324,15 +173,15 @@ def update_speed_velocity_graph(laps: List[Lap]):
         laps, reference_lap_selected=g_reference_lap_selected
     )
 
-    last_lap_data = gt7helper.get_data_from_lap(last_lap, distance_mode=True)
-    reference_lap_data = gt7helper.get_data_from_lap(reference_lap, distance_mode=True)
+    last_lap_data = gt7helper.get_data_dict_from_lap(last_lap, distance_mode=True)
+    reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
 
     if reference_lap and len(reference_lap.data_speed) > 0:
         data_sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
     data_sources[1].data = last_lap_data
     data_sources[2].data = reference_lap_data
-    data_sources[3].data = gt7helper.get_data_from_lap(median_lap, distance_mode=True)
+    data_sources[3].data = gt7helper.get_data_dict_from_lap(median_lap, distance_mode=True)
 
     last_lap_race_line.data_source.data = last_lap_data
     reference_lap_race_line.data_source.data = reference_lap_data
@@ -451,7 +300,29 @@ def update_tuning_info():
         app.gt7comm.session.min_body_height,
     )
 
+def get_race_lines_layout(number_of_race_lines):
+    """
+    This function returns the race lines layout.
+    It returns a grid of 3x3 race lines. Red is braking.
+    Green is throttling.
+    """
+    i = 0
+    race_line_diagrams = []
+    race_lines_data = []
 
+    while i < number_of_race_lines:
+        s_race_line, throttle_line, breaking_line, coasting_line = gt7diagrams.get_throttle_braking_race_line_diagram(race_line_width=500)
+        race_line_diagrams.append(s_race_line)
+        race_lines_data.append([throttle_line, breaking_line, coasting_line])
+        i+=1
+
+    l = layout(children=[
+        [race_line_diagrams[0], race_line_diagrams[1], race_line_diagrams[2]],
+        [race_line_diagrams[3], race_line_diagrams[4], race_line_diagrams[5]],
+        [race_line_diagrams[6], race_line_diagrams[7], race_line_diagrams[8]],
+    ])
+
+    return l, race_line_diagrams, race_lines_data
 
 app = bokeh.application.Application
 
@@ -479,10 +350,6 @@ else:
     else:
         # Existing thread has connection, proceed
         pass
-
-
-# Set empty data for avoiding warnings about missing columns
-dummy_data = gt7helper.get_data_from_lap(Lap(), distance_mode=True)
 
 source = ColumnDataSource(
     gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
@@ -517,7 +384,7 @@ columns = [
     f_braking,
     f_coasting,
     data_sources,
-) = get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
+) = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
 t_lap_times = DataTable(
     source=source, columns=columns, index_position=None, css_classes=["lap_times_table"]
@@ -601,24 +468,6 @@ l1 = layout(
 )
 
 
-def get_race_lines_layout(number_of_race_lines):
-    i = 0
-    race_line_diagrams = []
-    race_lines_data = []
-
-    while i < number_of_race_lines:
-        s_race_line, throttle_line, breaking_line, coasting_line = gt7diagrams.get_throttle_braking_race_line_diagram(race_line_width=500)
-        race_line_diagrams.append(s_race_line)
-        race_lines_data.append([throttle_line, breaking_line, coasting_line])
-        i+=1
-
-    l = layout(children=[
-        [race_line_diagrams[0], race_line_diagrams[1], race_line_diagrams[2]],
-        [race_line_diagrams[3], race_line_diagrams[4], race_line_diagrams[5]],
-        [race_line_diagrams[6], race_line_diagrams[7], race_line_diagrams[8]],
-    ])
-
-    return l, race_line_diagrams, race_lines_data
 
 
 l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=9)
@@ -628,6 +477,7 @@ l3 = layout(
     sizing_mode="stretch_width",
 )
 
+#  Setup the tabs
 tab1 = Panel(child=l1, title="Get Faster")
 tab2 = Panel(child=l2, title="Race Lines")
 tab3 = Panel(child=l3, title="Race")
