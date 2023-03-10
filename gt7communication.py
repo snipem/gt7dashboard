@@ -1,3 +1,4 @@
+import datetime
 import socket
 import struct
 import time
@@ -328,6 +329,8 @@ class GT7Communication(Thread):
         self.current_lap.lap_live_time = (self.current_lap.lap_ticks * 1. / 60.) - (self.session.special_packet_time / 1000.)
 
         self.current_lap.data_time.append(self.current_lap.lap_live_time)
+
+        self.current_lap.car_id = data.car_id
 
     def finish_lap(self, manual=False):
         """
