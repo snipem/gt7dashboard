@@ -132,3 +132,5 @@ dmypy.json
 .idea
 
 session.csv
+
+test_out
