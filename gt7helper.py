@@ -535,7 +535,9 @@ def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
 
 
 
-def get_data_from_lap(lap: Lap, distance_mode: bool):
+    return ""
+
+
 def get_data_dict_from_lap(lap: Lap, distance_mode: bool) -> dict[str, list]:
     # Use empty lap if lap is none
     if not lap:
