@@ -156,6 +156,7 @@ class GT7Communication(Thread):
     def __init__(self, playstation_ip):
         # Thread control
         Thread.__init__(self)
+        self._shall_run = True
         self._shall_restart = False
         # True will always quit with the main process
         self.daemon = True
@@ -170,8 +171,15 @@ class GT7Communication(Thread):
         self.laps = []
         self.last_data = GTData(None)
 
+        # This is used to record race data in any case. This will override the "in_race" flag.
+        # When recording data. Useful when recording replays.
+        self.always_record_data = False
+
+
+    def stop(self):
+        self._shall_run = False
     def run(self):
-        while True:
+        while self._shall_run:
             s = None
             try:
                 self._shall_restart = False
@@ -182,7 +190,7 @@ class GT7Communication(Thread):
                 previous_lap = -1
                 package_id = 0
                 package_nr = 0
-                while not self._shall_restart:
+                while not self._shall_restart and self._shall_run:
                     try:
                         data, address = s.recvfrom(4096)
                         package_nr = package_nr + 1
@@ -201,7 +209,7 @@ class GT7Communication(Thread):
                             if curlap == 0:
                                 self.session.special_packet_time = 0
 
-                            if curlap > 0 and self.last_data.in_race:
+                            if curlap > 0 and (self.last_data.in_race or self.always_record_data):
 
                                 if curlap != previous_lap:
                                     # New lap
@@ -268,7 +276,7 @@ class GT7Communication(Thread):
 
     def _log_data(self, data):
 
-        if not data.in_race:
+        if not (data.in_race or self.always_record_data):
             return
 
         if data.is_paused:
