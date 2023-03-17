@@ -6,39 +6,40 @@ import gt7helper
 from gt7lap import Lap
 
 
-def get_throttle_braking_race_line_diagram(race_line_width=250):
-
+def get_throttle_braking_race_line_diagram():
     # TODO Make this work, tooltips just show breakpoint
-    race_line_tooltips = [("index", "$index"), ("Breakpoint", "")]
+    race_line_tooltips = [("index", "$index")]
     s_race_line = figure(
         title="Race Line",
-        x_axis_label="z",
-        y_axis_label="x",
         match_aspect=True,
-        width=race_line_width,
-        height=race_line_width,
-        active_drag="box_zoom",
+        active_scroll="wheel_zoom",
         tooltips=race_line_tooltips,
     )
     s_race_line.toolbar.autohide = True
+
+    s_race_line.axis.visible = False
+    s_race_line.xgrid.visible = False
+    s_race_line.ygrid.visible = False
 
     throttle_line = s_race_line.line(
         x="raceline_z_throttle",
         y="raceline_x_throttle",
         legend_label="Throttle",
         line_width=5,
-        alpha=0.85,
         color="green",
-        source=ColumnDataSource(data={"raceline_z_throttle": [], "raceline_x_throttle": []})
+        source=ColumnDataSource(
+            data={"raceline_z_throttle": [], "raceline_x_throttle": []}
+        ),
     )
     breaking_line = s_race_line.line(
         x="raceline_z_braking",
         y="raceline_x_braking",
         legend_label="Braking",
         line_width=5,
-        alpha=0.85,
         color="red",
-        source=ColumnDataSource(data={"raceline_z_braking": [], "raceline_x_braking": []})
+        source=ColumnDataSource(
+            data={"raceline_z_braking": [], "raceline_x_braking": []}
+        ),
     )
 
     coasting_line = s_race_line.line(
@@ -46,18 +47,65 @@ def get_throttle_braking_race_line_diagram(race_line_width=250):
         y="raceline_x_coasting",
         legend_label="Coasting",
         line_width=5,
-        alpha=0.85,
         color="blue",
-        source=ColumnDataSource(data={"raceline_z_coasting": [], "raceline_x_coasting": []})
+        source=ColumnDataSource(
+            data={"raceline_z_coasting": [], "raceline_x_coasting": []}
+        ),
+    )
+
+    # Reference Lap
+
+    reference_throttle_line = s_race_line.line(
+        x="raceline_z_throttle",
+        y="raceline_x_throttle",
+        legend_label="Throttle",
+        line_width=15,
+        alpha=0.3,
+        color="green",
+        source=ColumnDataSource(
+            data={"raceline_z_throttle": [], "raceline_x_throttle": []}
+        ),
+    )
+    reference_breaking_line = s_race_line.line(
+        x="raceline_z_braking",
+        y="raceline_x_braking",
+        legend_label="Braking",
+        line_width=15,
+        alpha=0.3,
+        color="red",
+        source=ColumnDataSource(
+            data={"raceline_z_braking": [], "raceline_x_braking": []}
+        ),
+    )
+
+    reference_coasting_line = s_race_line.line(
+        x="raceline_z_coasting",
+        y="raceline_x_coasting",
+        legend_label="Coasting",
+        line_width=15,
+        alpha=0.3,
+        color="blue",
+        source=ColumnDataSource(
+            data={"raceline_z_coasting": [], "raceline_x_coasting": []}
+        ),
     )
 
     # FIXME: Does not work
     s_race_line.legend.visible = False
 
-    return s_race_line, throttle_line, breaking_line, coasting_line
+    return (
+        s_race_line,
+        throttle_line,
+        breaking_line,
+        coasting_line,
+        reference_throttle_line,
+        reference_breaking_line,
+        reference_coasting_line,
+    )
+
 
 def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
-        width: int,
+    width: int,
 ) -> tuple[Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
     """
     Returns figures for time-diff, speed, throttling, braking and coasting.
@@ -168,45 +216,45 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     dummy_data = gt7helper.get_data_dict_from_lap(Lap(), distance_mode=True)
 
     for color, legend in zip(colors, legends):
-            source = ColumnDataSource(data=dummy_data)
-            sources.append(source)
+        source = ColumnDataSource(data=dummy_data)
+        sources.append(source)
 
-            f_speed.line(
-                x="distance",
-                y="speed",
-                source=source,
-                legend_label=legend,
-                line_width=1,
-                color=color,
-                line_alpha=1,
-            )
-            f_throttle.line(
-                x="distance",
-                y="throttle",
-                source=source,
-                legend_label=legend,
-                line_width=1,
-                color=color,
-                line_alpha=1,
-            )
-            f_braking.line(
-                x="distance",
-                y="brake",
-                source=source,
-                legend_label=legend,
-                line_width=1,
-                color=color,
-                line_alpha=1,
-            )
-            f_coasting.line(
-                x="distance",
-                y="coast",
-                source=source,
-                legend_label=legend,
-                line_width=1,
-                color=color,
-                line_alpha=1,
-            )
+        f_speed.line(
+            x="distance",
+            y="speed",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
+        f_throttle.line(
+            x="distance",
+            y="throttle",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
+        f_braking.line(
+            x="distance",
+            y="brake",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
+        f_coasting.line(
+            x="distance",
+            y="coast",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+        )
 
     f_speed.legend.click_policy = "hide"
     f_throttle.legend.click_policy = f_speed.legend.click_policy

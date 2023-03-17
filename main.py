@@ -97,22 +97,28 @@ def update_fuel_map(step):
     div_fuel_map.text = table
 
 
-def update_race_lines(laps):
+def update_race_lines(laps: List[Lap], reference_lap: Lap):
     """
     This function updates the race lines on the second tab with the amount of laps
     that the race line tab can hold
     """
     global race_lines, race_lines_data
 
-    for i, lap in enumerate(laps[:len(race_lines)]):
-        print("Updating Race Line for Lap %d - %s" % (len(laps)-i, lap.title))
+    reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
 
-        race_lines[i].title.text = "Lap - %d %s" % (len(laps)-i, lap.title)
+    for i, lap in enumerate(laps[:len(race_lines)]):
+        print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
+
+        race_lines[i].title.text = "Lap %d - %s, Reference Lap: %s" % (len(laps) - i, lap.title, reference_lap.title)
 
         lap_data = gt7helper.get_data_dict_from_lap(lap, distance_mode=True)
         race_lines_data[i][0].data_source.data = lap_data
         race_lines_data[i][1].data_source.data = lap_data
         race_lines_data[i][2].data_source.data = lap_data
+
+        race_lines_data[i][3].data_source.data = reference_lap_data
+        race_lines_data[i][4].data_source.data = reference_lap_data
+        race_lines_data[i][5].data_source.data = reference_lap_data
 
         race_lines[i].legend.visible = False
         race_lines[i].axis.visible = False
@@ -165,7 +171,7 @@ def update_lap_change(step):
     update_time_table(laps)
     update_reference_lap_select(laps)
     update_speed_velocity_graph(laps)
-    update_race_lines(laps)
+    update_race_lines(laps, reference_lap)
 
 
     g_laps_stored = laps.copy()
@@ -321,17 +327,17 @@ def get_race_lines_layout(number_of_race_lines):
     race_line_diagrams = []
     race_lines_data = []
 
+    sizing_mode = "scale_height"
+
     while i < number_of_race_lines:
-        s_race_line, throttle_line, breaking_line, coasting_line = gt7diagrams.get_throttle_braking_race_line_diagram(race_line_width=500)
+        s_race_line, throttle_line, breaking_line, coasting_line, reference_throttle_line, reference_breaking_line, reference_coasting_line = gt7diagrams.get_throttle_braking_race_line_diagram()
+        s_race_line.sizing_mode = sizing_mode
         race_line_diagrams.append(s_race_line)
-        race_lines_data.append([throttle_line, breaking_line, coasting_line])
+        race_lines_data.append([throttle_line, breaking_line, coasting_line, reference_throttle_line, reference_breaking_line, reference_coasting_line])
         i+=1
 
-    l = layout(children=[
-        [race_line_diagrams[0], race_line_diagrams[1], race_line_diagrams[2]],
-        [race_line_diagrams[3], race_line_diagrams[4], race_line_diagrams[5]],
-        [race_line_diagrams[6], race_line_diagrams[7], race_line_diagrams[8]],
-    ])
+    l = layout(children=race_line_diagrams)
+    l.sizing_mode = sizing_mode
 
     return l, race_line_diagrams, race_lines_data
 
@@ -486,7 +492,7 @@ l1 = layout(
 
 
 
-l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=9)
+l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=1)
 
 l3 = layout(
     [[reset_button, save_button], [t_lap_times], [div_fuel_map]],
