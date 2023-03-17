@@ -29,7 +29,7 @@ class TestHelper(unittest.TestCase):
             reference_throttle_line_data,
             reference_breaking_line_data,
             reference_coasting_line_data,
-        ) = get_throttle_braking_race_line_diagram(race_line_width=600)
+        ) = get_throttle_braking_race_line_diagram()
 
         lap_data = gt7helper.get_data_dict_from_lap(
             self.test_laps[1], distance_mode=True
