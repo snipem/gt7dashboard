@@ -12,7 +12,7 @@ from bokeh.models import (
     TableColumn,
     DataTable,
     Button,
-    Div,
+    Div, CheckboxGroup,
 )
 from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
@@ -123,7 +123,11 @@ def update_race_lines(laps):
 
 @linear()
 def update_lap_change(step):
-    # time, x, y, z = from_csv(reader).next()
+    """
+    Is called whenever a lap changes.
+    It detects if the telemetry date retrieved is the same as the data displayed.
+    If true, it updates all the visual elements.
+    """
     global g_laps_stored
     global g_session_stored
     global g_connection_status_stored
@@ -228,6 +232,13 @@ def reset_button_handler(event):
     div_reference_lap.text = ""
     div_last_lap.text = ""
     app.gt7comm.reset()
+def always_record_checkbox_handler(event, old, new):
+    if len(new) == 2:
+        print("Set always record data to True")
+        app.gt7comm.always_record_data = True
+    else:
+        print("Set always record data to False")
+        app.gt7comm.always_record_data = False
 
 
 def log_lap_button_handler(event):
@@ -453,9 +464,14 @@ div_connection_info = Div(width=30, height=30)
 
 div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
 
+LABELS = ["Always Record"]
+
+checkbox_group = CheckboxGroup(labels=LABELS, active=[1])
+checkbox_group.on_change("active", always_record_checkbox_handler)
+
 l1 = layout(
     children=[
-        [div_connection_info],
+        [div_connection_info, checkbox_group],
         [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
         [f_speed, s_race_line],
         [f_throttle, [[div_last_lap, div_reference_lap]]],

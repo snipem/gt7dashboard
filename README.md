@@ -23,8 +23,13 @@ gt7dashboard is a live dashboard for Gran Turismo 7. Based on the recent discove
 * List off all recent laps with additional metrics, measured in percentage * 1000 for better readability
 * Additional data for tuning such as Max Speed and Min Body Height
 * Ability to Save current laps and reset all laps
+* Race Lines for the most recent laps depicting throttling (green), braking (red) and coasting (blue)
 * Additional "Race view" with only lap view and fuel map in a bigger font size
 * Optional Brake Points (slow) when setting `GT7_ADD_BRAKEPOINTS=true`
+
+### Get Telemetry of a Demonstration lap or Replay
+
+Enable the "Always Record" checkbox to always record replays. Otherwise will only the laps you are actually driving are recorded.
 
 ## How to run
 
@@ -58,7 +63,3 @@ There is a `Dockerfile` available. This is a sample `docker-compose` configurati
 ```
 
 
-
-## Get Telemetry of a Demonstration lap or Replay
-
-Since Update 1.23 telemetry data is no longer logged for replays.
