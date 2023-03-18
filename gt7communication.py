@@ -1,4 +1,5 @@
 import datetime
+import json
 import socket
 import struct
 import time
@@ -140,6 +141,9 @@ class GTData:
         # struct.unpack('f', ddata[0xE8:0xE8+4])[0]			# 0xE8 = ???
         # struct.unpack('f', ddata[0xEC:0xEC+4])[0]			# 0xEC = ???
         # struct.unpack('f', ddata[0xF0:0xF0+4])[0]			# 0xF0 = ???
+
+    def to_json(self):
+        return json.dumps(self, indent=4, sort_keys=True, default=str)
 
 class Session():
     def __init__(self):
