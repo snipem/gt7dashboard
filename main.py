@@ -105,8 +105,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     global race_lines, race_lines_data
 
 
-    if reference_lap:
-        reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
+    reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
 
     for i, lap in enumerate(laps[:len(race_lines)]):
         print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
@@ -118,10 +117,9 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
         race_lines_data[i][1].data_source.data = lap_data
         race_lines_data[i][2].data_source.data = lap_data
 
-        if reference_lap:
-            race_lines_data[i][3].data_source.data = reference_lap_data
-            race_lines_data[i][4].data_source.data = reference_lap_data
-            race_lines_data[i][5].data_source.data = reference_lap_data
+        race_lines_data[i][3].data_source.data = reference_lap_data
+        race_lines_data[i][4].data_source.data = reference_lap_data
+        race_lines_data[i][5].data_source.data = reference_lap_data
 
         race_lines[i].legend.visible = False
         race_lines[i].axis.visible = False
@@ -157,7 +155,7 @@ def update_lap_change(step):
     if laps == g_laps_stored and not g_telemetry_update_needed:
         return
 
-    reference_lap = None
+    reference_lap = Lap()
 
     if len(laps) > 0:
 
