@@ -1,3 +1,6 @@
+import gt7helper
+
+
 class Lap:
     def __init__(self):
         # Nice title for lap
@@ -48,4 +51,19 @@ class Lap:
             self.number,
             self.title,
             len(self.data_speed),
+        )
+
+    def get_speed_peaks_and_valleys(self):
+        (
+            peak_speed_data_x,
+            peak_speed_data_y,
+            valley_speed_data_x,
+            valley_speed_data_y,
+        ) = gt7helper.get_speed_peaks_and_valleys(self)
+
+        return (
+            peak_speed_data_x,
+            peak_speed_data_y,
+            valley_speed_data_x,
+            valley_speed_data_y,
         )

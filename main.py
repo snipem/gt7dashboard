@@ -281,7 +281,7 @@ def load_reference_lap_handler(attr, old, new):
     update_lap_change()
 
 
-def update_speed_peak_and_valley_diagram(div, lap, title):
+def update_speed_peak_and_valley_diagram(div, lap: Lap, title):
     table = """<table>"""
 
     (
@@ -289,7 +289,7 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
         peak_speed_data_y,
         valley_speed_data_x,
         valley_speed_data_y,
-    ) = get_speed_peaks_and_valleys(lap)
+    ) = lap.get_speed_peaks_and_valleys()
 
     table += '<tr><th colspan="3">%s - %s</th></tr>' % (title, lap.title)
 

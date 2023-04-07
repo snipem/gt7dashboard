@@ -3,8 +3,10 @@ import pickle
 import unittest
 
 from bokeh.layouts import layout
+from bokeh.models import Label
 from bokeh.plotting import save
 
+import gt7diagrams
 import gt7helper
 from gt7diagrams import (
     get_throttle_braking_race_line_diagram,
@@ -31,11 +33,14 @@ class TestHelper(unittest.TestCase):
             reference_coasting_line_data,
         ) = get_throttle_braking_race_line_diagram()
 
+        reference_lap = self.test_laps[0]
+        last_lap = self.test_laps[1]
+
         lap_data = gt7helper.get_data_dict_from_lap(
-            self.test_laps[1], distance_mode=True
+            last_lap, distance_mode=True
         )
         reference_lap_data = gt7helper.get_data_dict_from_lap(
-            self.test_laps[0], distance_mode=True
+            reference_lap, distance_mode=True
         )
 
         throttle_line_data.data_source.data = lap_data
@@ -45,6 +50,9 @@ class TestHelper(unittest.TestCase):
         reference_throttle_line_data.data_source.data = reference_lap_data
         reference_breaking_line_data.data_source.data = reference_lap_data
         reference_coasting_line_data.data_source.data = reference_lap_data
+
+        gt7diagrams.add_peaks_and_valleys_to_diagram(race_line, last_lap, reference_lap)
+
 
         out_file = "test_out/test_get_throttle_braking_race_line_diagram.html"
         save(race_line, out_file)

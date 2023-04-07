@@ -1,5 +1,5 @@
 import bokeh
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, Label
 from bokeh.plotting import figure, Figure
 
 import gt7helper
@@ -262,3 +262,45 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     f_coasting.legend.click_policy = f_speed.legend.click_policy
 
     return f_time_diff, f_speed, f_throttle, f_braking, f_coasting, sources
+
+
+def add_peaks_and_valleys_to_diagram(race_line: Figure, last_lap: Lap, reference_lap: Lap):
+
+    remove_all_annotation_text_from_figure(race_line)
+    _add_peaks_and_valley_decorations_for_lap(last_lap, race_line, color="blue", offset=-10)
+    _add_peaks_and_valley_decorations_for_lap(reference_lap, race_line, color="magenta", offset=10)
+
+    # Add peaks and valleys of last lap
+
+
+def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: Figure, color, offset):
+    (peak_speed_data_x,
+     peak_speed_data_y,
+     valley_speed_data_x,
+     valley_speed_data_y) = lap.get_speed_peaks_and_valleys()
+
+    for i in range(len(peak_speed_data_x)):
+
+        # shift 10 px to the left
+        position_x = lap.data_position_z[peak_speed_data_y[i]]
+        position_y = lap.data_position_x[peak_speed_data_y[i]]
+
+        mytext = Label(x=position_x, y=position_y, text_color=color, text_font_size="10pt", x_offset = offset)
+        mytext.text = "▴ %.0f" % peak_speed_data_x[i]
+
+        race_line.add_layout(mytext)
+
+    for i in range(len(valley_speed_data_x)):
+
+        # shift 10 px to the left
+        position_x = lap.data_position_z[valley_speed_data_y[i]]
+        position_y = lap.data_position_x[valley_speed_data_y[i]]
+
+        mytext = Label(x=position_x, y=position_y, text_color=color, text_font_size="10pt", x_offset = offset, text_font_style="italic")
+        mytext.text = "▾ %.0f" % valley_speed_data_x[i]
+
+        race_line.add_layout(mytext)
+
+
+def remove_all_annotation_text_from_figure(f: Figure):
+    f.center = [r for r in f.center if not isinstance(r, Label)]
