@@ -3,7 +3,6 @@ import pickle
 import unittest
 
 from bokeh.layouts import layout
-from bokeh.models import Label
 from bokeh.plotting import save
 
 import gt7diagrams

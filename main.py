@@ -1,5 +1,7 @@
 import copy
+import logging
 import os
+import time
 from typing import List
 
 import bokeh.application
@@ -124,6 +126,8 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
         race_lines[i].legend.visible = False
         race_lines[i].axis.visible = False
 
+        gt7diagrams.add_peaks_and_valleys_to_diagram(race_lines[i], lap, reference_lap)
+
         # Fixme not working
         race_lines[i].x_range = race_lines[0].x_range
 
@@ -171,10 +175,20 @@ def update_lap_change(step):
                     div_reference_lap, reference_lap, "Reference Lap"
                 )
 
+    # set logging level to debug
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    start_time = time.time()
+    logging.debug("Start of updates have %d laps" % len(laps))
+    logging.debug("Updating time table")
     update_time_table(laps)
+    logging.debug("Updating reference lap select")
     update_reference_lap_select(laps)
+    logging.debug("Updating speed velocity graph")
     update_speed_velocity_graph(laps)
+    logging.debug("Updating race lines")
     update_race_lines(laps, reference_lap)
+    logging.debug("End of updates took %ds" % (time.time() - start_time))
 
 
     g_laps_stored = laps.copy()

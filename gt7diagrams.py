@@ -279,6 +279,8 @@ def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: Figure, color
      valley_speed_data_x,
      valley_speed_data_y) = lap.get_speed_peaks_and_valleys()
 
+    decorations = []
+
     for i in range(len(peak_speed_data_x)):
 
         # shift 10 px to the left
@@ -288,7 +290,7 @@ def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: Figure, color
         mytext = Label(x=position_x, y=position_y, text_color=color, text_font_size="10pt", x_offset = offset)
         mytext.text = "▴ %.0f" % peak_speed_data_x[i]
 
-        race_line.add_layout(mytext)
+        decorations.append(mytext)
 
     for i in range(len(valley_speed_data_x)):
 
@@ -299,7 +301,12 @@ def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: Figure, color
         mytext = Label(x=position_x, y=position_y, text_color=color, text_font_size="10pt", x_offset = offset, text_font_style="italic")
         mytext.text = "▾ %.0f" % valley_speed_data_x[i]
 
-        race_line.add_layout(mytext)
+        decorations.append(mytext)
+
+    # This is multiple times faster by adding all texts at once rather than adding them above
+    # With around 20 positions, this took 27s before.
+    # Maybe this has something to do with every text being transmitted over network
+    race_line.center.extend(decorations)
 
 
 def remove_all_annotation_text_from_figure(f: Figure):
