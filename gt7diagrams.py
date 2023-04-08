@@ -1,5 +1,6 @@
 import bokeh
-from bokeh.models import ColumnDataSource, Label
+from bokeh.layouts import row
+from bokeh.models import ColumnDataSource, Label, Legend, LegendItem
 from bokeh.plotting import figure
 
 import gt7helper
@@ -24,7 +25,7 @@ def get_throttle_braking_race_line_diagram():
     throttle_line = s_race_line.line(
         x="raceline_z_throttle",
         y="raceline_x_throttle",
-        legend_label="Throttle",
+        legend_label="Throttle Last Lap",
         line_width=5,
         color="green",
         source=ColumnDataSource(
@@ -34,7 +35,7 @@ def get_throttle_braking_race_line_diagram():
     breaking_line = s_race_line.line(
         x="raceline_z_braking",
         y="raceline_x_braking",
-        legend_label="Braking",
+        legend_label="Braking Last Lap",
         line_width=5,
         color="red",
         source=ColumnDataSource(
@@ -45,7 +46,7 @@ def get_throttle_braking_race_line_diagram():
     coasting_line = s_race_line.line(
         x="raceline_z_coasting",
         y="raceline_x_coasting",
-        legend_label="Coasting",
+        legend_label="Coasting Last Lap",
         line_width=5,
         color="blue",
         source=ColumnDataSource(
@@ -58,7 +59,7 @@ def get_throttle_braking_race_line_diagram():
     reference_throttle_line = s_race_line.line(
         x="raceline_z_throttle",
         y="raceline_x_throttle",
-        legend_label="Throttle",
+        legend_label="Throttle Reference",
         line_width=15,
         alpha=0.3,
         color="green",
@@ -69,7 +70,7 @@ def get_throttle_braking_race_line_diagram():
     reference_breaking_line = s_race_line.line(
         x="raceline_z_braking",
         y="raceline_x_braking",
-        legend_label="Braking",
+        legend_label="Braking Reference",
         line_width=15,
         alpha=0.3,
         color="red",
@@ -81,7 +82,7 @@ def get_throttle_braking_race_line_diagram():
     reference_coasting_line = s_race_line.line(
         x="raceline_z_coasting",
         y="raceline_x_coasting",
-        legend_label="Coasting",
+        legend_label="Coasting Reference",
         line_width=15,
         alpha=0.3,
         color="blue",
@@ -90,8 +91,11 @@ def get_throttle_braking_race_line_diagram():
         ),
     )
 
-    # FIXME: Does not work
-    s_race_line.legend.visible = False
+    s_race_line.legend.visible = True
+
+    s_race_line.add_layout(s_race_line.legend[0], "right")
+
+    s_race_line.legend.click_policy = "hide"
 
     return (
         s_race_line,
@@ -264,12 +268,21 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     return f_time_diff, f_speed, f_throttle, f_braking, f_coasting, sources
 
 
-def add_peaks_and_valleys_to_diagram(race_line: figure, last_lap: Lap, reference_lap: Lap):
-
+def add_peaks_and_valleys_to_diagram(
+    race_line: figure, last_lap: Lap, reference_lap: Lap
+):
     remove_all_annotation_text_from_figure(race_line)
     decorations = []
-    decorations.extend(_add_peaks_and_valley_decorations_for_lap(last_lap, race_line, color="blue", offset=-10))
-    decorations.extend(_add_peaks_and_valley_decorations_for_lap(reference_lap, race_line, color="magenta", offset=10))
+    decorations.extend(
+        _add_peaks_and_valley_decorations_for_lap(
+            last_lap, race_line, color="blue", offset=0
+        )
+    )
+    decorations.extend(
+        _add_peaks_and_valley_decorations_for_lap(
+            reference_lap, race_line, color="magenta", offset=0
+        )
+    )
 
     # This is multiple times faster by adding all texts at once rather than adding them above
     # With around 20 positions, this took 27s before.
@@ -279,36 +292,55 @@ def add_peaks_and_valleys_to_diagram(race_line: figure, last_lap: Lap, reference
     # Add peaks and valleys of last lap
 
 
-def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: figure, color, offset):
-    (peak_speed_data_x,
-     peak_speed_data_y,
-     valley_speed_data_x,
-     valley_speed_data_y) = lap.get_speed_peaks_and_valleys()
+def _add_peaks_and_valley_decorations_for_lap(
+    lap: Lap, race_line: figure, color, offset
+):
+    (
+        peak_speed_data_x,
+        peak_speed_data_y,
+        valley_speed_data_x,
+        valley_speed_data_y,
+    ) = lap.get_speed_peaks_and_valleys()
 
     decorations = []
 
     for i in range(len(peak_speed_data_x)):
-
         # shift 10 px to the left
         position_x = lap.data_position_z[peak_speed_data_y[i]]
         position_y = lap.data_position_x[peak_speed_data_y[i]]
 
-        mytext = Label(x=position_x, y=position_y, text_color=color, text_font_size="10pt", x_offset = offset)
-        mytext.text = "▴ %.0f" % peak_speed_data_x[i]
+        mytext = Label(
+            x=position_x,
+            y=position_y,
+            text_color=color,
+            text_font_size="10pt",
+            text_font_style="bold",
+            x_offset=offset,
+            background_fill_color="white",
+            background_fill_alpha=0.75,
+        )
+        mytext.text = "▴%.0f" % peak_speed_data_x[i]
 
         decorations.append(mytext)
 
     for i in range(len(valley_speed_data_x)):
-
-        # shift 10 px to the left
         position_x = lap.data_position_z[valley_speed_data_y[i]]
         position_y = lap.data_position_x[valley_speed_data_y[i]]
 
-        mytext = Label(x=position_x, y=position_y, text_color=color, text_font_size="10pt", x_offset = offset, text_font_style="italic")
-        mytext.text = "▾ %.0f" % valley_speed_data_x[i]
+        mytext = Label(
+            x=position_x,
+            y=position_y,
+            text_color=color,
+            text_font_size="10pt",
+            x_offset=offset,
+            text_font_style="bold",
+            background_fill_color="white",
+            background_fill_alpha=0.75,
+            text_align="right",
+        )
+        mytext.text = "%.0f▾" % valley_speed_data_x[i]
 
         decorations.append(mytext)
-
 
     return decorations
 

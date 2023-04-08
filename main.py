@@ -121,7 +121,6 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
         race_lines_data[i][4].data_source.data = reference_lap_data
         race_lines_data[i][5].data_source.data = reference_lap_data
 
-        race_lines[i].legend.visible = False
         race_lines[i].axis.visible = False
 
         gt7diagrams.add_peaks_and_valleys_to_diagram(race_lines[i], lap, reference_lap)
@@ -142,6 +141,8 @@ def update_lap_change(step):
     global g_connection_status_stored
     global g_telemetry_update_needed
     global g_reference_lap_selected
+
+    update_start_time = time.time()
 
     laps = app.gt7comm.get_laps()
 
@@ -197,6 +198,8 @@ def update_lap_change(step):
     logging.debug("Updating race lines")
     update_race_lines(laps, reference_lap)
     logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    logging.debug("Whole Update took %dms" % ((time.time() - update_start_time) * 1000))
 
 
     g_laps_stored = laps.copy()
