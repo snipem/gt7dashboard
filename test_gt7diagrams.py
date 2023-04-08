@@ -68,6 +68,7 @@ class TestHelper(unittest.TestCase):
             f_throttle,
             f_braking,
             f_coasting,
+            f_tires,
             sources,
         ) = get_throttle_velocity_diagram_for_reference_lap_and_last_lap(600)
 
@@ -95,6 +96,7 @@ class TestHelper(unittest.TestCase):
                 [f_throttle],
                 [f_braking],
                 [f_coasting],
+                [f_tires],
             ),
             filename=out_file,
         )

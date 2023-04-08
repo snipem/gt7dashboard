@@ -428,6 +428,7 @@ columns = [
     f_throttle,
     f_braking,
     f_coasting,
+    f_tires,
     data_sources,
 ) = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
@@ -511,6 +512,7 @@ l1 = layout(
         [f_throttle, [[div_last_lap, div_reference_lap]]],
         [f_braking],
         [f_coasting],
+        [f_tires],
         [t_lap_times, div_fuel_map],
         [div_tuning_info],
         [reset_button, save_button, select_title, select],
