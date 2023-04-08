@@ -1,3 +1,4 @@
+import csv
 import itertools
 import os
 import pickle
@@ -533,7 +534,21 @@ def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
 
     return return_y, return_x, return_z
 
+CARS_CSV_FILENAME = "data/cars.csv"
+# MAKER_CSV_FILENAME = "data/makers.csv"
 
+def get_car_name_for_car_id(car_id: str) -> str:
+    # check if file exists
+    if not os.path.isfile(CARS_CSV_FILENAME):
+        logging.info("Could not find file %s" % CARS_CSV_FILENAME)
+        return ""
+
+    # read csv from file
+    with open(CARS_CSV_FILENAME, 'r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for row in csv_reader:
+            if row[0] == car_id:
+                return row[1]
 
     return ""
 

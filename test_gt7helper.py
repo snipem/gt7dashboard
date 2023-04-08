@@ -248,7 +248,6 @@ class TestLaps(unittest.TestCase):
         self.assertEqual([253, 1236, 2138, 3006, 4293], peaks)
         self.assertEqual([565, 1746, 2387, 3380, 4808], valleys)
 
-
     def test_get_data_from_lap(self):
         path = os.path.join(os.getcwd(), 'test_data', 'tsukuba_2laps_rain_first_is_best.pickle')
         with open(path, 'rb') as f:
@@ -256,3 +255,16 @@ class TestLaps(unittest.TestCase):
 
         lap = gt7helper.get_data_dict_from_lap(l[0], distance_mode=True)
         print(lap)
+
+
+    def test_get_car_name_for_car_id(self):
+        car_name = gt7helper.get_car_name_for_car_id("1448")
+        self.assertEqual("SILVIA spec-R Aero (S15) '02", car_name)
+
+        non_existing_car_name = gt7helper.get_car_name_for_car_id("89239843984983")
+        self.assertEqual(non_existing_car_name, "")
+
+    def test_get_car_name_for_car_id_when_csv_file_does_not_exist(self):
+        gt7helper.CARS_CSV_FILENAME = "not_existing_file"
+        car_name = gt7helper.get_car_name_for_car_id("1448")
+        self.assertEqual(car_name, "")
