@@ -180,15 +180,26 @@ def update_lap_change(step):
 
     start_time = time.time()
     logging.debug("Start of updates have %d laps" % len(laps))
+
+    start_time = time.time()
     logging.debug("Updating time table")
     update_time_table(laps)
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    start_time = time.time()
     logging.debug("Updating reference lap select")
     update_reference_lap_select(laps)
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    start_time = time.time()
     logging.debug("Updating speed velocity graph")
     update_speed_velocity_graph(laps)
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    start_time = time.time()
     logging.debug("Updating race lines")
     update_race_lines(laps, reference_lap)
-    logging.debug("End of updates took %ds" % (time.time() - start_time))
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
 
 
     g_laps_stored = laps.copy()

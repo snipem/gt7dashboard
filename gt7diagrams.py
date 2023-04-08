@@ -267,8 +267,14 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
 def add_peaks_and_valleys_to_diagram(race_line: Figure, last_lap: Lap, reference_lap: Lap):
 
     remove_all_annotation_text_from_figure(race_line)
-    _add_peaks_and_valley_decorations_for_lap(last_lap, race_line, color="blue", offset=-10)
-    _add_peaks_and_valley_decorations_for_lap(reference_lap, race_line, color="magenta", offset=10)
+    decorations = []
+    decorations.extend(_add_peaks_and_valley_decorations_for_lap(last_lap, race_line, color="blue", offset=-10))
+    decorations.extend(_add_peaks_and_valley_decorations_for_lap(reference_lap, race_line, color="magenta", offset=10))
+
+    # This is multiple times faster by adding all texts at once rather than adding them above
+    # With around 20 positions, this took 27s before.
+    # Maybe this has something to do with every text being transmitted over network
+    race_line.center.extend(decorations)
 
     # Add peaks and valleys of last lap
 
@@ -303,11 +309,9 @@ def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: Figure, color
 
         decorations.append(mytext)
 
-    # This is multiple times faster by adding all texts at once rather than adding them above
-    # With around 20 positions, this took 27s before.
-    # Maybe this has something to do with every text being transmitted over network
-    race_line.center.extend(decorations)
+
+    return decorations
 
 
-def remove_all_annotation_text_from_figure(f: Figure):
+def remove_all_annotation_text_from_figure(f: figure):
     f.center = [r for r in f.center if not isinstance(r, Label)]
