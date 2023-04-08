@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import socket
 import struct
 import time
@@ -234,9 +235,10 @@ class GT7Communication(Thread):
                             if package_nr > 100:
                                 self._send_hb(s)
                                 package_nr = 0
-                    except Exception as e:
+                    except TimeoutError as e:
                         # Handler for package exceptions
-                        print(traceback.format_exc())
+                        logging.info("No connection to %s:%d" % (self.playstation_ip, self.send_port))
+                        # print(traceback.format_exc())
                         self._send_hb(s)
                         package_nr = 0
 

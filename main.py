@@ -14,12 +14,10 @@ from bokeh.models import (
     TableColumn,
     DataTable,
     Button,
-    Div, CheckboxGroup,
+    Div, CheckboxGroup, TabPanel, Tabs,
 )
-from bokeh.models.widgets import Tabs, Panel
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
-from bokeh.plotting.figure import Figure
 
 import gt7communication
 import gt7diagrams
@@ -178,7 +176,6 @@ def update_lap_change(step):
     # set logging level to debug
     logging.getLogger().setLevel(logging.DEBUG)
 
-    start_time = time.time()
     logging.debug("Start of updates have %d laps" % len(laps))
 
     start_time = time.time()
@@ -238,7 +235,7 @@ def update_speed_velocity_graph(laps: List[Lap]):
         update_break_points(reference_lap, s_race_line, "magenta")
 
 
-def update_break_points(lap: Lap, race_line: Figure, color: str):
+def update_break_points(lap: Lap, race_line: figure, color: str):
     brake_points_x, brake_points_y = gt7helper.get_brake_points(lap)
 
     for i, _ in enumerate(brake_points_x):
@@ -528,9 +525,9 @@ l3 = layout(
 )
 
 #  Setup the tabs
-tab1 = Panel(child=l1, title="Get Faster")
-tab2 = Panel(child=l2, title="Race Lines")
-tab3 = Panel(child=l3, title="Race")
+tab1 = TabPanel(child=l1, title="Get Faster")
+tab2 = TabPanel(child=l2, title="Race Lines")
+tab3 = TabPanel(child=l3, title="Race")
 tabs = Tabs(tabs=[tab1, tab2, tab3])
 
 curdoc().add_root(tabs)

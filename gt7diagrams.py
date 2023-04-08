@@ -1,6 +1,6 @@
 import bokeh
 from bokeh.models import ColumnDataSource, Label
-from bokeh.plotting import figure, Figure
+from bokeh.plotting import figure
 
 import gt7helper
 from gt7lap import Lap
@@ -106,7 +106,7 @@ def get_throttle_braking_race_line_diagram():
 
 def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     width: int,
-) -> tuple[Figure, Figure, Figure, Figure, Figure, list[ColumnDataSource]]:
+) -> tuple[figure, figure, figure, figure, figure, list[ColumnDataSource]]:
     """
     Returns figures for time-diff, speed, throttling, braking and coasting.
     All with lines for last lap, best lap and median lap.
@@ -264,7 +264,7 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     return f_time_diff, f_speed, f_throttle, f_braking, f_coasting, sources
 
 
-def add_peaks_and_valleys_to_diagram(race_line: Figure, last_lap: Lap, reference_lap: Lap):
+def add_peaks_and_valleys_to_diagram(race_line: figure, last_lap: Lap, reference_lap: Lap):
 
     remove_all_annotation_text_from_figure(race_line)
     decorations = []
@@ -279,7 +279,7 @@ def add_peaks_and_valleys_to_diagram(race_line: Figure, last_lap: Lap, reference
     # Add peaks and valleys of last lap
 
 
-def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: Figure, color, offset):
+def _add_peaks_and_valley_decorations_for_lap(lap: Lap, race_line: figure, color, offset):
     (peak_speed_data_x,
      peak_speed_data_y,
      valley_speed_data_x,
