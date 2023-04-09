@@ -3,6 +3,7 @@ import pickle
 import unittest
 
 from bokeh.layouts import layout
+from bokeh.models import Div
 from bokeh.plotting import save
 
 import gt7diagrams
@@ -11,6 +12,7 @@ from gt7diagrams import (
     get_throttle_braking_race_line_diagram,
     get_throttle_velocity_diagram_for_reference_lap_and_last_lap,
 )
+from gt7lap import Lap
 
 
 class TestHelper(unittest.TestCase):
@@ -51,7 +53,6 @@ class TestHelper(unittest.TestCase):
         reference_coasting_line_data.data_source.data = reference_lap_data
 
         gt7diagrams.add_peaks_and_valleys_to_diagram(race_line, last_lap, reference_lap)
-
 
         out_file = "test_out/test_get_throttle_braking_race_line_diagram.html"
         save(race_line, out_file)
@@ -104,3 +105,25 @@ class TestHelper(unittest.TestCase):
         # get file size, should be about 5MB
         file_size = os.path.getsize(out_file)
         self.assertAlmostEqual(file_size, 5000000, delta=1000000)
+
+
+    def test_get_fuel_map_html_table(self):
+        d = Div()
+        lap = Lap()
+        lap.fuel_at_start = 100
+        lap.fuel_at_end = 80
+        lap.lap_finish_time = 90 * 1000
+
+        fuel_map_html_table = gt7diagrams.get_fuel_map_html_table(lap)
+        d.text = fuel_map_html_table
+        out_file = "test_out/test_get_fuel_map_html_table.html"
+        save(d, out_file)
+        print("View file for reference at %s" % out_file)
+
+    def test_get_fuel_map_html_table_with_no_consumption(self):
+        d = Div()
+        fuel_map_html_table = gt7diagrams.get_fuel_map_html_table(self.test_laps[0])
+        d.text = fuel_map_html_table
+        out_file = "test_out/test_get_fuel_map_html_table_with_no_consumption.html"
+        save(d, out_file)
+        print("View file for reference at %s" % out_file)

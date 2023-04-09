@@ -62,39 +62,7 @@ def update_fuel_map(step):
         g_stored_fuel_map = last_lap
 
     # TODO Add real live data during a lap
-    fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
-
-    table = (
-        "<table><tr>"
-        "<th title='The fuel level relative to the current one'>Fuel Lvl.</th>"
-        "<th title='Fuel consumed'>Fuel Cons.</th>"
-        "<th title='Laps remaining with this setting'>Laps Rem.</th>"
-        "<th title='Time remaining with this setting' >Time Rem.</th>"
-        "<th title='Time Diff to last lap with this setting'>Time Diff</th></tr>"
-    )
-    for fuel_map in fuel_maps:
-        table += (
-            "<tr id='fuel_map_row_%d'>"
-            "<td style='text-align:center'>%d</td>"
-            "<td style='text-align:center'>%d</td>"
-            "<td style='text-align:center'>%.1f</td>"
-            "<td style='text-align:center'>%s</td>"
-            "<td style='text-align:center'>%s</td>"
-            "</tr>"
-            % (
-                fuel_map.mixture_setting,
-                fuel_map.mixture_setting,
-                fuel_map.fuel_consumed_per_lap,
-                fuel_map.laps_remaining_on_current_fuel,
-                gt7helper.seconds_to_lap_time(
-                    fuel_map.time_remaining_on_current_fuel / 1000
-                ),
-                gt7helper.seconds_to_lap_time(fuel_map.lap_time_diff / 1000),
-            )
-        )
-    table += "</table>"
-    table += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.fuel_at_end
-    div_fuel_map.text = table
+    div_fuel_map.text = gt7diagrams.get_fuel_map_html_table(last_lap)
 
 
 def update_race_lines(laps: List[Lap], reference_lap: Lap):
