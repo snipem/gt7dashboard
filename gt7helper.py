@@ -330,8 +330,7 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
     storage_folder = "data"
     local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
     dt = datetime.now(tz=local_timezone)
-    str_date_time = dt.strftime("%d-%m-%Y_%H.%M.%S")
-    print("Current timestamp", str_date_time)
+    str_date_time = dt.strftime("%Y-%m-%d_%H_%M_%S")
     storage_filename = "laps_%s.pickle" % str_date_time
     Path(storage_folder).mkdir(parents=True, exist_ok=True)
 
