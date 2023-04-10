@@ -13,9 +13,7 @@ deps:
 	pip3 install -r requirements.txt
 
 car_lists:
-	mkdir data || true
-	wget https://raw.githubusercontent.com/ddm999/gt7info/web-new/_data/db/cars.csv -O data/cars.csv
-	wget https://raw.githubusercontent.com/ddm999/gt7info/web-new/_data/db/maker.csv -O data/maker.csv
+	python3 helper/download_cars_csv.py
 
 serve:
 	GT7_PLAYSTATION_IP=192.168.178.119 bokeh serve .
