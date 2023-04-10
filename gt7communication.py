@@ -352,7 +352,7 @@ class GT7Communication(Thread):
         """
 
         if manual:
-            # Manual laps have no time assigned, so take current live time as lap finish time
+            # Manual laps have no time assigned, so take current live time as lap finish time.
             # Finish time is tracked in seconds while live time is tracked in ms
             self.current_lap.lap_finish_time = self.current_lap.lap_live_time * 1000
         else:
@@ -364,7 +364,8 @@ class GT7Communication(Thread):
         self.current_lap.fuel_consumed = self.current_lap.fuel_at_start - self.current_lap.fuel_at_end
         self.current_lap.lap_finish_time = self.current_lap.lap_finish_time
         self.current_lap.title = seconds_to_lap_time(self.current_lap.lap_finish_time / 1000)
-        self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game time table
+        self.current_lap.car_id = self.last_data.car_id
+        self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game timetable
         self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
 
         # Race is not in 0th lap, which is before starting the race.
@@ -374,6 +375,7 @@ class GT7Communication(Thread):
             self.laps.insert(0, self.current_lap)
 
 
+        # Reset current lap with an empty one
         self.current_lap = Lap()
         self.current_lap.fuel_at_start = self.last_data.current_fuel
 
