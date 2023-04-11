@@ -256,7 +256,6 @@ class TestLaps(unittest.TestCase):
         lap = gt7helper.get_data_dict_from_lap(l[0], distance_mode=True)
         print(lap)
 
-
     def test_get_car_name_for_car_id(self):
         car_name = gt7helper.get_car_name_for_car_id(1448)
         self.assertEqual("SILVIA spec-R Aero (S15) '02", car_name)
@@ -268,3 +267,7 @@ class TestLaps(unittest.TestCase):
         gt7helper.CARS_CSV_FILENAME = "not_existing_file"
         car_name = gt7helper.get_car_name_for_car_id(1448)
         self.assertEqual(car_name, "")
+
+
+    def test_get_safe_filename(self):
+        self.assertEqual("Cio_123_98", gt7helper.get_safe_filename("Cio 123 '98"))

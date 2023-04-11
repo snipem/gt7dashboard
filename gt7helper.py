@@ -344,6 +344,10 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
     return path
 
 
+def get_safe_filename(unsafe_filename: str) -> str:
+    return "".join(x for x in unsafe_filename if x.isalnum() or x in "._- ").replace(" ", "_")
+
+
 def human_readable_size(size, decimal_places=3):
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size < 1024.0:
@@ -601,7 +605,7 @@ def get_data_dict_from_lap(lap: Lap, distance_mode: bool) -> dict[str, list]:
 
 
 def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
-    tuples = []
+    tuples = [""] # Use empty first option which is default
     for lapfile in lapfiles:
         tuples.append(tuple((lapfile.path, lapfile.__str__())))
     return tuples
