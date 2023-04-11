@@ -235,9 +235,9 @@ class GT7Communication(Thread):
                             if package_nr > 100:
                                 self._send_hb(s)
                                 package_nr = 0
-                    except TimeoutError as e:
+                    except (OSError, TimeoutError) as e:
                         # Handler for package exceptions
-                        logging.info("No connection to %s:%d" % (self.playstation_ip, self.send_port))
+                        logging.info("No connection to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
                         # print(traceback.format_exc())
                         self._send_hb(s)
                         package_nr = 0
@@ -373,7 +373,6 @@ class GT7Communication(Thread):
         # TODO Correct this comment, this is about Laptime not lap numbers
         if self.current_lap.lap_finish_time > 0:
             self.laps.insert(0, self.current_lap)
-
 
         # Reset current lap with an empty one
         self.current_lap = Lap()
