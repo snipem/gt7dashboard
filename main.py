@@ -78,7 +78,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     for i, lap in enumerate(laps[:len(race_lines)]):
         print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
 
-        race_lines[i].title.text = "Lap %d - %s, Reference Lap: %s" % (len(laps) - i, lap.title, reference_lap.title)
+        race_lines[i].title.text = "Lap %d - %s %s, Reference Lap: %s %s" % (len(laps) - i, lap.title, lap.car_name(), reference_lap.title, reference_lap.car_name())
 
         lap_data = gt7helper.get_data_dict_from_lap(lap, distance_mode=True)
         race_lines_data[i][0].data_source.data = lap_data
@@ -475,8 +475,8 @@ checkbox_group.on_change("active", always_record_checkbox_handler)
 
 l1 = layout(
     children=[
-        [div_connection_info, checkbox_group],
-        [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
+        [div_connection_info, reset_button, save_button, select_title, select],
+        [f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select])],
         [f_speed, s_race_line],
         [f_throttle, [[div_last_lap, div_reference_lap]]],
         [f_braking],
@@ -484,7 +484,6 @@ l1 = layout(
         [f_tires],
         [t_lap_times, div_fuel_map],
         [div_tuning_info],
-        [reset_button, save_button, select_title, select],
     ]
 )
 
