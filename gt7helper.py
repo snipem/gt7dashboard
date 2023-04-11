@@ -319,7 +319,7 @@ def list_lap_files_from_path(root: str):
                 lf.size = os.path.getsize(lf.path)
                 lap_files.append(lf)
 
-    lap_files.sort(key=lambda x: x.path)
+    lap_files.sort(key=lambda x: x.path, reverse=True)
     return lap_files
 
 
@@ -471,6 +471,7 @@ def pd_data_frame_from_lap(
                     "number": lap.number,
                     "time": seconds_to_lap_time(lap.lap_finish_time / 1000),
                     "diff": time_diff,
+                    "car_name": lap.car_name(),
                     "fuelconsumed": "%d" % lap.fuel_consumed,
                     "fullthrottle": "%d"
                                     % (lap.full_throttle_ticks / lap.lap_ticks * 1000),
@@ -539,7 +540,12 @@ def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
 CARS_CSV_FILENAME = "data/cars.csv"
 # MAKER_CSV_FILENAME = "data/makers.csv"
 
-def get_car_name_for_car_id(car_id: str) -> str:
+def get_car_name_for_car_id(car_id: int) -> str:
+
+    # check if variable is int
+    if not isinstance(car_id, int):
+        raise ValueError("car_id must be an integer")
+
     # check if file exists
     if not os.path.isfile(CARS_CSV_FILENAME):
         logging.info("Could not find file %s" % CARS_CSV_FILENAME)
@@ -549,7 +555,7 @@ def get_car_name_for_car_id(car_id: str) -> str:
     with open(CARS_CSV_FILENAME, 'r') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         for row in csv_reader:
-            if row[0] == car_id:
+            if row[0] == str(car_id):
                 return row[1]
 
     return ""

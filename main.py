@@ -78,7 +78,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     for i, lap in enumerate(laps[:len(race_lines)]):
         print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
 
-        race_lines[i].title.text = "Lap %d - %s %s, Reference Lap: %s %s" % (len(laps) - i, lap.title, lap.car_name(), reference_lap.title, reference_lap.car_name())
+        race_lines[i].title.text = "Lap %d - %s (%s), Reference Lap: %s (%s)" % (len(laps) - i, lap.title, lap.car_name(), reference_lap.title, reference_lap.car_name())
 
         lap_data = gt7helper.get_data_dict_from_lap(lap, distance_mode=True)
         race_lines_data[i][0].data_source.data = lap_data
@@ -384,11 +384,12 @@ columns = [
     TableColumn(field="number", title="#"),
     TableColumn(field="time", title="Time"),
     TableColumn(field="diff", title="Diff"),
-    TableColumn(field="fuelconsumed", title="Fuel Consumed"),
-    TableColumn(field="fullthrottle", title="Full Throttle"),
+    TableColumn(field="fuelconsumed", title="Fuel Cons."),
+    TableColumn(field="fullthrottle", title="Full Throt."),
     TableColumn(field="fullbreak", title="Full Break"),
-    TableColumn(field="nothrottle", title="No Throttle"),
+    TableColumn(field="nothrottle", title="Coast"),
     TableColumn(field="tyrespinning", title="Tire Spin"),
+    TableColumn(field="car_name", title="Car"),
 ]
 
 (

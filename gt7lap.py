@@ -70,5 +70,8 @@ class Lap:
             valley_speed_data_y,
         )
 
-    def car_name(self):
-        gt7helper.get_car_name_for_car_id(self.car_id)
+    def car_name(self) -> str:
+        # FIXME Breaking change. Not all log files up to this point have this attribute, remove this later
+        if (not hasattr(self, "car_id")):
+            return "Not logged"
+        return gt7helper.get_car_name_for_car_id(self.car_id)
