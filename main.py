@@ -227,6 +227,7 @@ def update_time_table(laps: List[Lap]):
             laps, best_lap_time=app.gt7comm.session.best_lap
         )
     )
+    # FIXME time table is not updating
     t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
 
@@ -308,7 +309,8 @@ def update_speed_peak_and_valley_diagram(div, lap: Lap, title):
 
 
 def update_tuning_info():
-    div_tuning_info.text = """<p>Max Speed: <b>%d</b> kph</p>
+    div_tuning_info.text = """<h4>Tuning Info</h4>
+    <p>Max Speed: <b>%d</b> kph</p>
     <p>Min Body Height: <b>%d</b> mm</p>""" % (
         app.gt7comm.session.max_speed,
         app.gt7comm.session.min_body_height,
@@ -408,7 +410,7 @@ t_lap_times = DataTable(
 t_lap_times.autosize_mode = "fit_columns"
 # t_lap_times.width = 1000
 t_lap_times.min_height = 20
-t_lap_times.min_width = 630
+t_lap_times.min_width = 950
 
 # Race line
 
@@ -483,8 +485,7 @@ l1 = layout(
         [f_braking],
         [f_coasting],
         [f_tires],
-        [t_lap_times, div_fuel_map],
-        [div_tuning_info],
+        [t_lap_times, div_fuel_map, div_tuning_info],
     ]
 )
 
