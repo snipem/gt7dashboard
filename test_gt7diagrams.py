@@ -52,6 +52,8 @@ class TestHelper(unittest.TestCase):
         reference_breaking_line_data.data_source.data = reference_lap_data
         reference_coasting_line_data.data_source.data = reference_lap_data
 
+        gt7diagrams.add_starting_line_to_diagram(race_line, last_lap)
+
         gt7diagrams.add_peaks_and_valleys_to_diagram(race_line, last_lap, reference_lap)
 
         out_file = "test_out/test_get_throttle_braking_race_line_diagram.html"

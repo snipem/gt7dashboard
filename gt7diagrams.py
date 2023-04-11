@@ -421,3 +421,12 @@ def get_fuel_map_html_table(last_lap):
     table += "</table>"
     table += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.fuel_at_end
     return table
+
+
+def add_starting_line_to_diagram(race_line, last_lap: Lap):
+    if len(last_lap.data_position_z) == 0:
+        return
+
+    x = last_lap.data_position_z[0]
+    y = last_lap.data_position_x[0]
+    race_line.scatter(x, y, marker="dash", color="black", size=20, line_width=5, line_dash="dashed")

@@ -92,6 +92,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
         race_lines[i].axis.visible = False
 
         gt7diagrams.add_peaks_and_valleys_to_diagram(race_lines[i], lap, reference_lap)
+        gt7diagrams.add_starting_line_to_diagram(race_lines[i], lap)
 
         # Fixme not working
         race_lines[i].x_range = race_lines[0].x_range
