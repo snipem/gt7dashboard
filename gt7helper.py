@@ -312,7 +312,7 @@ def list_lap_files_from_path(root: str):
     lap_files = []
     for path, sub_dirs, files in os.walk(root):
         for name in files:
-            if name.endswith(".pickle"):
+            if name.endswith(".laps"):
                 lf = LapFile()
                 lf.name = name
                 lf.path = os.path.join(path, name)
@@ -333,7 +333,7 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
     local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
     dt = datetime.now(tz=local_timezone)
     str_date_time = dt.strftime("%Y-%m-%d_%H_%M_%S")
-    storage_filename = "laps_%s.pickle" % str_date_time
+    storage_filename = "%s_%s.laps" % (str_date_time, get_safe_filename(laps[0].car_name()))
     Path(storage_folder).mkdir(parents=True, exist_ok=True)
 
     path = os.path.join(os.getcwd(), storage_folder, storage_filename)
