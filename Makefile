@@ -16,7 +16,7 @@ car_lists:
 	python3 helper/download_cars_csv.py
 
 serve:
-	GT7_PLAYSTATION_IP=192.168.178.119 bokeh serve .
+	GT7_PLAYSTATION_IP=ps5wifi bokeh serve .
 
 deploy:
 	git push
