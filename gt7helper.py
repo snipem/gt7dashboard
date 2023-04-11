@@ -541,8 +541,7 @@ def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
 
     return return_y, return_x, return_z
 
-CARS_CSV_FILENAME = "data/cars.csv"
-# MAKER_CSV_FILENAME = "data/makers.csv"
+CARS_CSV_FILENAME = "db/cars.csv"
 
 def get_car_name_for_car_id(car_id: int) -> str:
 
