@@ -5,7 +5,7 @@ import gt7communication
 from gt7lap import Lap
 import socket
 
-PLAYSTATION_IP = "192.168.178.119"
+PLAYSTATION_IP = "ps5wifi"
 # # TODO check if this is true
 PLAYSTATION_PORT = 33739
 
