@@ -312,12 +312,14 @@ def list_lap_files_from_path(root: str):
     lap_files = []
     for path, sub_dirs, files in os.walk(root):
         for name in files:
-            lf = LapFile()
-            lf.name = name
-            lf.path = os.path.join(path, name)
-            lf.size = os.path.getsize(lf.path)
-            lap_files.append(lf)
+            if name.endswith(".pickle"):
+                lf = LapFile()
+                lf.name = name
+                lf.path = os.path.join(path, name)
+                lf.size = os.path.getsize(lf.path)
+                lap_files.append(lf)
 
+    lap_files.sort(key=lambda x: x.path)
     return lap_files
 
 
