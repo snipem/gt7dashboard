@@ -35,6 +35,8 @@ class Lap:
         self.fuel_at_start = 0
         self.fuel_at_end = -1
         self.fuel_consumed = -1
+        # Car
+        self.car_id = 0
 
     def __str__(self):
         return "\n %s, %2d, %1.f, %4d, %4d, %4d" % (
@@ -67,3 +69,6 @@ class Lap:
             valley_speed_data_x,
             valley_speed_data_y,
         )
+
+    def car_name(self):
+        gt7helper.get_car_name_for_car_id(self.car_id)
