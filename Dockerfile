@@ -9,6 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ADD https://raw.githubusercontent.com/ddm999/gt7info/web-new/_data/db/cars.csv db/cars.csv
-RUN chmod 644 -r db
+RUN chmod -R 644 db
 
 CMD [ "bokeh", "serve", "." ]
