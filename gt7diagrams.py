@@ -18,6 +18,11 @@ def get_throttle_braking_race_line_diagram():
         active_scroll="wheel_zoom",
         tooltips=race_line_tooltips,
     )
+
+    # We set this to true, since maps appear flipped in the game
+    # compared to their actual coordinates
+    s_race_line.x_range.flipped = True
+
     s_race_line.toolbar.autohide = True
 
     s_race_line.axis.visible = False
