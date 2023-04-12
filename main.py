@@ -428,6 +428,11 @@ s_race_line = figure(
     active_drag="box_zoom",
     tooltips=race_line_tooltips,
 )
+
+# We set this to true, since maps appear flipped in the game
+# compared to their actual coordinates
+s_race_line.x_range.flipped = True
+
 s_race_line.toolbar.autohide = True
 
 last_lap_race_line = s_race_line.line(
