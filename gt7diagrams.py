@@ -21,7 +21,7 @@ def get_throttle_braking_race_line_diagram():
 
     # We set this to true, since maps appear flipped in the game
     # compared to their actual coordinates
-    s_race_line.x_range.flipped = True
+    s_race_line.y_range.flipped = True
 
     s_race_line.toolbar.autohide = True
 
