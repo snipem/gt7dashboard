@@ -388,6 +388,9 @@ def _add_peaks_and_valley_decorations_for_lap(
 def remove_all_annotation_text_from_figure(f: figure):
     f.center = [r for r in f.center if not isinstance(r, Label)]
 
+def remove_all_scatters_from_figure(f: figure):
+    f.renderers = [r for r in f.renderers if not isinstance(r, Scatter)]
+
 def get_fuel_map_html_table(last_lap):
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
     table = (
@@ -431,6 +434,8 @@ def get_fuel_map_html_table(last_lap):
 def add_starting_line_to_diagram(race_line, last_lap: Lap):
     if len(last_lap.data_position_z) == 0:
         return
+
+    remove_all_scatters_from_figure(race_line)
 
     x = last_lap.data_position_x[0]
     y = last_lap.data_position_z[0]
