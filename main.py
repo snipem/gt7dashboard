@@ -23,7 +23,6 @@ import gt7communication
 import gt7diagrams
 import gt7helper
 from gt7helper import (
-    get_speed_peaks_and_valleys,
     load_laps_from_pickle,
     save_laps_to_pickle,
     list_lap_files_from_path,
@@ -98,6 +97,10 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
         race_lines[i].x_range = race_lines[0].x_range
 
 
+def update_header_line(div: Div, last_lap: Lap, reference_lap: Lap):
+    div.text = f"<p><b>Last Lap: {last_lap.title} ({reference_lap.car_name()})<b></p>" \
+               f"<p><b>Reference Lap: {reference_lap.title} ({reference_lap.car_name()})<b></p>"
+
 @linear()
 def update_lap_change(step):
     """
@@ -142,6 +145,8 @@ def update_lap_change(step):
                 update_speed_peak_and_valley_diagram(
                     div_reference_lap, reference_lap, "Reference Lap"
                 )
+
+    update_header_line(div_header_line, last_lap, reference_lap)
 
     # set logging level to debug
     logging.getLogger().setLevel(logging.DEBUG)
@@ -471,10 +476,14 @@ reset_button.on_click(reset_button_handler)
 div_tuning_info = Div(width=200, height=100)
 
 div_last_lap = Div(width=200, height=125)
+div_gt7_dashboard = Div(width=120, height=30)
+div_header_line = Div(width=400, height=30)
 div_reference_lap = Div(width=200, height=125)
 div_connection_info = Div(width=30, height=30)
 
 div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
+
+div_gt7_dashboard.text = f"<a href='https://github.com/snipem/gt7dashboard'>GT7 Dashboard</a>"
 
 LABELS = ["Always Record"]
 
@@ -483,7 +492,7 @@ checkbox_group.on_change("active", always_record_checkbox_handler)
 
 l1 = layout(
     children=[
-        [div_connection_info, reset_button, save_button, select_title, select],
+        [div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select],
         [f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select])],
         [f_speed, s_race_line],
         [f_throttle, [[div_last_lap, div_reference_lap]]],

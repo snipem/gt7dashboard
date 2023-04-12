@@ -73,5 +73,5 @@ class Lap:
     def car_name(self) -> str:
         # FIXME Breaking change. Not all log files up to this point have this attribute, remove this later
         if (not hasattr(self, "car_id")):
-            return "Not logged"
+            return "Car not logged"
         return gt7helper.get_car_name_for_car_id(self.car_id)

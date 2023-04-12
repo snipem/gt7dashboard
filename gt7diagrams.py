@@ -2,7 +2,7 @@ from typing import Tuple, List
 
 import bokeh
 from bokeh.layouts import row
-from bokeh.models import ColumnDataSource, Label, Legend, LegendItem
+from bokeh.models import ColumnDataSource, Label, Legend, LegendItem, Scatter
 from bokeh.plotting import figure
 
 import gt7helper
