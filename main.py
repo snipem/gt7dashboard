@@ -483,7 +483,7 @@ div_connection_info = Div(width=30, height=30)
 
 div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
 
-div_gt7_dashboard.text = f"<a href='https://github.com/snipem/gt7dashboard'>GT7 Dashboard</a>"
+div_gt7_dashboard.text = f"<a href='https://github.com/snipem/gt7dashboard' target='_blank'>GT7 Dashboard</a>"
 
 LABELS = ["Always Record"]
 
