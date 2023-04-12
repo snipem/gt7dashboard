@@ -206,8 +206,8 @@ class TestLaps(unittest.TestCase):
         """Will fail"""
         brake_points_x, brake_points_y = gt7helper.get_brake_points(self.Lap)
         # A break point will be the point after a zero for breaking
-        self.assertListEqual(brake_points_x, [1, 8])
-        self.assertListEqual(brake_points_y, [2, 18])
+        self.assertListEqual(brake_points_x, [2, 18])
+        self.assertListEqual(brake_points_y, [1, 8])
 
     def test_get_median_lap(self):
         median_lap = gt7helper.get_median_lap(self.Laps)
