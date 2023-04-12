@@ -420,8 +420,8 @@ speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
 s_race_line = figure(
     title="Race Line",
-    x_axis_label="z",
-    y_axis_label="x",
+    x_axis_label="x",
+    y_axis_label="z",
     match_aspect=True,
     width=race_line_width,
     height=race_line_width,
@@ -431,20 +431,20 @@ s_race_line = figure(
 s_race_line.toolbar.autohide = True
 
 last_lap_race_line = s_race_line.line(
-    x="raceline_z",
-    y="raceline_x",
+    x="raceline_x",
+    y="raceline_z",
     legend_label="Last Lap",
     line_width=1,
     color="blue",
-    source=ColumnDataSource(data={"raceline_z": [], "raceline_x": []})
+    source=ColumnDataSource(data={"raceline_x": [], "raceline_z": []})
 )
 reference_lap_race_line = s_race_line.line(
-    x="raceline_z",
-    y="raceline_x",
+    x="raceline_x",
+    y="raceline_z",
     legend_label="Reference Lap",
     line_width=1,
     color="magenta",
-    source=ColumnDataSource(data={"raceline_z": [], "raceline_x": []})
+    source=ColumnDataSource(data={"raceline_x": [], "raceline_z": []})
 )
 
 select_title = Paragraph(text="Load Laps:", align="center")

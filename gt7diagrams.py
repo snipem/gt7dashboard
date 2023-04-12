@@ -25,8 +25,8 @@ def get_throttle_braking_race_line_diagram():
     s_race_line.ygrid.visible = False
 
     throttle_line = s_race_line.line(
-        x="raceline_z_throttle",
-        y="raceline_x_throttle",
+        x="raceline_x_throttle",
+        y="raceline_z_throttle",
         legend_label="Throttle Last Lap",
         line_width=5,
         color="green",
@@ -35,8 +35,8 @@ def get_throttle_braking_race_line_diagram():
         ),
     )
     breaking_line = s_race_line.line(
-        x="raceline_z_braking",
-        y="raceline_x_braking",
+        x="raceline_x_braking",
+        y="raceline_z_braking",
         legend_label="Braking Last Lap",
         line_width=5,
         color="red",
@@ -46,8 +46,8 @@ def get_throttle_braking_race_line_diagram():
     )
 
     coasting_line = s_race_line.line(
-        x="raceline_z_coasting",
-        y="raceline_x_coasting",
+        x="raceline_x_coasting",
+        y="raceline_z_coasting",
         legend_label="Coasting Last Lap",
         line_width=5,
         color="blue",
@@ -59,8 +59,8 @@ def get_throttle_braking_race_line_diagram():
     # Reference Lap
 
     reference_throttle_line = s_race_line.line(
-        x="raceline_z_throttle",
-        y="raceline_x_throttle",
+        x="raceline_x_throttle",
+        y="raceline_z_throttle",
         legend_label="Throttle Reference",
         line_width=15,
         alpha=0.3,
@@ -70,8 +70,8 @@ def get_throttle_braking_race_line_diagram():
         ),
     )
     reference_breaking_line = s_race_line.line(
-        x="raceline_z_braking",
-        y="raceline_x_braking",
+        x="raceline_x_braking",
+        y="raceline_z_braking",
         legend_label="Braking Reference",
         line_width=15,
         alpha=0.3,
@@ -82,8 +82,8 @@ def get_throttle_braking_race_line_diagram():
     )
 
     reference_coasting_line = s_race_line.line(
-        x="raceline_z_coasting",
-        y="raceline_x_coasting",
+        x="raceline_x_coasting",
+        y="raceline_z_coasting",
         legend_label="Coasting Reference",
         line_width=15,
         alpha=0.3,
@@ -341,8 +341,8 @@ def _add_peaks_and_valley_decorations_for_lap(
 
     for i in range(len(peak_speed_data_x)):
         # shift 10 px to the left
-        position_x = lap.data_position_z[peak_speed_data_y[i]]
-        position_y = lap.data_position_x[peak_speed_data_y[i]]
+        position_x = lap.data_position_x[peak_speed_data_y[i]]
+        position_y = lap.data_position_z[peak_speed_data_y[i]]
 
         mytext = Label(
             x=position_x,
@@ -359,8 +359,8 @@ def _add_peaks_and_valley_decorations_for_lap(
         decorations.append(mytext)
 
     for i in range(len(valley_speed_data_x)):
-        position_x = lap.data_position_z[valley_speed_data_y[i]]
-        position_y = lap.data_position_x[valley_speed_data_y[i]]
+        position_x = lap.data_position_x[valley_speed_data_y[i]]
+        position_y = lap.data_position_z[valley_speed_data_y[i]]
 
         mytext = Label(
             x=position_x,
@@ -427,6 +427,6 @@ def add_starting_line_to_diagram(race_line, last_lap: Lap):
     if len(last_lap.data_position_z) == 0:
         return
 
-    x = last_lap.data_position_z[0]
-    y = last_lap.data_position_x[0]
+    x = last_lap.data_position_x[0]
+    y = last_lap.data_position_z[0]
     race_line.scatter(x, y, marker="dash", color="black", size=20, line_width=5, line_dash="dashed")

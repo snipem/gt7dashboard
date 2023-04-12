@@ -434,8 +434,8 @@ def get_brake_points(lap):
     for i, b in enumerate(lap.data_braking):
         if i > 0:
             if lap.data_braking[i - 1] == 0 and lap.data_braking[i] > 0:
-                x.append(lap.data_position_z[i])
-                y.append(lap.data_position_x[i])
+                x.append(lap.data_position_x[i])
+                y.append(lap.data_position_z[i])
 
     return x, y
 
