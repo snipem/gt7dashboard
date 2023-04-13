@@ -1,7 +1,8 @@
+import logging
 from typing import Tuple, List
 
 import bokeh
-from bokeh.layouts import row
+from bokeh.layouts import row, layout
 from bokeh.models import ColumnDataSource, Label, Legend, LegendItem, Scatter
 from bokeh.plotting import figure
 
@@ -115,15 +116,90 @@ def get_throttle_braking_race_line_diagram():
     )
 
 
-def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
-    width: int,
-) -> tuple[figure, figure, figure, figure, figure, figure, list[ColumnDataSource]]:
+class RaceDiagram(object):
+    def __init__(self, f_time_diff: figure, f_braking: figure, f_coasting: figure, f_speed: figure, f_throttle: figure, f_tires: figure, sources: list[ColumnDataSource]):
+
+        self.f_time_diff = f_time_diff
+        self.f_throttle = f_throttle
+        self.f_braking = f_braking
+        self.f_coasting = f_coasting
+        self.f_speed = f_speed
+        self.f_tires = f_tires
+
+        # Data Sources
+        self.sources = sources
+
+    def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool):
+
+        # Set empty data for avoiding warnings about missing columns
+        dummy_data = gt7helper.get_data_dict_from_lap(Lap(), distance_mode=True)
+
+        source = ColumnDataSource(data=dummy_data)
+
+        self.f_speed.line(
+            x="distance",
+            y="speed",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        )
+        self.f_throttle.line(
+            x="distance",
+            y="throttle",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        )
+        self.f_braking.line(
+            x="distance",
+            y="brake",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        )
+        self.f_coasting.line(
+            x="distance",
+            y="coast",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        )
+        self.f_tires.line(
+            x="distance",
+            y="tires",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        )
+        return source
+
+    def get_layout(self):
+        return layout(self.f_speed, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires)
+
+
+def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> RaceDiagram:
     """
     Returns figures for time-diff, speed, throttling, braking and coasting.
     All with lines for last lap, best lap and median lap.
     The last return value is the sources object, that has to be altered
     to display data.
     """
+
     tooltips = [
         ("index", "$index"),
         ("value", "$y"),
@@ -235,69 +311,17 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     )
     sources.append(time_diff_source)
 
-    # Set empty data for avoiding warnings about missing columns
-    dummy_data = gt7helper.get_data_dict_from_lap(Lap(), distance_mode=True)
+    rd = RaceDiagram(f_time_diff, f_braking, f_coasting, f_speed, f_throttle, f_tires, sources)
 
     for color, legend in zip(colors, legends):
-        source = ColumnDataSource(data=dummy_data)
-        sources.append(source)
 
         if legend == "Median Lap":
             visible = False
         else:
             visible = True
 
-        f_speed.line(
-            x="distance",
-            y="speed",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        )
-        f_throttle.line(
-            x="distance",
-            y="throttle",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        )
-        f_braking.line(
-            x="distance",
-            y="brake",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        )
-        f_coasting.line(
-            x="distance",
-            y="coast",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        )
-        f_tires.line(
-            x="distance",
-            y="tires",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        )
-
+        source = rd.add_lap_to_race_diagram(color, legend, visible)
+        rd.sources.append(source)
 
     f_speed.legend.click_policy = "hide"
     f_throttle.legend.click_policy = f_speed.legend.click_policy
@@ -305,7 +329,9 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(
     f_coasting.legend.click_policy = f_speed.legend.click_policy
     f_tires.legend.click_policy = f_speed.legend.click_policy
 
-    return f_time_diff, f_speed, f_throttle, f_braking, f_coasting, f_tires, sources
+    return rd
+
+
 
 
 def add_peaks_and_valleys_to_diagram(
@@ -388,8 +414,14 @@ def _add_peaks_and_valley_decorations_for_lap(
 def remove_all_annotation_text_from_figure(f: figure):
     f.center = [r for r in f.center if not isinstance(r, Label)]
 
+
 def remove_all_scatters_from_figure(f: figure):
-    f.renderers = [r for r in f.renderers if not isinstance(r, Scatter)]
+
+    remove_scatters = [r for r in f.renderers if isinstance(r.glyph, Scatter)]
+    for rs in remove_scatters:
+        f.renderers.remove(rs)
+    # for r in scatter_renderes:
+        # r.remove(r)
 
 def get_fuel_map_html_table(last_lap):
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
@@ -432,6 +464,10 @@ def get_fuel_map_html_table(last_lap):
 
 
 def add_starting_line_to_diagram(race_line, last_lap: Lap):
+
+    logging.warning("Skipping add_starting_line_to_diagram does not work yet. Race lines are added constantly.")
+    pass
+
     if len(last_lap.data_position_z) == 0:
         return
 

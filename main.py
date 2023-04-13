@@ -146,7 +146,7 @@ def update_lap_change(step):
                     div_reference_lap, reference_lap, "Reference Lap"
                 )
 
-    update_header_line(div_header_line, last_lap, reference_lap)
+        update_header_line(div_header_line, last_lap, reference_lap)
 
     # set logging level to debug
     logging.getLogger().setLevel(logging.DEBUG)
@@ -189,11 +189,11 @@ def update_speed_velocity_graph(laps: List[Lap]):
     reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
 
     if reference_lap and len(reference_lap.data_speed) > 0:
-        data_sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
+        race_diagram.sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
-    data_sources[1].data = last_lap_data
-    data_sources[2].data = reference_lap_data
-    data_sources[3].data = gt7helper.get_data_dict_from_lap(median_lap, distance_mode=True)
+    race_diagram.sources[1].data = last_lap_data
+    race_diagram.sources[2].data = reference_lap_data
+    race_diagram.sources[3].data = gt7helper.get_data_dict_from_lap(median_lap, distance_mode=True)
 
     last_lap_race_line.data_source.data = last_lap_data
     reference_lap_race_line.data_source.data = reference_lap_data
@@ -240,6 +240,9 @@ def reset_button_handler(event):
     print("reset button clicked")
     div_reference_lap.text = ""
     div_last_lap.text = ""
+
+    init_lap_times_source()
+
     app.gt7comm.reset()
 def always_record_checkbox_handler(event, old, new):
     if len(new) == 2:
@@ -372,9 +375,15 @@ else:
         # Existing thread has connection, proceed
         pass
 
-source = ColumnDataSource(
+lap_times_source = ColumnDataSource(
     gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
 )
+
+def init_lap_times_source():
+    global lap_times_source
+    lap_times_source.data = gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
+
+init_lap_times_source()
 
 g_laps_stored = []
 g_session_stored = None
@@ -399,23 +408,42 @@ columns = [
     TableColumn(field="car_name", title="Car"),
 ]
 
-(
-    f_time_diff,
-    f_speed,
-    f_throttle,
-    f_braking,
-    f_coasting,
-    f_tires,
-    data_sources,
-) = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
+race_diagram = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
 t_lap_times = DataTable(
-    source=source, columns=columns, index_position=None, css_classes=["lap_times_table"]
+    source=lap_times_source, columns=columns, index_position=None, css_classes=["lap_times_table"]
 )
 t_lap_times.autosize_mode = "fit_columns"
 # t_lap_times.width = 1000
 t_lap_times.min_height = 20
 t_lap_times.min_width = 950
+
+def table_row_selection_callback(attrname, old, new):
+    global g_laps_stored
+    global lap_times_source
+    global data_sources
+
+    selectionIndex=lap_times_source.selected.indices
+    print("you have selected the row nr "+str(selectionIndex))
+
+    colors = ["green", "red", "black"]
+    max_additional_laps = len(colors)
+
+    if len(data_sources) > 3:
+        logging.debug("There are additional laps to last, reference and median lap, maybe delete them")
+        data_sources = data_sources[3:]
+        # TODO also remove lines
+
+    for index in selectionIndex:
+        if index < max_additional_laps:
+            lap_to_add = g_laps_stored[index]
+            # TODO maybe add this globally
+            new_lap_data_source = race_diagram.add_lap_to_speed_velocity_graph(colors[index], legend=g_laps_stored[index].title, visible=True)
+            new_lap_data_source.data = gt7helper.get_data_dict_from_lap(lap_to_add, distance_mode=True)
+            data_sources.append(new_lap_data_source)
+
+
+lap_times_source.selected.on_change('indices', table_row_selection_callback)
 
 # Race line
 
@@ -493,12 +521,12 @@ checkbox_group.on_change("active", always_record_checkbox_handler)
 l1 = layout(
     children=[
         [div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select],
-        [f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select])],
-        [f_speed, s_race_line],
-        [f_throttle, [[div_last_lap, div_reference_lap]]],
-        [f_braking],
-        [f_coasting],
-        [f_tires],
+        [race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select])],
+        [race_diagram.f_speed, s_race_line],
+        [race_diagram.f_throttle, [[div_last_lap, div_reference_lap]]],
+        [race_diagram.f_braking],
+        [race_diagram.f_coasting],
+        [race_diagram.f_tires],
         [t_lap_times, div_fuel_map, div_tuning_info],
     ]
 )
