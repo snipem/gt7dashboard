@@ -242,6 +242,7 @@ def reset_button_handler(event):
     print("reset button clicked")
     div_reference_lap.text = ""
     div_last_lap.text = ""
+    race_diagram.delete_all_additional_laps()
 
     app.gt7comm.reset()
 def always_record_checkbox_handler(event, old, new):
@@ -265,6 +266,7 @@ def save_button_handler(event):
 
 def load_laps_handler(attr, old, new):
     print("Loading %s" % new)
+    race_diagram.delete_all_additional_laps()
     app.gt7comm.load_laps(load_laps_from_pickle(new), replace_other_laps=True)
 
 

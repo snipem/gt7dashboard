@@ -124,9 +124,9 @@ class TestHelper(unittest.TestCase):
         output_file(out_file)
         save(rd.get_layout())
 
-        # get file size, should be about 6MB
+        # get file size, should be about 5MB
         file_size = os.path.getsize(out_file)
-        self.assertAlmostEqual(file_size, 6000000, delta=1000000)
+        self.assertAlmostEqual(file_size, 5000000, delta=1000000)
 
         with open(out_file, 'r') as fp:
             data = fp.read()

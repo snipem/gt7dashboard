@@ -188,7 +188,6 @@ class RaceDiagram(object):
             lap, distance_mode=True
         )
         self.sources_additional_laps.append(source)
-        self.additional_laps.append(lap)
 
     def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 
@@ -261,16 +260,21 @@ class RaceDiagram(object):
         # Delete all but first three in list
         self.sources_additional_laps = []
 
-        self.speed_lines = self.speed_lines[:3]
-        self.braking_lines = self.braking_lines[:3]
-        self.coasting_lines = self.coasting_lines[:3]
-        self.throttle_lines = self.throttle_lines[:3]
-        self.tires_lines = self.tires_lines[:3]
+        for i, _ in enumerate(self.f_speed.renderers):
+            if i >= self.number_of_default_laps:
+                self.f_speed.renderers.remove(self.f_speed.renderers[i])  # remove the line renderer
+                self.f_throttle.renderers.remove(self.f_throttle.renderers[i])  # remove the line renderer
+                self.f_braking.renderers.remove(self.f_braking.renderers[i])  # remove the line renderer
+                self.f_coasting.renderers.remove(self.f_coasting.renderers[i])  # remove the line renderer
+                self.f_tires.renderers.remove(self.f_tires.renderers[i])  # remove the line renderer
+                # self.f_time_diff.renderers.remove(self.f_time_diff.renderers[i])  # remove the line renderer
 
-        # line: Line
-        # for line in self.speed_lines[3:] + self.braking_lines[3:] + self.coasting_lines[3:] + self.throttle_lines[3:] + self.tires_lines[3:]:
-        #     line.visible = False
-
+                self.f_speed.legend.items.pop(i)
+                self.f_throttle.legend.items.pop(i)
+                self.f_braking.legend.items.pop(i)
+                self.f_coasting.legend.items.pop(i)
+                self.f_tires.legend.items.pop(i)
+                # self.f_time_diff.legend.items.pop(i)
 
 
 def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> RaceDiagram:
