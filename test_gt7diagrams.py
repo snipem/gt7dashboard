@@ -53,9 +53,7 @@ class TestHelper(unittest.TestCase):
         reference_breaking_line_data.data_source.data = reference_lap_data
         reference_coasting_line_data.data_source.data = reference_lap_data
 
-        gt7diagrams.add_starting_line_to_diagram(race_line, last_lap)
-
-        gt7diagrams.add_peaks_and_valleys_to_diagram(race_line, last_lap, reference_lap)
+        gt7diagrams.add_annotations_to_race_line(race_line, last_lap, reference_lap)
 
         out_file = "test_out/test_get_throttle_braking_race_line_diagram.html"
         output_file(out_file)
@@ -157,36 +155,3 @@ class TestHelper(unittest.TestCase):
         output_file(out_file)
         save(d)
         print("View file for reference at %s" % out_file)
-
-    def test_remove_all_scatters(self):
-        self.skipTest("Does not work yet")
-        f = figure()
-
-        f.scatter(10, 20, marker="dash", color="black", size=20, line_width=5, line_dash="dashed")
-        f.scatter(30, 40, marker="dash", color="black", size=20, line_width=5, line_dash="dashed")
-        f.scatter(50, 60, marker="dash", color="black", size=20, line_width=5, line_dash="dashed")
-
-        magic_word = "test show me in the file"
-        f.add_layout(Label(x=0,y=0, text=magic_word))
-
-
-        magic_x = 4711
-        magic_y = 993388457
-        f.scatter(magic_x, magic_y, marker="dash", color="black", size=20, line_width=5, line_dash="dashed")
-
-        gt7diagrams.remove_all_scatters_from_figure(f)
-
-        filename = "test_out/test_remove_all_scatters.html"
-
-        output_file(filename, title="Test")
-        save(f)
-
-        # check if file contains string
-        with open(filename, 'r') as fp:
-            data = fp.read()
-            self.assertIn(magic_word, data)
-            self.assertNotIn("Scatter", data)
-            self.assertNotIn(str(magic_x), data)
-            self.assertNotIn(str(magic_y), data)
-            # FIXME does not work, will have to use a proper model for the scatters
-            self.assertFalse(True)

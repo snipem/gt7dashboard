@@ -4,7 +4,6 @@ import logging
 import os
 import time
 from typing import List
-from bokeh.palettes import Set3_12 as palette
 
 import bokeh.application
 from bokeh.driving import linear
@@ -18,6 +17,7 @@ from bokeh.models import (
     Button,
     Div, CheckboxGroup, TabPanel, Tabs,
 )
+from bokeh.palettes import Set3_12 as palette
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
 
@@ -31,6 +31,9 @@ from gt7helper import (
     calculate_time_diff_by_distance,
 )
 from gt7lap import Lap
+
+# set logging level to debug
+logging.getLogger().setLevel(logging.DEBUG)
 
 
 def update_connection_info():
@@ -92,8 +95,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
 
         race_lines[i].axis.visible = False
 
-        gt7diagrams.add_peaks_and_valleys_to_diagram(race_lines[i], lap, reference_lap)
-        gt7diagrams.add_starting_line_to_diagram(race_lines[i], lap)
+        gt7diagrams.add_annotations_to_race_line(race_lines[i], lap, reference_lap)
 
         # Fixme not working
         race_lines[i].x_range = race_lines[0].x_range
@@ -132,6 +134,8 @@ def update_lap_change(step):
     if laps == g_laps_stored and not g_telemetry_update_needed:
         return
 
+    logging.debug("Rerendering laps")
+
     reference_lap = Lap()
 
     if len(laps) > 0:
@@ -149,9 +153,6 @@ def update_lap_change(step):
                 )
 
         update_header_line(div_header_line, last_lap, reference_lap)
-
-    # set logging level to debug
-    logging.getLogger().setLevel(logging.DEBUG)
 
     logging.debug("Start of updates have %d laps" % len(laps))
 
@@ -228,14 +229,13 @@ def update_break_points(lap: Lap, race_line: figure, color: str):
 
 
 def update_time_table(laps: List[Lap]):
+    global t_lap_times
+    global lap_times_source
     print("Adding %d laps to table" % len(laps))
-    t_lap_times.source.data = ColumnDataSource.from_df(
-        gt7helper.pd_data_frame_from_lap(
-            laps, best_lap_time=app.gt7comm.session.best_lap
-        )
-    )
+    new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=app.gt7comm.session.best_lap)
+    lap_times_source.data = ColumnDataSource.from_df(new_df)
     # FIXME time table is not updating
-    t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
+    # t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
 
 def reset_button_handler(event):
@@ -532,7 +532,9 @@ l1 = layout(
 l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=1)
 
 l3 = layout(
-    [[reset_button, save_button], [t_lap_times], [div_fuel_map]],
+    [[reset_button, save_button],
+     # [t_lap_times],
+     [div_fuel_map]],
     sizing_mode="stretch_width",
 )
 

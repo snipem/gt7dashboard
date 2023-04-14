@@ -368,10 +368,13 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
 
 
 
-def add_peaks_and_valleys_to_diagram(
+def add_annotations_to_race_line(
     race_line: figure, last_lap: Lap, reference_lap: Lap
 ):
+    """ Adds annotations such as speed peaks and valleys and the starting line to the racing line"""
+
     remove_all_annotation_text_from_figure(race_line)
+
     decorations = []
     decorations.extend(
         _add_peaks_and_valley_decorations_for_lap(
@@ -383,6 +386,7 @@ def add_peaks_and_valleys_to_diagram(
             reference_lap, race_line, color="magenta", offset=0
         )
     )
+    add_starting_line_to_diagram(race_line, last_lap)
 
     # This is multiple times faster by adding all texts at once rather than adding them above
     # With around 20 positions, this took 27s before.
@@ -449,14 +453,6 @@ def remove_all_annotation_text_from_figure(f: figure):
     f.center = [r for r in f.center if not isinstance(r, Label)]
 
 
-def remove_all_scatters_from_figure(f: figure):
-
-    remove_scatters = [r for r in f.renderers if isinstance(r.glyph, Scatter)]
-    for rs in remove_scatters:
-        f.renderers.remove(rs)
-    # for r in scatter_renderes:
-        # r.remove(r)
-
 def get_fuel_map_html_table(last_lap):
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
     table = (
@@ -502,10 +498,9 @@ def add_starting_line_to_diagram(race_line: figure, last_lap: Lap):
     if len(last_lap.data_position_z) == 0:
         return
 
-    remove_all_annotation_text_from_figure(race_line)
-
     x = last_lap.data_position_x[0]
     y = last_lap.data_position_z[0]
+
     # We use a text because scatters are too memory consuming
     # and cannot be easily removed from the diagram
     mytext = Label(
