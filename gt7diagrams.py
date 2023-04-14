@@ -497,16 +497,25 @@ def get_fuel_map_html_table(last_lap):
     return table
 
 
-def add_starting_line_to_diagram(race_line, last_lap: Lap):
-
-    logging.warning("Skipping add_starting_line_to_diagram does not work yet. Race lines are added constantly.")
-    pass
+def add_starting_line_to_diagram(race_line: figure, last_lap: Lap):
 
     if len(last_lap.data_position_z) == 0:
         return
 
-    remove_all_scatters_from_figure(race_line)
+    remove_all_annotation_text_from_figure(race_line)
 
     x = last_lap.data_position_x[0]
     y = last_lap.data_position_z[0]
-    race_line.scatter(x, y, marker="dash", color="black", size=20, line_width=5, line_dash="dashed")
+    # We use a text because scatters are too memory consuming
+    # and cannot be easily removed from the diagram
+    mytext = Label(
+        x=x,
+        y=y,
+        text_font_size="10pt",
+        text_font_style="bold",
+        background_fill_color="white",
+        background_fill_alpha=0.25,
+        text_align="center",
+    )
+    mytext.text = "===="
+    race_line.center.append(mytext)
