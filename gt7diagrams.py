@@ -176,12 +176,19 @@ class RaceDiagram(object):
         self.source_median_lap = None
         self.sources_additional_laps = []
 
+        self.additional_laps = List[Lap]
+
+        # This is the number of default laps,
+        # last lap, best lap and median lap
+        self.number_of_default_laps = 3
+
     def add_additional_lap_to_race_diagram(self, color: str, lap: Lap, visible: bool = True):
         source = self.add_lap_to_race_diagram(color, lap.title, visible)
         source.data = gt7helper.get_data_dict_from_lap(
             lap, distance_mode=True
         )
         self.sources_additional_laps.append(source)
+        self.additional_laps.append(lap)
 
     def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 

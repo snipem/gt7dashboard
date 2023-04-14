@@ -17,7 +17,7 @@ from bokeh.models import (
     Button,
     Div, CheckboxGroup, TabPanel, Tabs,
 )
-from bokeh.palettes import Set3_12 as palette
+from bokeh.palettes import Plasma11 as palette
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
 
@@ -395,24 +395,32 @@ stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
 
 race_diagram = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 race_time_table = gt7diagrams.RaceTimeTable()
+colors = itertools.cycle(palette)
 
 
 def table_row_selection_callback(attrname, old, new):
     global g_laps_stored
     global race_diagram
     global race_time_table
+    global colors
 
     selectionIndex=race_time_table.lap_times_source.selected.indices
     print("you have selected the row nr "+str(selectionIndex))
 
-    colors = ["green", "red", "black"]
-    colors = itertools.cycle(palette)
+    colors = ["blue", "magenta", "green", "orange", "black", "purple"]
     # max_additional_laps = len(palette)
+    colors_index = len(race_diagram.sources_additional_laps) + race_diagram.number_of_default_laps # which are the default colors
 
     for index in selectionIndex:
-            lap_to_add = g_laps_stored[index]
-            new_lap_data_source = race_diagram.add_lap_to_race_diagram(next(colors), legend=g_laps_stored[index].title, visible=True)
-            new_lap_data_source.data = gt7helper.get_data_dict_from_lap(lap_to_add, distance_mode=True)
+        if index >= len(colors):
+            colors_index = 0
+
+        # get element at index of iterator
+        color = colors[colors_index]
+        colors_index+=1
+        lap_to_add = g_laps_stored[index]
+        new_lap_data_source = race_diagram.add_lap_to_race_diagram(color, legend=g_laps_stored[index].title, visible=True)
+        new_lap_data_source.data = gt7helper.get_data_dict_from_lap(lap_to_add, distance_mode=True)
 
 
 race_time_table.lap_times_source.selected.on_change('indices', table_row_selection_callback)
