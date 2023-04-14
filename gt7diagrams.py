@@ -1,8 +1,9 @@
 import logging
+from typing import List
 
 import bokeh
 from bokeh.layouts import layout
-from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line
+from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable
 from bokeh.plotting import figure
 
 import gt7helper
@@ -114,6 +115,41 @@ def get_throttle_braking_race_line_diagram():
         reference_coasting_line,
     )
 
+class RaceTimeTable(object):
+
+    def __init__(self):
+
+        self.columns = [
+            TableColumn(field="number", title="#"),
+            TableColumn(field="time", title="Time"),
+            TableColumn(field="diff", title="Diff"),
+            TableColumn(field="fuelconsumed", title="Fuel Cons."),
+            TableColumn(field="fullthrottle", title="Full Throt."),
+            TableColumn(field="fullbreak", title="Full Break"),
+            TableColumn(field="nothrottle", title="Coast"),
+            TableColumn(field="tyrespinning", title="Tire Spin"),
+            TableColumn(field="car_name", title="Car"),
+        ]
+
+        self.lap_times_source = ColumnDataSource(
+            # FIXME best lap time is obsolete
+            gt7helper.pd_data_frame_from_lap([], best_lap_time=0)
+        )
+        self.t_lap_times: DataTable
+
+        self.t_lap_times = DataTable(
+            source=self.lap_times_source, columns=self.columns, index_position=None, css_classes=["lap_times_table"]
+        )
+        # This will lead to not being rendered
+        # self.t_lap_times.autosize_mode = "fit_columns"
+        # self.t_lap_times.min_height = 20
+        # self.t_lap_times.min_width = 950
+
+
+    def show_laps(self, laps: List[Lap]):
+        # FIXME best lap time is obsolete
+        new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=0)
+        self.lap_times_source.data = ColumnDataSource.from_df(new_df)
 
 class RaceDiagram(object):
     def __init__(self, f_time_diff: figure, f_braking: figure, f_coasting: figure, f_speed: figure, f_throttle: figure, f_tires: figure):

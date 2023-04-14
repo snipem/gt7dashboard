@@ -229,12 +229,12 @@ def update_break_points(lap: Lap, race_line: figure, color: str):
 
 
 def update_time_table(laps: List[Lap]):
-    global t_lap_times
+    global race_time_table
     global lap_times_source
-    print("Adding %d laps to table" % len(laps))
-    new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=app.gt7comm.session.best_lap)
-    lap_times_source.data = ColumnDataSource.from_df(new_df)
     # FIXME time table is not updating
+    print("Adding %d laps to table" % len(laps))
+    race_time_table.show_laps(laps)
+
     # t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
 
@@ -242,8 +242,6 @@ def reset_button_handler(event):
     print("reset button clicked")
     div_reference_lap.text = ""
     div_last_lap.text = ""
-
-    init_lap_times_source()
 
     app.gt7comm.reset()
 def always_record_checkbox_handler(event, old, new):
@@ -377,15 +375,12 @@ else:
         # Existing thread has connection, proceed
         pass
 
-lap_times_source = ColumnDataSource(
-    gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
-)
 
-def init_lap_times_source():
-    global lap_times_source
-    lap_times_source.data = gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
-
-init_lap_times_source()
+# def init_lap_times_source():
+#     global lap_times_source
+#     lap_times_source.data = gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
+#
+# init_lap_times_source()
 
 g_laps_stored = []
 g_session_stored = None
@@ -398,34 +393,16 @@ stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
     list_lap_files_from_path(os.path.join(os.getcwd(), "data"))
 )
 
-columns = [
-    TableColumn(field="number", title="#"),
-    TableColumn(field="time", title="Time"),
-    TableColumn(field="diff", title="Diff"),
-    TableColumn(field="fuelconsumed", title="Fuel Cons."),
-    TableColumn(field="fullthrottle", title="Full Throt."),
-    TableColumn(field="fullbreak", title="Full Break"),
-    TableColumn(field="nothrottle", title="Coast"),
-    TableColumn(field="tyrespinning", title="Tire Spin"),
-    TableColumn(field="car_name", title="Car"),
-]
-
 race_diagram = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
+race_time_table = gt7diagrams.RaceTimeTable()
 
-t_lap_times = DataTable(
-    source=lap_times_source, columns=columns, index_position=None, css_classes=["lap_times_table"]
-)
-t_lap_times.autosize_mode = "fit_columns"
-# t_lap_times.width = 1000
-t_lap_times.min_height = 20
-t_lap_times.min_width = 950
 
 def table_row_selection_callback(attrname, old, new):
     global g_laps_stored
-    global lap_times_source
     global race_diagram
+    global race_time_table
 
-    selectionIndex=lap_times_source.selected.indices
+    selectionIndex=race_time_table.lap_times_source.selected.indices
     print("you have selected the row nr "+str(selectionIndex))
 
     colors = ["green", "red", "black"]
@@ -438,7 +415,7 @@ def table_row_selection_callback(attrname, old, new):
             new_lap_data_source.data = gt7helper.get_data_dict_from_lap(lap_to_add, distance_mode=True)
 
 
-lap_times_source.selected.on_change('indices', table_row_selection_callback)
+race_time_table.lap_times_source.selected.on_change('indices', table_row_selection_callback)
 
 # Race line
 
@@ -522,7 +499,7 @@ l1 = layout(
         [race_diagram.f_braking],
         [race_diagram.f_coasting],
         [race_diagram.f_tires],
-        [t_lap_times, div_fuel_map, div_tuning_info],
+        [race_time_table.t_lap_times, div_fuel_map, div_tuning_info],
     ]
 )
 

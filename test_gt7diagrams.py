@@ -2,7 +2,7 @@ import os
 import pickle
 import unittest
 
-from bokeh.io import output_file
+from bokeh.io import output_file, show
 from bokeh.layouts import layout
 from bokeh.models import Div, Plot, Scatter, Label
 from bokeh.plotting import save, figure
@@ -155,3 +155,12 @@ class TestHelper(unittest.TestCase):
         output_file(out_file)
         save(d)
         print("View file for reference at %s" % out_file)
+
+
+    def test_race_table(self):
+        rt = gt7diagrams.RaceTimeTable()
+        rt.show_laps(self.test_laps)
+
+        out_file = "test_out/test_race_table.html"
+        output_file(out_file)
+        save(rt.t_lap_times)
