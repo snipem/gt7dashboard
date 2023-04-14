@@ -1,9 +1,8 @@
 import logging
-from typing import Tuple, List
 
 import bokeh
-from bokeh.layouts import row, layout
-from bokeh.models import ColumnDataSource, Label, Legend, LegendItem, Scatter
+from bokeh.layouts import layout
+from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line
 from bokeh.plotting import figure
 
 import gt7helper
@@ -117,7 +116,7 @@ def get_throttle_braking_race_line_diagram():
 
 
 class RaceDiagram(object):
-    def __init__(self, f_time_diff: figure, f_braking: figure, f_coasting: figure, f_speed: figure, f_throttle: figure, f_tires: figure, sources: list[ColumnDataSource]):
+    def __init__(self, f_time_diff: figure, f_braking: figure, f_coasting: figure, f_speed: figure, f_throttle: figure, f_tires: figure):
 
         self.f_time_diff = f_time_diff
         self.f_throttle = f_throttle
@@ -126,17 +125,36 @@ class RaceDiagram(object):
         self.f_speed = f_speed
         self.f_tires = f_tires
 
-        # Data Sources
-        self.sources = sources
+        self.speed_lines = []
+        self.braking_lines = []
+        self.coasting_lines = []
+        self.throttle_lines = []
+        self.tires_lines = []
 
-    def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool):
+        self.layout = layout(self.f_time_diff, self.f_speed, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires)
+
+        # Data Sources
+        self.source_time_diff = None
+        self.source_last_lap = None
+        self.source_reference_lap = None
+        self.source_median_lap = None
+        self.sources_additional_laps = []
+
+    def add_additional_lap_to_race_diagram(self, color: str, lap: Lap, visible: bool = True):
+        source = self.add_lap_to_race_diagram(color, lap.title, visible)
+        source.data = gt7helper.get_data_dict_from_lap(
+            lap, distance_mode=True
+        )
+        self.sources_additional_laps.append(source)
+
+    def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 
         # Set empty data for avoiding warnings about missing columns
         dummy_data = gt7helper.get_data_dict_from_lap(Lap(), distance_mode=True)
 
         source = ColumnDataSource(data=dummy_data)
 
-        self.f_speed.line(
+        self.speed_lines.append(self.f_speed.line(
             x="distance",
             y="speed",
             source=source,
@@ -145,8 +163,9 @@ class RaceDiagram(object):
             color=color,
             line_alpha=1,
             visible=visible
-        )
-        self.f_throttle.line(
+        ))
+
+        self.throttle_lines.append(self.f_throttle.line(
             x="distance",
             y="throttle",
             source=source,
@@ -155,8 +174,9 @@ class RaceDiagram(object):
             color=color,
             line_alpha=1,
             visible=visible
-        )
-        self.f_braking.line(
+        ))
+
+        self.braking_lines.append(self.f_braking.line(
             x="distance",
             y="brake",
             source=source,
@@ -165,8 +185,9 @@ class RaceDiagram(object):
             color=color,
             line_alpha=1,
             visible=visible
-        )
-        self.f_coasting.line(
+        ))
+
+        self.coasting_lines.append(self.f_coasting.line(
             x="distance",
             y="coast",
             source=source,
@@ -175,8 +196,9 @@ class RaceDiagram(object):
             color=color,
             line_alpha=1,
             visible=visible
-        )
-        self.f_tires.line(
+        ))
+
+        self.tires_lines.append(self.f_tires.line(
             x="distance",
             y="tires",
             source=source,
@@ -185,11 +207,27 @@ class RaceDiagram(object):
             color=color,
             line_alpha=1,
             visible=visible
-        )
+        ))
+
         return source
 
-    def get_layout(self):
-        return layout(self.f_speed, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires)
+    def get_layout(self) -> Column:
+        return self.layout
+
+    def delete_all_additional_laps(self):
+        # Delete all but first three in list
+        self.sources_additional_laps = []
+
+        self.speed_lines = self.speed_lines[:3]
+        self.braking_lines = self.braking_lines[:3]
+        self.coasting_lines = self.coasting_lines[:3]
+        self.throttle_lines = self.throttle_lines[:3]
+        self.tires_lines = self.tires_lines[:3]
+
+        # line: Line
+        # for line in self.speed_lines[3:] + self.braking_lines[3:] + self.coasting_lines[3:] + self.throttle_lines[3:] + self.tires_lines[3:]:
+        #     line.visible = False
+
 
 
 def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> RaceDiagram:
@@ -216,8 +254,6 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
         ("reference", "@reference{0} ms"),
         ("comparison", "@comparison{0} ms"),
     ]
-    colors = ["blue", "magenta", "green"]
-    legends = ["Last Lap", "Reference Lap", "Median Lap"]
 
     f_speed = figure(
         title="Last, Reference, Median",
@@ -298,8 +334,6 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
     f_tires.xaxis.visible = False
     f_tires.toolbar.autohide = True
 
-    sources = []
-
     time_diff_source = ColumnDataSource(data={"distance": [], "timedelta": []})
     f_time_diff.line(
         x="distance",
@@ -309,19 +343,19 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
         color="blue",
         line_alpha=1,
     )
-    sources.append(time_diff_source)
 
-    rd = RaceDiagram(f_time_diff, f_braking, f_coasting, f_speed, f_throttle, f_tires, sources)
+    rd = RaceDiagram(f_time_diff, f_braking, f_coasting, f_speed, f_throttle, f_tires)
 
-    for color, legend in zip(colors, legends):
+    rd.source_time_diff = time_diff_source
 
-        if legend == "Median Lap":
-            visible = False
-        else:
-            visible = True
+    source_last_lap = rd.add_lap_to_race_diagram("blue", "Last Lap", True)
+    rd.source_last_lap = source_last_lap
 
-        source = rd.add_lap_to_race_diagram(color, legend, visible)
-        rd.sources.append(source)
+    source_reference_lap = rd.add_lap_to_race_diagram("magenta", "Reference Lap", True)
+    rd.source_reference_lap = source_reference_lap
+
+    source_median_lap = rd.add_lap_to_race_diagram("green", "Median Lap", False)
+    rd.source_median_lap = source_median_lap
 
     f_speed.legend.click_policy = "hide"
     f_throttle.legend.click_policy = f_speed.legend.click_policy

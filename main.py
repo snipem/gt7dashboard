@@ -1,8 +1,10 @@
 import copy
+import itertools
 import logging
 import os
 import time
 from typing import List
+from bokeh.palettes import Set3_12 as palette
 
 import bokeh.application
 from bokeh.driving import linear
@@ -189,11 +191,11 @@ def update_speed_velocity_graph(laps: List[Lap]):
     reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
 
     if reference_lap and len(reference_lap.data_speed) > 0:
-        race_diagram.sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
+        race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
-    race_diagram.sources[1].data = last_lap_data
-    race_diagram.sources[2].data = reference_lap_data
-    race_diagram.sources[3].data = gt7helper.get_data_dict_from_lap(median_lap, distance_mode=True)
+    race_diagram.source_last_lap.data = last_lap_data
+    race_diagram.source_reference_lap.data = reference_lap_data
+    race_diagram.source_median_lap.data = gt7helper.get_data_dict_from_lap(median_lap, distance_mode=True)
 
     last_lap_race_line.data_source.data = last_lap_data
     reference_lap_race_line.data_source.data = reference_lap_data
@@ -421,26 +423,19 @@ t_lap_times.min_width = 950
 def table_row_selection_callback(attrname, old, new):
     global g_laps_stored
     global lap_times_source
-    global data_sources
+    global race_diagram
 
     selectionIndex=lap_times_source.selected.indices
     print("you have selected the row nr "+str(selectionIndex))
 
     colors = ["green", "red", "black"]
-    max_additional_laps = len(colors)
-
-    if len(data_sources) > 3:
-        logging.debug("There are additional laps to last, reference and median lap, maybe delete them")
-        data_sources = data_sources[3:]
-        # TODO also remove lines
+    colors = itertools.cycle(palette)
+    # max_additional_laps = len(palette)
 
     for index in selectionIndex:
-        if index < max_additional_laps:
             lap_to_add = g_laps_stored[index]
-            # TODO maybe add this globally
-            new_lap_data_source = race_diagram.add_lap_to_speed_velocity_graph(colors[index], legend=g_laps_stored[index].title, visible=True)
+            new_lap_data_source = race_diagram.add_lap_to_race_diagram(next(colors), legend=g_laps_stored[index].title, visible=True)
             new_lap_data_source.data = gt7helper.get_data_dict_from_lap(lap_to_add, distance_mode=True)
-            data_sources.append(new_lap_data_source)
 
 
 lap_times_source.selected.on_change('indices', table_row_selection_callback)
