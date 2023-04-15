@@ -188,18 +188,20 @@ def update_speed_velocity_graph(laps: List[Lap]):
         laps, reference_lap_selected=g_reference_lap_selected
     )
 
-    last_lap_data = last_lap.get_data_dict()
-    reference_lap_data = reference_lap.get_data_dict()
+    if last_lap:
+        last_lap_data = last_lap.get_data_dict()
+        race_diagram.source_last_lap.data = last_lap_data
+        last_lap_race_line.data_source.data = last_lap_data
 
     if reference_lap and len(reference_lap.data_speed) > 0:
+        reference_lap_data = reference_lap.get_data_dict()
         race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
+        race_diagram.source_reference_lap.data = reference_lap_data
+        reference_lap_race_line.data_source.data = reference_lap_data
 
-    race_diagram.source_last_lap.data = last_lap_data
-    race_diagram.source_reference_lap.data = reference_lap_data
-    race_diagram.source_median_lap.data = median_lap.get_data_dict()
+    if median_lap:
+        race_diagram.source_median_lap.data = median_lap.get_data_dict()
 
-    last_lap_race_line.data_source.data = last_lap_data
-    reference_lap_race_line.data_source.data = reference_lap_data
 
     s_race_line.legend.visible = False
     s_race_line.axis.visible = False
