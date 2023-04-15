@@ -671,14 +671,15 @@ def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap]
 
 def get_variance_for_fastest_laps(laps: List[Lap], number_of_laps = 3, percent_threshold = 0.05):
     fastest_laps = get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps, number_of_laps, percent_threshold)
-    return get_variance_for_laps(fastest_laps)
+    variance = get_variance_for_laps(fastest_laps)
+    return variance
 
 
 def get_variance_for_laps(laps: List[Lap]) -> DataFrame:
 
     dataframe_distance_columns = []
     for lap in laps:
-        d = {'speed_variance': lap.data_speed, 'distance': get_x_axis_for_distance(lap)}
+        d = {'speed': lap.data_speed}
         df = pd.DataFrame(data=d)
         dataframe_distance_columns.append(df)
 
@@ -693,6 +694,7 @@ def get_variance_for_laps(laps: List[Lap]) -> DataFrame:
     speed_std_df = pd.concat(dataframe_distance_columns, axis=1).std(axis=1)
 
     # create a new data frame with absolute values
-    abs_df = pd.DataFrame(abs(speed_std_df))
+    abs_df = pd.DataFrame(abs(speed_std_df), columns=['speed_variance'])
+    abs_df['distance'] = get_x_axis_for_distance(laps[len(laps) - 1])
 
     return abs_df

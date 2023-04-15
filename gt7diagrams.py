@@ -3,7 +3,7 @@ from typing import List
 
 import bokeh
 from bokeh.layouts import layout
-from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable
+from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable, Range1d
 from bokeh.plotting import figure
 
 import gt7helper
@@ -152,9 +152,10 @@ class RaceTimeTable(object):
         self.lap_times_source.data = ColumnDataSource.from_df(new_df)
 
 class RaceDiagram(object):
-    def __init__(self, f_time_diff: figure, f_braking: figure, f_coasting: figure, f_speed: figure, f_throttle: figure, f_tires: figure):
+    def __init__(self, f_time_diff: figure, f_speed_variance: figure, f_braking: figure, f_coasting: figure, f_speed: figure, f_throttle: figure, f_tires: figure):
 
         self.f_time_diff = f_time_diff
+        self.f_speed_variance = f_speed_variance
         self.f_throttle = f_throttle
         self.f_braking = f_braking
         self.f_coasting = f_coasting
@@ -167,10 +168,11 @@ class RaceDiagram(object):
         self.throttle_lines = []
         self.tires_lines = []
 
-        self.layout = layout(self.f_time_diff, self.f_speed, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires)
+        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires)
 
         # Data Sources
         self.source_time_diff = None
+        self.source_speed_variance = None
         self.source_last_lap = None
         self.source_reference_lap = None
         self.source_median_lap = None
@@ -182,21 +184,18 @@ class RaceDiagram(object):
         # last lap, best lap and median lap
         self.number_of_default_laps = 3
 
-        dummy_data = Lap().get_data_dict()
-        source = ColumnDataSource(data=dummy_data)
+        self.source_speed_variance = ColumnDataSource(data={"distance": [], "speed_variance": []})
 
-        self.speed_lines.append(self.f_speed.line(
+        self.f_speed_variance.line(
             x="distance",
             y="speed_variance",
-            source=source,
+            source=self.source_speed_variance,
             legend_label="Fastest Lap Variance",
             line_width=1,
             color="red",
             line_alpha=1,
             visible=True
-        ))
-
-        self.fastest_lap_variance_source = source
+        )
 
     def add_additional_lap_to_race_diagram(self, color: str, lap: Lap, visible: bool = True):
         source = self.add_lap_to_race_diagram(color, lap.title, visible)
@@ -204,9 +203,8 @@ class RaceDiagram(object):
         self.sources_additional_laps.append(source)
 
     def update_fastest_laps_variance(self, laps):
-        self.fastest_lap_variance_source = gt7helper.get_variance_for_fastest_laps(laps)
-
-
+        variance = gt7helper.get_variance_for_fastest_laps(laps)
+        self.source_speed_variance.data = variance
     def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 
         # Set empty data for avoiding warnings about missing columns
@@ -329,6 +327,16 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
         active_drag="box_zoom",
     )
 
+    f_speed_variance = figure(
+        y_axis_label="Speed Variance Top Laps",
+        x_range=f_speed.x_range,
+        y_range=Range1d(0, 100),
+        width=width,
+        height=int(f_speed.height / 2),
+        tooltips=tooltips,
+        active_drag="box_zoom",
+    )
+
     f_time_diff = figure(
         title="Time Diff - Last, Reference",
         x_range=f_speed.x_range,
@@ -387,6 +395,9 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
 
     f_time_diff.toolbar.autohide = True
 
+    f_speed_variance.xaxis.visible = False
+    f_speed_variance.toolbar.autohide = True
+
     f_throttle.xaxis.visible = False
     f_throttle.toolbar.autohide = True
 
@@ -409,7 +420,7 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
         line_alpha=1,
     )
 
-    rd = RaceDiagram(f_time_diff, f_braking, f_coasting, f_speed, f_throttle, f_tires)
+    rd = RaceDiagram(f_time_diff, f_speed_variance, f_braking, f_coasting, f_speed, f_throttle, f_tires)
 
     rd.source_time_diff = time_diff_source
 
