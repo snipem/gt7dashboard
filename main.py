@@ -204,6 +204,8 @@ def update_speed_velocity_graph(laps: List[Lap]):
     s_race_line.legend.visible = False
     s_race_line.axis.visible = False
 
+    race_diagram.update_fastest_laps_variance(laps)
+
     # Update breakpoints
     # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
     brake_points_enabled = os.environ.get("GT7_ADD_BRAKEPOINTS") == "true"
@@ -505,6 +507,7 @@ l1 = layout(
         [div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select],
         [race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select])],
         [race_diagram.f_speed, s_race_line],
+        [race_diagram.f_speed_variance],
         [race_diagram.f_throttle, [[div_last_lap, div_reference_lap]]],
         [race_diagram.f_braking],
         [race_diagram.f_coasting],

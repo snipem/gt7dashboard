@@ -190,7 +190,6 @@ class RaceDiagram(object):
             x="distance",
             y="speed_variance",
             source=self.source_speed_variance,
-            legend_label="Fastest Lap Variance",
             line_width=1,
             color="red",
             line_alpha=1,
@@ -332,7 +331,7 @@ def get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width: int) -> 
         x_range=f_speed.x_range,
         y_range=Range1d(0, 100),
         width=width,
-        height=int(f_speed.height / 2),
+        height=int(f_speed.height / 4),
         tooltips=tooltips,
         active_drag="box_zoom",
     )
