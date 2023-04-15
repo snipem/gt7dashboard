@@ -62,7 +62,7 @@ def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
     pass
 
 
-def get_time_delta_dataframe_for_lap(lap: Lap, name: str):
+def get_time_delta_dataframe_for_lap(lap: Lap, name: str) -> DataFrame:
     lap_distance = get_x_axis_for_distance(lap)
     lap_time = lap.data_time
 
@@ -494,12 +494,13 @@ def pd_data_frame_from_lap(
 
     return df
 
+
 RACE_LINE_BRAKING_MODE = "RACE_LINE_BRAKING_MODE"
 RACE_LINE_THROTTLE_MODE = "RACE_LINE_THROTTLE_MODE"
 RACE_LINE_COASTING_MODE = "RACE_LINE_COASTING_MODE"
 
-def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
 
+def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
     return_y = []
     return_x = []
     return_z = []
@@ -541,10 +542,11 @@ def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
 
     return return_y, return_x, return_z
 
+
 CARS_CSV_FILENAME = "db/cars.csv"
 
-def get_car_name_for_car_id(car_id: int) -> str:
 
+def get_car_name_for_car_id(car_id: int) -> str:
     # check if variable is int
     if not isinstance(car_id, int):
         raise ValueError("car_id must be an integer")
@@ -564,9 +566,8 @@ def get_car_name_for_car_id(car_id: int) -> str:
     return ""
 
 
-
 def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
-    tuples = [""] # Use empty first option which is default
+    tuples = [""]  # Use empty first option which is default
     for lapfile in lapfiles:
         tuples.append(tuple((lapfile.path, lapfile.__str__())))
     return tuples
@@ -653,10 +654,45 @@ def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[FuelMap]:
 
     return relative_fuel_maps
 
-def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap], number_of_laps: int, percent_threshold: float):
-    filtered_laps = [lap for lap in laps if not lap.is_replay]
+
+def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap], number_of_laps: int,
+                                                                 percent_threshold: float):
+    # FIXME use filtered_laps = [lap for lap in laps if not lap.is_replay] . when all laps have is_replay field
+    # filtered_laps = [lap for lap in laps if not lap.is_replay]
+    filtered_laps = laps
+
     # sort laps by finish time
     filtered_laps.sort(key=lambda lap: lap.lap_finish_time)
     fastest_lap = filtered_laps[0]
-    threshold_laps = [lap for lap in filtered_laps if lap.lap_finish_time <= fastest_lap.lap_finish_time * (1 + percent_threshold)]
+    threshold_laps = [lap for lap in filtered_laps if
+                      lap.lap_finish_time <= fastest_lap.lap_finish_time * (1 + percent_threshold)]
     return threshold_laps[:number_of_laps]
+
+
+def get_variance_for_fastest_laps(laps: List[Lap], number_of_laps = 3, percent_threshold = 0.05):
+    fastest_laps = get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps, number_of_laps, percent_threshold)
+    return get_variance_for_laps(fastest_laps)
+
+
+def get_variance_for_laps(laps: List[Lap]) -> DataFrame:
+
+    dataframe_distance_columns = []
+    for lap in laps:
+        d = {'speed_variance': lap.data_speed, 'distance': get_x_axis_for_distance(lap)}
+        df = pd.DataFrame(data=d)
+        dataframe_distance_columns.append(df)
+
+    # df = dataframe_distance_columns[0].join(, how="outer").sort_index().interpolate()
+
+    # After interpolation, we can make the index a normal field and rename it
+    # df.reset_index(inplace=True)
+    # df = df.rename(columns={"index": "distance"})
+
+    # calculate the standard deviation of the "speed" column across the data frames
+    # it is a little bit naive because we are only comparing each value with each other but should fit
+    speed_std_df = pd.concat(dataframe_distance_columns, axis=1).std(axis=1)
+
+    # create a new data frame with absolute values
+    abs_df = pd.DataFrame(abs(speed_std_df))
+
+    return abs_df

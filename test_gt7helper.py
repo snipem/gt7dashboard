@@ -271,29 +271,30 @@ class TestLaps(unittest.TestCase):
     def test_get_safe_filename(self):
         self.assertEqual("Cio_123_98", gt7helper.get_safe_filename("Cio 123 '98"))
 
-
     def test_get_n_fastest_laps_within_percent_threshold_ignoring_replays(self):
         l1 = Lap()
-        l1.lap_finish_time = 1005 # second best
+        l1.lap_finish_time = 1005  # second best
 
         l2 = Lap()
-        l2.lap_finish_time = 1100 # dead last, is cut off
+        l2.lap_finish_time = 1100  # dead last, is cut off
 
         l3 = Lap()
         l3.lap_finish_time = 500
-        l3.is_replay = True # Super quick but replay
+        l3.is_replay = True  # Super quick but replay
 
         l4 = Lap()
-        l4.lap_finish_time = 1000 # best
+        l4.lap_finish_time = 1000  # best
 
         l5 = Lap()
-        l5.lap_finish_time = 5000 # Super slow
+        l5.lap_finish_time = 5000  # Super slow
 
         l6 = Lap()
-        l6.lap_finish_time = 1010 # second to last
+        l6.lap_finish_time = 1010  # second to last
 
         number_of_laps_to_get = 3
-        filtered_laps = gt7helper.get_n_fastest_laps_within_percent_threshold_ignoring_replays([l1, l2, l3, l4, l5, l6], number_of_laps_to_get, 0.15)
+        filtered_laps = gt7helper.get_n_fastest_laps_within_percent_threshold_ignoring_replays([l1, l2, l3, l4, l5, l6],
+                                                                                               number_of_laps_to_get,
+                                                                                               0.15)
         self.assertEqual(number_of_laps_to_get, len(filtered_laps))
 
         self.assertEqual(1000, filtered_laps[0].lap_finish_time)
@@ -301,7 +302,29 @@ class TestLaps(unittest.TestCase):
         self.assertEqual(1010, filtered_laps[2].lap_finish_time)
 
         threshold_percentage = 0.006
-        tighter_filtered_laps = gt7helper.get_n_fastest_laps_within_percent_threshold_ignoring_replays([l1, l2, l3, l4, l5, l6], number_of_laps_to_get, percent_threshold=threshold_percentage)
+        tighter_filtered_laps = gt7helper.get_n_fastest_laps_within_percent_threshold_ignoring_replays(
+            [l1, l2, l3, l4, l5, l6], number_of_laps_to_get, percent_threshold=threshold_percentage)
 
         # Should only contain 1000 and 1005 within 0,6% difference
         self.assertEqual(2, len(tighter_filtered_laps))
+
+
+    def test_get_variance_for_fastest_laps(self):
+        l1 = Lap()
+        l1.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
+        l1.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+
+        l2 = Lap()
+        l2.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
+        l2.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+
+        l3 = Lap()
+        l3.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
+        l3.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+
+        l4 = Lap()
+        l4.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
+        l4.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+
+        variance = gt7helper.get_variance_for_fastest_laps([l1, l2, l3, l4])
+        print(variance)

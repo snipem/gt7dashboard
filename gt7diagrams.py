@@ -182,10 +182,30 @@ class RaceDiagram(object):
         # last lap, best lap and median lap
         self.number_of_default_laps = 3
 
+        dummy_data = Lap().get_data_dict()
+        source = ColumnDataSource(data=dummy_data)
+
+        self.speed_lines.append(self.f_speed.line(
+            x="distance",
+            y="speed_variance",
+            source=source,
+            legend_label="Fastest Lap Variance",
+            line_width=1,
+            color="red",
+            line_alpha=1,
+            visible=True
+        ))
+
+        self.fastest_lap_variance_source = source
+
     def add_additional_lap_to_race_diagram(self, color: str, lap: Lap, visible: bool = True):
         source = self.add_lap_to_race_diagram(color, lap.title, visible)
         source.data = lap.get_data_dict()
         self.sources_additional_laps.append(source)
+
+    def update_fastest_laps_variance(self, laps):
+        self.fastest_lap_variance_source = gt7helper.get_variance_for_fastest_laps(laps)
+
 
     def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 
