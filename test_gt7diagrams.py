@@ -38,12 +38,8 @@ class TestHelper(unittest.TestCase):
         reference_lap = self.test_laps[0]
         last_lap = self.test_laps[1]
 
-        lap_data = gt7helper.get_data_dict_from_lap(
-            last_lap, distance_mode=True
-        )
-        reference_lap_data = gt7helper.get_data_dict_from_lap(
-            reference_lap, distance_mode=True
-        )
+        lap_data = last_lap.get_data_dict()
+        reference_lap_data = reference_lap.get_data_dict()
 
         throttle_line_data.data_source.data = lap_data
         breaking_line_data.data_source.data = lap_data
@@ -67,16 +63,10 @@ class TestHelper(unittest.TestCase):
     def helper_get_race_diagram(self):
         rd = get_throttle_velocity_diagram_for_reference_lap_and_last_lap(600)
 
-        lap_data_1 = gt7helper.get_data_dict_from_lap(
-            self.test_laps[0], distance_mode=True
-        )
-        lap_data_2 = gt7helper.get_data_dict_from_lap(
-            self.test_laps[1], distance_mode=True
-        )
+        lap_data_1 = self.test_laps[0].get_data_dict()
+        lap_data_2 = self.test_laps[1].get_data_dict()
 
-        median_lap_data = gt7helper.get_data_dict_from_lap(
-            gt7helper.get_median_lap(self.test_laps), distance_mode=True
-        )
+        median_lap_data = gt7helper.get_median_lap(self.test_laps).get_data_dict()
 
         rd.source_time_diff.data = gt7helper.calculate_time_diff_by_distance(
             self.test_laps[0], self.test_laps[1]
