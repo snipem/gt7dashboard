@@ -184,15 +184,13 @@ class RaceDiagram(object):
 
     def add_additional_lap_to_race_diagram(self, color: str, lap: Lap, visible: bool = True):
         source = self.add_lap_to_race_diagram(color, lap.title, visible)
-        source.data = gt7helper.get_data_dict_from_lap(
-            lap, distance_mode=True
-        )
+        source.data = lap.get_data_dict()
         self.sources_additional_laps.append(source)
 
     def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 
         # Set empty data for avoiding warnings about missing columns
-        dummy_data = gt7helper.get_data_dict_from_lap(Lap(), distance_mode=True)
+        dummy_data = Lap().get_data_dict()
 
         source = ColumnDataSource(data=dummy_data)
 

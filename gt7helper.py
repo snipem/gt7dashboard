@@ -552,7 +552,7 @@ def get_car_name_for_car_id(car_id: int) -> str:
     # check if file exists
     if not os.path.isfile(CARS_CSV_FILENAME):
         logging.info("Could not find file %s" % CARS_CSV_FILENAME)
-        return ""
+        return "CAR-ID-%d" % car_id
 
     # read csv from file
     with open(CARS_CSV_FILENAME, 'r') as csv_file:
@@ -563,44 +563,6 @@ def get_car_name_for_car_id(car_id: int) -> str:
 
     return ""
 
-
-def get_data_dict_from_lap(lap: Lap, distance_mode: bool) -> dict[str, list]:
-    # Use empty lap if lap is none
-    if not lap:
-        lap = Lap()
-
-    raceline_y_throttle, raceline_x_throttle, raceline_z_throttle = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_THROTTLE_MODE)
-    raceline_y_braking, raceline_x_braking, raceline_z_braking = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_BRAKING_MODE)
-    raceline_y_coasting, raceline_x_coasting, raceline_z_coasting = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_COASTING_MODE)
-
-    data = {
-        "throttle": lap.data_throttle,
-        "brake": lap.data_braking,
-        "speed": lap.data_speed,
-        "time": lap.data_time,
-        "tires": lap.data_tires,
-        "ticks": list(range(len(lap.data_speed))),
-        "coast": lap.data_coasting,
-        "raceline_y": lap.data_position_y,
-        "raceline_x": lap.data_position_x,
-        "raceline_z": lap.data_position_z,
-        # For a raceline when throttle is engaged
-        "raceline_y_throttle": raceline_y_throttle,
-        "raceline_x_throttle": raceline_x_throttle,
-        "raceline_z_throttle": raceline_z_throttle,
-        # For a raceline when braking is engaged
-        "raceline_y_braking": raceline_y_braking,
-        "raceline_x_braking": raceline_x_braking,
-        "raceline_z_braking": raceline_z_braking,
-        # For a raceline when neither throttle nor brake is engaged
-        "raceline_y_coasting": raceline_y_coasting,
-        "raceline_x_coasting": raceline_x_coasting,
-        "raceline_z_coasting": raceline_z_coasting,
-
-        "distance": get_x_axis_depending_on_mode(lap, distance_mode),
-    }
-
-    return data
 
 
 def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
