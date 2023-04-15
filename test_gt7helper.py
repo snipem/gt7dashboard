@@ -268,6 +268,40 @@ class TestLaps(unittest.TestCase):
         car_name = gt7helper.get_car_name_for_car_id(1448)
         self.assertEqual(car_name, "")
 
-
     def test_get_safe_filename(self):
         self.assertEqual("Cio_123_98", gt7helper.get_safe_filename("Cio 123 '98"))
+
+
+    def test_get_n_fastest_laps_within_percent_threshold_ignoring_replays(self):
+        l1 = Lap()
+        l1.lap_finish_time = 1005 # second best
+
+        l2 = Lap()
+        l2.lap_finish_time = 1100 # dead last, is cut off
+
+        l3 = Lap()
+        l3.lap_finish_time = 500
+        l3.is_replay = True # Super quick but replay
+
+        l4 = Lap()
+        l4.lap_finish_time = 1000 # best
+
+        l5 = Lap()
+        l5.lap_finish_time = 5000 # Super slow
+
+        l6 = Lap()
+        l6.lap_finish_time = 1010 # second to last
+
+        number_of_laps_to_get = 3
+        filtered_laps = gt7helper.get_n_fastest_laps_within_percent_threshold_ignoring_replays([l1, l2, l3, l4, l5, l6], number_of_laps_to_get, 0.15)
+        self.assertEqual(number_of_laps_to_get, len(filtered_laps))
+
+        self.assertEqual(1000, filtered_laps[0].lap_finish_time)
+        self.assertEqual(1005, filtered_laps[1].lap_finish_time)
+        self.assertEqual(1010, filtered_laps[2].lap_finish_time)
+
+        threshold_percentage = 0.006
+        tighter_filtered_laps = gt7helper.get_n_fastest_laps_within_percent_threshold_ignoring_replays([l1, l2, l3, l4, l5, l6], number_of_laps_to_get, percent_threshold=threshold_percentage)
+
+        # Should only contain 1000 and 1005 within 0,6% difference
+        self.assertEqual(2, len(tighter_filtered_laps))

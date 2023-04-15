@@ -690,3 +690,11 @@ def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[FuelMap]:
         i += 1
 
     return relative_fuel_maps
+
+def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap], number_of_laps: int, percent_threshold: float):
+    filtered_laps = [lap for lap in laps if not lap.is_replay]
+    # sort laps by finish time
+    filtered_laps.sort(key=lambda lap: lap.lap_finish_time)
+    fastest_lap = filtered_laps[0]
+    threshold_laps = [lap for lap in filtered_laps if lap.lap_finish_time <= fastest_lap.lap_finish_time * (1 + percent_threshold)]
+    return threshold_laps[:number_of_laps]

@@ -38,6 +38,10 @@ class Lap:
         # Car
         self.car_id = 0
 
+        # Always record was set when recording the lap, likely a replay
+        self.is_replay = False
+        self.is_manual = False
+
     def __str__(self):
         return "\n %s, %2d, %1.f, %4d, %4d, %4d" % (
             self.title,
