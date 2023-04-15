@@ -77,14 +77,14 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     global race_lines, race_lines_data
 
 
-    reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
+    reference_lap_data = reference_lap.get_data_dict()
 
     for i, lap in enumerate(laps[:len(race_lines)]):
         print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
 
         race_lines[i].title.text = "Lap %d - %s (%s), Reference Lap: %s (%s)" % (len(laps) - i, lap.title, lap.car_name(), reference_lap.title, reference_lap.car_name())
 
-        lap_data = gt7helper.get_data_dict_from_lap(lap, distance_mode=True)
+        lap_data = lap.get_data_dict()
         race_lines_data[i][0].data_source.data = lap_data
         race_lines_data[i][1].data_source.data = lap_data
         race_lines_data[i][2].data_source.data = lap_data
@@ -188,15 +188,15 @@ def update_speed_velocity_graph(laps: List[Lap]):
         laps, reference_lap_selected=g_reference_lap_selected
     )
 
-    last_lap_data = gt7helper.get_data_dict_from_lap(last_lap, distance_mode=True)
-    reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
+    last_lap_data = last_lap.get_data_dict()
+    reference_lap_data = reference_lap.get_data_dict()
 
     if reference_lap and len(reference_lap.data_speed) > 0:
         race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
 
     race_diagram.source_last_lap.data = last_lap_data
     race_diagram.source_reference_lap.data = reference_lap_data
-    race_diagram.source_median_lap.data = gt7helper.get_data_dict_from_lap(median_lap, distance_mode=True)
+    race_diagram.source_median_lap.data = median_lap.get_data_dict()
 
     last_lap_race_line.data_source.data = last_lap_data
     reference_lap_race_line.data_source.data = reference_lap_data
@@ -422,7 +422,7 @@ def table_row_selection_callback(attrname, old, new):
         colors_index+=1
         lap_to_add = g_laps_stored[index]
         new_lap_data_source = race_diagram.add_lap_to_race_diagram(color, legend=g_laps_stored[index].title, visible=True)
-        new_lap_data_source.data = gt7helper.get_data_dict_from_lap(lap_to_add, distance_mode=True)
+        new_lap_data_source.data = lap_to_add.get_data_dict()
 
 
 race_time_table.lap_times_source.selected.on_change('indices', table_row_selection_callback)

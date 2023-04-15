@@ -360,6 +360,10 @@ class GT7Communication(Thread):
             # have their lap time stored in last_lap
             self.current_lap.lap_finish_time = self.last_data.last_lap
 
+        # Track recording meta data
+        self.current_lap.is_replay = self.always_record_data
+        self.current_lap.is_manual = manual
+
         self.current_lap.fuel_at_end = self.last_data.current_fuel
         self.current_lap.fuel_consumed = self.current_lap.fuel_at_start - self.current_lap.fuel_at_end
         self.current_lap.lap_finish_time = self.current_lap.lap_finish_time

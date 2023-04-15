@@ -253,7 +253,7 @@ class TestLaps(unittest.TestCase):
         with open(path, 'rb') as f:
             l = pickle.load(f)
 
-        lap = gt7helper.get_data_dict_from_lap(l[0], distance_mode=True)
+        lap = l[0].get_data_dict()
         print(lap)
 
     def test_get_car_name_for_car_id(self):
