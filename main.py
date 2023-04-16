@@ -399,7 +399,7 @@ stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
     list_lap_files_from_path(os.path.join(os.getcwd(), "data"))
 )
 
-race_diagram = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
+race_diagram = gt7diagrams.RaceDiagram(width=1000)
 race_time_table = gt7diagrams.RaceTimeTable()
 colors = itertools.cycle(palette)
 

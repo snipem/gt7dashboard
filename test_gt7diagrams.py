@@ -11,7 +11,6 @@ import gt7diagrams
 import gt7helper
 from gt7diagrams import (
     get_throttle_braking_race_line_diagram,
-    get_throttle_velocity_diagram_for_reference_lap_and_last_lap,
 )
 from gt7lap import Lap
 
@@ -61,7 +60,7 @@ class TestHelper(unittest.TestCase):
         self.assertAlmostEqual(file_size, 7500000, delta=1000000)
 
     def helper_get_race_diagram(self):
-        rd = get_throttle_velocity_diagram_for_reference_lap_and_last_lap(600)
+        rd = gt7diagrams.RaceDiagram(600)
 
         lap_data_1 = self.test_laps[0].get_data_dict()
         lap_data_2 = self.test_laps[1].get_data_dict()
@@ -155,7 +154,7 @@ class TestHelper(unittest.TestCase):
         output_file(out_file)
         save(rt.t_lap_times)
 
-    def test_get_last_variance(self):
+    def test_display_variance(self):
         rd = self.helper_get_race_diagram()
         rd.update_fastest_laps_variance(self.test_laps)
 
@@ -167,3 +166,17 @@ class TestHelper(unittest.TestCase):
         # get file size, should be about 5MB
         file_size = os.path.getsize(out_file)
         self.assertAlmostEqual(file_size, 5000000, delta=1000000)
+
+    def test_display_flat_line_variance(self):
+        rd = self.helper_get_race_diagram()
+        # three times the same lap should result in a flat line
+        rd.update_fastest_laps_variance([self.test_laps[0], self.test_laps[0], self.test_laps[0]])
+
+        out_file = "test_out/test_display_flat_line_variance.html"
+        print("View file for reference at %s" % out_file)
+        output_file(out_file)
+        save(layout(rd.f_speed_variance))
+
+        # get file size, should be about 5MB
+        file_size = os.path.getsize(out_file)
+        self.assertAlmostEqual(file_size, 140000, delta=1000000)

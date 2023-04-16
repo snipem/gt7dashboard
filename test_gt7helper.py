@@ -266,7 +266,7 @@ class TestLaps(unittest.TestCase):
     def test_get_car_name_for_car_id_when_csv_file_does_not_exist(self):
         gt7helper.CARS_CSV_FILENAME = "not_existing_file"
         car_name = gt7helper.get_car_name_for_car_id(1448)
-        self.assertEqual(car_name, "")
+        self.assertEqual(car_name, "CAR-ID-1448")
 
     def test_get_safe_filename(self):
         self.assertEqual("Cio_123_98", gt7helper.get_safe_filename("Cio 123 '98"))
