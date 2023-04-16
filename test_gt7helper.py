@@ -311,20 +311,17 @@ class TestLaps(unittest.TestCase):
 
     def test_get_variance_for_fastest_laps(self):
         l1 = Lap()
-        l1.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
-        l1.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+        l1.data_speed = [50, 100, 110, 120]
+        l1.data_time =  [10, 100,200,300]
 
         l2 = Lap()
-        l2.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
-        l2.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+        l2.data_speed = [50, 200, 300, 400]
+        l2.data_time =  [10, 100,200,300]
 
         l3 = Lap()
-        l3.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
-        l3.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+        l3.data_speed = [50, 150, 200, 200]
+        l3.data_time =  [10, 100,200,300]
 
-        l4 = Lap()
-        l4.data_speed = [0, 2, 3, 5, 5, 4.5, 3, 6, 7, 8, 7, 8, 3, 2]
-        l4.data_time =  [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
-
-        variance = gt7helper.get_variance_for_fastest_laps([l1, l2, l3, l4])
+        variance = gt7helper.get_variance_for_laps([l1, l2, l3])
+        print("")
         print(variance)
