@@ -21,18 +21,16 @@ from bokeh.palettes import Plasma11 as palette
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
 
-import gt7communication
-import gt7diagrams
-import gt7help
-import gt7helper
-from gt7help import get_help_div
-from gt7helper import (
+from gt7dashboard import gt7communication, gt7diagrams, gt7help, gt7helper, gt7lap
+
+from gt7dashboard.gt7help import get_help_div
+from gt7dashboard.gt7helper import (
     load_laps_from_pickle,
     save_laps_to_pickle,
     list_lap_files_from_path,
     calculate_time_diff_by_distance,
 )
-from gt7lap import Lap
+from gt7dashboard.gt7lap import Lap
 
 # set logging level to debug
 logging.getLogger().setLevel(logging.DEBUG)

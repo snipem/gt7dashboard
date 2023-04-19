@@ -1,6 +1,6 @@
 from bokeh.models import Div
 
-import gt7helper
+from gt7dashboard import gt7helper
 
 SPEED_VARIANCE_HELP = f"Displays the speed deviation of the fastest laps within a {gt7helper.DEFAULT_FASTEST_LAPS_PERCENT_THRESHOLD * 100}% threshold of the fastest lap." \
                       f" Replay laps are ignored. The speed deviation is calculated as the standard deviation between these fastest laps." \

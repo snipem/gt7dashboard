@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 import bokeh
@@ -6,7 +5,7 @@ from bokeh.layouts import layout
 from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable, Range1d
 from bokeh.plotting import figure
 
-import gt7dashboard.gt7helper
+from gt7dashboard import gt7helper
 from gt7dashboard.gt7lap import Lap
 
 

@@ -243,7 +243,6 @@ class GT7Communication(Thread):
             except Exception as e:
                 # Handler for general socket exceptions
                 logging.info("No connection to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
-                print(traceback.format_exc())
                 s.close()
                 # Wait before reconnect
                 time.sleep(5)
