@@ -658,9 +658,9 @@ def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[FuelMap]:
 
 def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap], number_of_laps: int,
                                                                  percent_threshold: float):
-    # FIXME use filtered_laps = [lap for lap in laps if not lap.is_replay] . when all laps have is_replay field
+    # FIXME Replace later with this line
     # filtered_laps = [lap for lap in laps if not lap.is_replay]
-    filtered_laps = laps
+    filtered_laps = [lap for lap in laps if not (hasattr(lap, "is_replay") and lap.is_replay)]
 
     # sort laps by finish time
     filtered_laps.sort(key=lambda lap: lap.lap_finish_time)
@@ -670,10 +670,11 @@ def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap]
     return threshold_laps[:number_of_laps]
 
 
-def get_variance_for_fastest_laps(laps: List[Lap], number_of_laps = 3, percent_threshold = 0.05):
-    fastest_laps = get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps, number_of_laps, percent_threshold)
-    variance = get_variance_for_laps(fastest_laps)
-    return variance
+DEFAULT_FASTEST_LAPS_PERCENT_THRESHOLD = 0.05
+def get_variance_for_fastest_laps(laps: List[Lap], number_of_laps: int = 3, percent_threshold: float = DEFAULT_FASTEST_LAPS_PERCENT_THRESHOLD) -> (DataFrame, list[Lap]):
+    fastest_laps: list[Lap] = get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps, number_of_laps, percent_threshold)
+    variance: DataFrame = get_variance_for_laps(fastest_laps)
+    return variance, fastest_laps
 
 
 def get_variance_for_laps(laps: List[Lap]) -> DataFrame:

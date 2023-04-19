@@ -23,7 +23,9 @@ from bokeh.plotting import figure
 
 import gt7communication
 import gt7diagrams
+import gt7help
 import gt7helper
+from gt7help import get_help_div
 from gt7helper import (
     load_laps_from_pickle,
     save_laps_to_pickle,
@@ -206,7 +208,11 @@ def update_speed_velocity_graph(laps: List[Lap]):
     s_race_line.legend.visible = False
     s_race_line.axis.visible = False
 
-    race_diagram.update_fastest_laps_variance(laps)
+    fastest_laps = race_diagram.update_fastest_laps_variance(laps)
+    print("Updating Speed Deviance with %d fastest laps" % len(fastest_laps))
+    div_deviance_laps_on_display.text = ""
+    for fastest_lap in fastest_laps:
+        div_deviance_laps_on_display.text += f"<b>Lap {fastest_lap.number}:</b> {fastest_lap.title}<br>"
 
     # Update breakpoints
     # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
@@ -494,6 +500,7 @@ div_gt7_dashboard = Div(width=120, height=30)
 div_header_line = Div(width=400, height=30)
 div_reference_lap = Div(width=200, height=125)
 div_connection_info = Div(width=30, height=30)
+div_deviance_laps_on_display = Div(width=200, height=race_diagram.f_speed_variance.height)
 
 div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
 
@@ -509,8 +516,8 @@ l1 = layout(
         [div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select],
         [race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select])],
         [race_diagram.f_speed, s_race_line],
-        [race_diagram.f_speed_variance],
-        [race_diagram.f_throttle, [[div_last_lap, div_reference_lap]]],
+        [race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE_HELP)],
+        [race_diagram.f_throttle, [[div_last_lap, div_reference_lap]], get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS_HELP)],
         [race_diagram.f_braking],
         [race_diagram.f_coasting],
         [race_diagram.f_tires],

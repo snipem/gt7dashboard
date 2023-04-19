@@ -198,6 +198,12 @@ class RaceDiagram(object):
             ("comparison", "@comparison{0} ms"),
         ]
 
+        self.tooltips_speed_variance = [
+            ("index", "$index"),
+            ("Distance", "@distance{0} m"),
+            ("Spd. Deviation", "@speed_variance{0}"),
+        ]
+
         self.f_speed = figure(
             title="Last, Reference, Median",
             y_axis_label="Speed",
@@ -213,7 +219,7 @@ class RaceDiagram(object):
             y_range=Range1d(0, 50),
             width=width,
             height=int(self.f_speed.height / 4),
-            tooltips=tooltips,
+            tooltips=self.tooltips_speed_variance,
             active_drag="box_zoom",
         )
 
@@ -333,8 +339,9 @@ class RaceDiagram(object):
 
     def update_fastest_laps_variance(self, laps):
         # FIXME, many many data points, mayabe reduce by the amount of laps?
-        variance = gt7helper.get_variance_for_fastest_laps(laps)
+        variance, fastest_laps = gt7helper.get_variance_for_fastest_laps(laps)
         self.source_speed_variance.data = variance
+        return fastest_laps
 
     def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 
