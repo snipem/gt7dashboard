@@ -2,6 +2,7 @@ import time
 import unittest
 
 import gt7dashboard.gt7communication
+from gt7dashboard import gt7communication
 from gt7dashboard.gt7lap import Lap
 import socket
 

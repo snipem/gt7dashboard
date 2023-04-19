@@ -9,6 +9,7 @@ from bokeh.plotting import save, figure
 
 import gt7dashboard.gt7diagrams
 import gt7dashboard.gt7helper
+from gt7dashboard import gt7diagrams, gt7helper
 from gt7dashboard.gt7diagrams import (
     get_throttle_braking_race_line_diagram,
 )
@@ -18,7 +19,7 @@ from gt7dashboard.gt7lap import Lap
 class TestHelper(unittest.TestCase):
     def setUp(self) -> None:
         self.path = os.path.join(
-            os.getcwd(), "test_data", "tsukuba_2laps_rain_first_is_best.pickle"
+            os.getcwd(), "test_data", "brands_hatch_10_laps.laps"
         )
         with open(self.path, "rb") as f:
             self.test_laps = pickle.load(f)
@@ -57,7 +58,7 @@ class TestHelper(unittest.TestCase):
 
         # get file size, should be about 3.5MB
         file_size = os.path.getsize(out_file)
-        self.assertAlmostEqual(file_size, 7500000, delta=1000000)
+        self.assertAlmostEqual(file_size, 4500000, delta=1000000)
 
     def helper_get_race_diagram(self):
         rd = gt7diagrams.RaceDiagram(600)
@@ -87,7 +88,7 @@ class TestHelper(unittest.TestCase):
 
         # get file size, should be about 5MB
         file_size = os.path.getsize(out_file)
-        self.assertAlmostEqual(file_size, 5000000, delta=1000000)
+        self.assertAlmostEqual(file_size, 2500000, delta=1000000)
 
     def test_add_5_additional_laps_to_race_diagram(self):
 
@@ -115,7 +116,7 @@ class TestHelper(unittest.TestCase):
 
         # get file size, should be about 5MB
         file_size = os.path.getsize(out_file)
-        self.assertAlmostEqual(file_size, 5000000, delta=1000000)
+        self.assertAlmostEqual(file_size, 2600000, delta=1000000)
 
         with open(out_file, 'r') as fp:
             data = fp.read()
@@ -165,7 +166,7 @@ class TestHelper(unittest.TestCase):
 
         # get file size, should be about 5MB
         file_size = os.path.getsize(out_file)
-        self.assertAlmostEqual(file_size, 5000000, delta=1000000)
+        self.assertAlmostEqual(file_size, 3000000, delta=1000000)
 
     def test_display_flat_line_variance(self):
         rd = self.helper_get_race_diagram()

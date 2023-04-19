@@ -16,7 +16,7 @@ from scipy.signal import find_peaks
 from tabulate import tabulate
 
 from gt7dashboard.gt7lap import Lap
-from gt7dashboard import gt7lap
+from gt7dashboard import gt7helper
 
 
 def save_laps(laps: List[Lap]):

@@ -79,7 +79,7 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
 
     def test_calculate_time_diff_by_distance_from_pickle(self):
-        path = os.path.join(os.getcwd(), 'test_data', 'tsukuba_2laps_rain_first_is_best.pickle')
+        path = os.path.join(os.getcwd(), 'test_data', 'brands_hatch_10_laps.laps')
         laps = gt7helper.load_laps_from_pickle(path)
 
         df = calculate_time_diff_by_distance(laps[0], laps[1])
@@ -241,17 +241,17 @@ class TestLaps(unittest.TestCase):
         self.assertEqual([3, 9, 11], peaks)
 
     def test_find_speed_peaks_and_valleys_real_data(self):
-        path = os.path.join(os.getcwd(), 'test_data', 'tsukuba_2laps_rain_first_is_best.pickle')
+        path = os.path.join(os.getcwd(), 'test_data', 'brands_hatch_10_laps.laps')
         with open(path, 'rb') as f:
             l = pickle.load(f)
 
         peaks, valleys = gt7helper.find_speed_peaks_and_valleys(l[1], width=100)
 
-        self.assertEqual([253, 1236, 2138, 3006, 4293], peaks)
-        self.assertEqual([565, 1746, 2387, 3380, 4808], valleys)
+        self.assertEqual([622, 1166, 1684], peaks)
+        self.assertEqual([274, 804, 1279, 2201], valleys)
 
     def test_get_data_from_lap(self):
-        path = os.path.join(os.getcwd(), 'test_data', 'tsukuba_2laps_rain_first_is_best.pickle')
+        path = os.path.join(os.getcwd(), 'test_data', 'brands_hatch_10_laps.laps')
         with open(path, 'rb') as f:
             l = pickle.load(f)
 
