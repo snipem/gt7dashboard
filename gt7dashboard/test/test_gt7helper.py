@@ -2,7 +2,8 @@ import pickle
 import unittest
 import os
 
-from gt7dashboard.gt7helper import calculate_remaining_fuel, format_laps_to_table, calculate_time_diff_by_distance
+from gt7dashboard.gt7helper import calculate_remaining_fuel, format_laps_to_table, calculate_time_diff_by_distance, \
+    get_n_fastest_laps_within_percent_threshold_ignoring_replays
 from gt7dashboard.gt7lap import Lap
 
 from gt7dashboard import gt7helper
@@ -327,3 +328,20 @@ class TestLaps(unittest.TestCase):
         variance = gt7helper.get_variance_for_laps([l1, l2, l3])
         print("")
         print(variance)
+
+    def test_get_n_fastest_laps_within_percent_threshold_ignoring_replays(self):
+        empty_lap = Lap()
+        empty_lap.data_speed = []
+        empty_lap.data_time =  []
+
+        l3 = Lap()
+        l3.data_speed = [50, 150, 200, 200]
+        l3.data_time =  [10, 100,200,300]
+
+        laps = [
+            empty_lap, l3
+        ]
+
+        filtered_laps = get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps, number_of_laps=999, percent_threshold=1)
+        self.assertEqual(1, len(filtered_laps))
+        self.assertEqual([l3], filtered_laps)

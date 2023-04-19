@@ -661,7 +661,10 @@ def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap]
                                                                  percent_threshold: float):
     # FIXME Replace later with this line
     # filtered_laps = [lap for lap in laps if not lap.is_replay]
-    filtered_laps = [lap for lap in laps if not (hasattr(lap, "is_replay") and len(lap.data_speed) > 0 and lap.is_replay)]
+    filtered_laps = [lap for lap in laps if not (len(lap.data_speed) == 0 or lap.is_replay)]
+
+    if len(filtered_laps) == 0:
+        return []
 
     # sort laps by finish time
     filtered_laps.sort(key=lambda lap: lap.lap_finish_time)
