@@ -9,6 +9,9 @@ race:
 normal:
 	python3 gt7telemetry.py 192.168.178.120
 
+doc:
+	python3 generate_doc.py
+
 deps:
 	pip3 install -r requirements.txt
 

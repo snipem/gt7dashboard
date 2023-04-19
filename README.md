@@ -62,4 +62,16 @@ There is a `Dockerfile` available. This is a sample `docker-compose` configurati
             - TZ=Europe/Berlin
 ```
 
+## Manual
 
+### Tab 'Get Faster'
+
+#### Speed Deviation (Spd. Dev.)
+
+Displays the speed deviation of the fastest laps within a 5.0% time difference threshold of the fastest lap.
+Replay laps are ignored. The speed deviation is calculated as the standard deviation between these fastest laps.
+
+With a perfect driver in an ideal world, this line would be flat. In a real world situation, you will get an almost flat line, 
+with bumps at the corners and long straights. This is where even your best laps deviate.
+
+You may get some insights for improvement on your consistency if you look at the points of the track where this line is bumpy.
