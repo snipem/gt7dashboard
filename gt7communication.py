@@ -237,13 +237,12 @@ class GT7Communication(Thread):
                                 package_nr = 0
                     except (OSError, TimeoutError) as e:
                         # Handler for package exceptions
-                        logging.info("No connection to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
-                        # print(traceback.format_exc())
                         self._send_hb(s)
                         package_nr = 0
 
             except Exception as e:
                 # Handler for general socket exceptions
+                logging.info("No connection to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
                 print(traceback.format_exc())
                 s.close()
                 # Wait before reconnect
