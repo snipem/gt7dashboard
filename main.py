@@ -102,7 +102,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
 
 
 def update_header_line(div: Div, last_lap: Lap, reference_lap: Lap):
-    div.text = f"<p><b>Last Lap: {last_lap.title} ({reference_lap.car_name()})<b></p>" \
+    div.text = f"<p><b>Last Lap: {last_lap.title} ({last_lap.car_name()})<b></p>" \
                f"<p><b>Reference Lap: {reference_lap.title} ({reference_lap.car_name()})<b></p>"
 
 @linear()
