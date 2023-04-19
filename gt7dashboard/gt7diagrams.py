@@ -6,8 +6,8 @@ from bokeh.layouts import layout
 from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable, Range1d
 from bokeh.plotting import figure
 
-import gt7helper
-from gt7lap import Lap
+import gt7dashboard.gt7helper
+from gt7dashboard.gt7lap import Lap
 
 
 def get_throttle_braking_race_line_diagram():

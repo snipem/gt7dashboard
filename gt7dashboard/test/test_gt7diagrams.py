@@ -7,12 +7,12 @@ from bokeh.layouts import layout
 from bokeh.models import Div, Plot, Scatter, Label
 from bokeh.plotting import save, figure
 
-import gt7diagrams
-import gt7helper
-from gt7diagrams import (
+import gt7dashboard.gt7diagrams
+import gt7dashboard.gt7helper
+from gt7dashboard.gt7diagrams import (
     get_throttle_braking_race_line_diagram,
 )
-from gt7lap import Lap
+from gt7dashboard.gt7lap import Lap
 
 
 class TestHelper(unittest.TestCase):

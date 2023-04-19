@@ -1,4 +1,4 @@
-import gt7helper
+import gt7dashboard.gt7helper
 
 
 class Lap:
@@ -65,7 +65,7 @@ class Lap:
             peak_speed_data_y,
             valley_speed_data_x,
             valley_speed_data_y,
-        ) = gt7helper.get_speed_peaks_and_valleys(self)
+        ) = gt7dashboard.gt7helper.get_speed_peaks_and_valleys(self)
 
         return (
             peak_speed_data_x,
@@ -78,13 +78,13 @@ class Lap:
         # FIXME Breaking change. Not all log files up to this point have this attribute, remove this later
         if (not hasattr(self, "car_id")):
             return "Car not logged"
-        return gt7helper.get_car_name_for_car_id(self.car_id)
+        return gt7dashboard.gt7helper.get_car_name_for_car_id(self.car_id)
 
     def get_data_dict(self, distance_mode=True) -> dict[str, list]:
 
-        raceline_y_throttle, raceline_x_throttle, raceline_z_throttle = gt7helper.get_race_line_coordinates_when_mode_is_active(self, mode=gt7helper.RACE_LINE_THROTTLE_MODE)
-        raceline_y_braking, raceline_x_braking, raceline_z_braking = gt7helper.get_race_line_coordinates_when_mode_is_active(self, mode=gt7helper.RACE_LINE_BRAKING_MODE)
-        raceline_y_coasting, raceline_x_coasting, raceline_z_coasting = gt7helper.get_race_line_coordinates_when_mode_is_active(self, mode=gt7helper.RACE_LINE_COASTING_MODE)
+        raceline_y_throttle, raceline_x_throttle, raceline_z_throttle = gt7dashboard.gt7helper.get_race_line_coordinates_when_mode_is_active(self, mode=gt7helper.RACE_LINE_THROTTLE_MODE)
+        raceline_y_braking, raceline_x_braking, raceline_z_braking = gt7dashboard.gt7helper.get_race_line_coordinates_when_mode_is_active(self, mode=gt7helper.RACE_LINE_BRAKING_MODE)
+        raceline_y_coasting, raceline_x_coasting, raceline_z_coasting = gt7dashboard.gt7helper.get_race_line_coordinates_when_mode_is_active(self, mode=gt7helper.RACE_LINE_COASTING_MODE)
 
         data = {
             "throttle": self.data_throttle,
@@ -110,7 +110,7 @@ class Lap:
             "raceline_x_coasting": raceline_x_coasting,
             "raceline_z_coasting": raceline_z_coasting,
 
-            "distance": gt7helper.get_x_axis_depending_on_mode(self, distance_mode),
+            "distance": gt7dashboard.gt7helper.get_x_axis_depending_on_mode(self, distance_mode),
         }
 
         return data

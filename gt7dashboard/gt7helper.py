@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import statistics
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import StatisticsError
@@ -14,8 +15,8 @@ from pandas import DataFrame
 from scipy.signal import find_peaks
 from tabulate import tabulate
 
-import gt7helper
-from gt7lap import Lap
+from gt7dashboard.gt7lap import Lap
+from gt7dashboard import gt7lap
 
 
 def save_laps(laps: List[Lap]):

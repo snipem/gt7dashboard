@@ -11,8 +11,8 @@ from typing import List
 
 from salsa20 import Salsa20_xor
 
-from gt7helper import seconds_to_lap_time
-from gt7lap import Lap
+from gt7dashboard.gt7helper import seconds_to_lap_time
+from gt7dashboard.gt7lap import Lap
 
 
 class GTData:

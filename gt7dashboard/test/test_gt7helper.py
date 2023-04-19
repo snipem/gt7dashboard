@@ -2,9 +2,11 @@ import pickle
 import unittest
 import os
 
-import gt7helper
-from gt7helper import calculate_remaining_fuel, format_laps_to_table, calculate_time_diff_by_distance
-from gt7lap import Lap
+from gt7dashboard.gt7helper import calculate_remaining_fuel, format_laps_to_table, calculate_time_diff_by_distance
+from gt7dashboard.gt7lap import Lap
+
+from gt7dashboard import gt7helper
+from gt7dashboard import gt7lap
 
 
 class TestHelper(unittest.TestCase):

@@ -1,8 +1,8 @@
 import time
 import unittest
 
-import gt7communication
-from gt7lap import Lap
+import gt7dashboard.gt7communication
+from gt7dashboard.gt7lap import Lap
 import socket
 
 PLAYSTATION_IP = "ps5wifi"
