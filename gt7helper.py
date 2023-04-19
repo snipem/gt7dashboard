@@ -14,6 +14,7 @@ from pandas import DataFrame
 from scipy.signal import find_peaks
 from tabulate import tabulate
 
+import gt7helper
 from gt7lap import Lap
 
 
@@ -678,23 +679,20 @@ def get_variance_for_fastest_laps(laps: List[Lap], number_of_laps = 3, percent_t
 def get_variance_for_laps(laps: List[Lap]) -> DataFrame:
 
     dataframe_distance_columns = []
+    merged_df = pd.DataFrame(columns=['distance'])
     for lap in laps:
-        d = {'speed': lap.data_speed}
+        d = {'speed': lap.data_speed, 'distance' : gt7helper.get_x_axis_for_distance(lap)}
         df = pd.DataFrame(data=d)
         dataframe_distance_columns.append(df)
+        merged_df = pd.merge(merged_df, df, on='distance', how='outer')
 
-    # df = dataframe_distance_columns[0].join(, how="outer").sort_index().interpolate()
+    merged_df = merged_df.sort_values(by='distance')
+    merged_df = merged_df.set_index('distance')
 
-    # After interpolation, we can make the index a normal field and rename it
-    # df.reset_index(inplace=True)
-    # df = df.rename(columns={"index": "distance"})
+    # Interpolate missing values
+    merged_df = merged_df.interpolate()
+    dbs_df = merged_df.std(axis=1).abs()
+    dbs_df = dbs_df.reset_index().rename(columns={'index': 'distance'})
+    dbs_df.columns = ["distance", "speed_variance"]
 
-    # calculate the standard deviation of the "speed" column across the data frames
-    # it is a little bit naive because we are only comparing each value with each other but should fit
-    speed_std_df = pd.concat(dataframe_distance_columns, axis=1).std(axis=1)
-
-    # create a new data frame with absolute values
-    abs_df = pd.DataFrame(abs(speed_std_df), columns=['speed_variance'])
-    abs_df['distance'] = get_x_axis_for_distance(laps[len(laps) - 1])
-
-    return abs_df
+    return dbs_df

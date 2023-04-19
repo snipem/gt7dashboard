@@ -188,18 +188,20 @@ def update_speed_velocity_graph(laps: List[Lap]):
         laps, reference_lap_selected=g_reference_lap_selected
     )
 
-    last_lap_data = last_lap.get_data_dict()
-    reference_lap_data = reference_lap.get_data_dict()
+    if last_lap:
+        last_lap_data = last_lap.get_data_dict()
+        race_diagram.source_last_lap.data = last_lap_data
+        last_lap_race_line.data_source.data = last_lap_data
 
     if reference_lap and len(reference_lap.data_speed) > 0:
+        reference_lap_data = reference_lap.get_data_dict()
         race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
+        race_diagram.source_reference_lap.data = reference_lap_data
+        reference_lap_race_line.data_source.data = reference_lap_data
 
-    race_diagram.source_last_lap.data = last_lap_data
-    race_diagram.source_reference_lap.data = reference_lap_data
-    race_diagram.source_median_lap.data = median_lap.get_data_dict()
+    if median_lap:
+        race_diagram.source_median_lap.data = median_lap.get_data_dict()
 
-    last_lap_race_line.data_source.data = last_lap_data
-    reference_lap_race_line.data_source.data = reference_lap_data
 
     s_race_line.legend.visible = False
     s_race_line.axis.visible = False
@@ -397,7 +399,7 @@ stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
     list_lap_files_from_path(os.path.join(os.getcwd(), "data"))
 )
 
-race_diagram = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
+race_diagram = gt7diagrams.RaceDiagram(width=1000)
 race_time_table = gt7diagrams.RaceTimeTable()
 colors = itertools.cycle(palette)
 
