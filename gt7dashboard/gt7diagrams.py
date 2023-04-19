@@ -530,7 +530,7 @@ def get_fuel_map_html_table(last_lap):
         "<th title='Time Diff to last lap with this setting'>Time Diff</th></tr>"
     )
     for fuel_map in fuel_maps:
-        no_fuel_consumption = fuel_map.fuel_consumed_per_lap == 0
+        no_fuel_consumption = fuel_map.fuel_consumed_per_lap <= 0
         line_style = ""
         if fuel_map.mixture_setting == 0 and not no_fuel_consumption:
             line_style = "background-color:rgba(0,255,0,0.5)"
@@ -546,7 +546,7 @@ def get_fuel_map_html_table(last_lap):
                     fuel_map.mixture_setting,
                     line_style,
                     fuel_map.mixture_setting,
-                    fuel_map.fuel_consumed_per_lap,
+                    0 if no_fuel_consumption else fuel_map.fuel_consumed_per_lap,
                     0 if no_fuel_consumption else fuel_map.laps_remaining_on_current_fuel,
                     "No Fuel" if no_fuel_consumption else (gt7helper.seconds_to_lap_time(
                         fuel_map.time_remaining_on_current_fuel / 1000

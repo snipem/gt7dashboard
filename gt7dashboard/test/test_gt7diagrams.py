@@ -137,6 +137,24 @@ class TestHelper(unittest.TestCase):
         save(d)
         print("View file for reference at %s" % out_file)
 
+    def test_get_fuel_map_html_table_negative_fuel_consumption(self):
+        d = Div()
+        lap = Lap()
+        lap.fuel_at_start = 0
+        lap.fuel_at_end = 100
+        lap.lap_finish_time = 90 * 1000
+
+        fuel_map_html_table = gt7diagrams.get_fuel_map_html_table(lap)
+        d.text = fuel_map_html_table
+        out_file = "test_out/test_get_fuel_map_html_table_negative_fuel_consumption.html"
+        output_file(out_file)
+        save(d)
+        print("View file for reference at %s" % out_file)
+
+        with open(out_file, 'r') as fp:
+            data = fp.read()
+            self.assertIn("No Fuel", data)
+
     def test_get_fuel_map_html_table_with_no_consumption(self):
         d = Div()
         fuel_map_html_table = gt7diagrams.get_fuel_map_html_table(self.test_laps[0])
