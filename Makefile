@@ -13,7 +13,13 @@ doc:
 	python3 generate_doc.py
 
 deps:
-	pip3 install -r requirements.txt
+	python3 -m pip install -r requirements.txt
+
+test_deps:
+	python3 -m pip install pytest
+
+test: test_deps deps
+	python3 -m pytest .
 
 car_lists:
 	python3 helper/download_cars_csv.py
