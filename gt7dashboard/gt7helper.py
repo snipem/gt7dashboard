@@ -458,6 +458,11 @@ def pd_data_frame_from_lap(
     df = pd.DataFrame()
     for i, lap in enumerate(laps):
         time_diff = ""
+        info = ""
+
+        if lap.is_replay:
+            info += "Replay"
+
         if best_lap_time == lap.lap_finish_time:
             # lap_color = 35 # magenta
             # TODO add some formatting
@@ -467,7 +472,7 @@ def pd_data_frame_from_lap(
             # This can only mean that lap.lap_finish_time is from an earlier race on a different track
             time_diff = "-"
         elif best_lap_time > 0:
-            time_diff = seconds_to_lap_time(
+            time_diff = "+" + seconds_to_lap_time(
                 -1 * (best_lap_time / 1000 - lap.lap_finish_time / 1000)
             )
 
@@ -477,6 +482,7 @@ def pd_data_frame_from_lap(
                     "number": lap.number,
                     "time": seconds_to_lap_time(lap.lap_finish_time / 1000),
                     "diff": time_diff,
+                    "info": info,
                     "car_name": lap.car_name(),
                     "fuelconsumed": "%d" % lap.fuel_consumed,
                     "fullthrottle": "%d"

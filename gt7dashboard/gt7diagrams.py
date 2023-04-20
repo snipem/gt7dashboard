@@ -122,6 +122,7 @@ class RaceTimeTable(object):
             TableColumn(field="number", title="#"),
             TableColumn(field="time", title="Time"),
             TableColumn(field="diff", title="Diff"),
+            TableColumn(field="info", title="Info"),
             TableColumn(field="fuelconsumed", title="Fuel Cons."),
             TableColumn(field="fullthrottle", title="Full Throt."),
             TableColumn(field="fullbreak", title="Full Break"),
@@ -131,7 +132,6 @@ class RaceTimeTable(object):
         ]
 
         self.lap_times_source = ColumnDataSource(
-            # FIXME best lap time is obsolete
             gt7helper.pd_data_frame_from_lap([], best_lap_time=0)
         )
         self.t_lap_times: DataTable
@@ -146,8 +146,8 @@ class RaceTimeTable(object):
 
 
     def show_laps(self, laps: List[Lap]):
-        # FIXME best lap time is obsolete
-        new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=0)
+        best_lap = gt7helper.get_best_lap(laps)
+        new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=best_lap.lap_finish_time)
         self.lap_times_source.data = ColumnDataSource.from_df(new_df)
 
 class RaceDiagram(object):
