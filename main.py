@@ -509,6 +509,8 @@ LABELS = ["Always Record"]
 checkbox_group = CheckboxGroup(labels=LABELS, active=[1])
 checkbox_group.on_change("active", always_record_checkbox_handler)
 
+race_time_table.t_lap_times.width=900
+
 l1 = layout(
     children=[
         [div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select],
@@ -530,7 +532,7 @@ l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=1)
 
 l3 = layout(
     [[reset_button, save_button],
-     # [t_lap_times],
+     # [race_time_table.t_lap_times], # TODO Does not render twice, one rendering will be empty
      [div_fuel_map]],
     sizing_mode="stretch_width",
 )
