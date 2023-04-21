@@ -1,7 +1,10 @@
+import csv
 import itertools
+import logging
 import os
 import pickle
 import statistics
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import StatisticsError
@@ -12,7 +15,8 @@ from pandas import DataFrame
 from scipy.signal import find_peaks
 from tabulate import tabulate
 
-from gt7lap import Lap
+from gt7dashboard.gt7lap import Lap
+from gt7dashboard import gt7helper
 
 
 def save_laps(laps: List[Lap]):
@@ -60,7 +64,7 @@ def get_x_axis_depending_on_mode(lap: Lap, distance_mode: bool):
     pass
 
 
-def get_time_delta_dataframe_for_lap(lap: Lap, name: str):
+def get_time_delta_dataframe_for_lap(lap: Lap, name: str) -> DataFrame:
     lap_distance = get_x_axis_for_distance(lap)
     lap_time = lap.data_time
 
@@ -310,12 +314,14 @@ def list_lap_files_from_path(root: str):
     lap_files = []
     for path, sub_dirs, files in os.walk(root):
         for name in files:
-            lf = LapFile()
-            lf.name = name
-            lf.path = os.path.join(path, name)
-            lf.size = os.path.getsize(lf.path)
-            lap_files.append(lf)
+            if name.endswith(".laps"):
+                lf = LapFile()
+                lf.name = name
+                lf.path = os.path.join(path, name)
+                lf.size = os.path.getsize(lf.path)
+                lap_files.append(lf)
 
+    lap_files.sort(key=lambda x: x.path, reverse=True)
     return lap_files
 
 
@@ -328,9 +334,8 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
     storage_folder = "data"
     local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
     dt = datetime.now(tz=local_timezone)
-    str_date_time = dt.strftime("%d-%m-%Y_%H.%M.%S")
-    print("Current timestamp", str_date_time)
-    storage_filename = "laps_%s.pickle" % str_date_time
+    str_date_time = dt.strftime("%Y-%m-%d_%H_%M_%S")
+    storage_filename = "%s_%s.laps" % (str_date_time, get_safe_filename(laps[0].car_name()))
     Path(storage_folder).mkdir(parents=True, exist_ok=True)
 
     path = os.path.join(os.getcwd(), storage_folder, storage_filename)
@@ -339,6 +344,10 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
         pickle.dump(laps, f)
 
     return path
+
+
+def get_safe_filename(unsafe_filename: str) -> str:
+    return "".join(x for x in unsafe_filename if x.isalnum() or x in "._- ").replace(" ", "_")
 
 
 def human_readable_size(size, decimal_places=3):
@@ -427,8 +436,8 @@ def get_brake_points(lap):
     for i, b in enumerate(lap.data_braking):
         if i > 0:
             if lap.data_braking[i - 1] == 0 and lap.data_braking[i] > 0:
-                x.append(lap.data_position_z[i])
-                y.append(lap.data_position_x[i])
+                x.append(lap.data_position_x[i])
+                y.append(lap.data_position_z[i])
 
     return x, y
 
@@ -449,6 +458,11 @@ def pd_data_frame_from_lap(
     df = pd.DataFrame()
     for i, lap in enumerate(laps):
         time_diff = ""
+        info = ""
+
+        if lap.is_replay:
+            info += "Replay"
+
         if best_lap_time == lap.lap_finish_time:
             # lap_color = 35 # magenta
             # TODO add some formatting
@@ -458,7 +472,7 @@ def pd_data_frame_from_lap(
             # This can only mean that lap.lap_finish_time is from an earlier race on a different track
             time_diff = "-"
         elif best_lap_time > 0:
-            time_diff = seconds_to_lap_time(
+            time_diff = "+" + seconds_to_lap_time(
                 -1 * (best_lap_time / 1000 - lap.lap_finish_time / 1000)
             )
 
@@ -468,6 +482,8 @@ def pd_data_frame_from_lap(
                     "number": lap.number,
                     "time": seconds_to_lap_time(lap.lap_finish_time / 1000),
                     "diff": time_diff,
+                    "info": info,
+                    "car_name": lap.car_name(),
                     "fuelconsumed": "%d" % lap.fuel_consumed,
                     "fullthrottle": "%d"
                                     % (lap.full_throttle_ticks / lap.lap_ticks * 1000),
@@ -486,12 +502,13 @@ def pd_data_frame_from_lap(
 
     return df
 
+
 RACE_LINE_BRAKING_MODE = "RACE_LINE_BRAKING_MODE"
 RACE_LINE_THROTTLE_MODE = "RACE_LINE_THROTTLE_MODE"
 RACE_LINE_COASTING_MODE = "RACE_LINE_COASTING_MODE"
 
-def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
 
+def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
     return_y = []
     return_x = []
     return_z = []
@@ -534,51 +551,31 @@ def get_race_line_coordinates_when_mode_is_active(lap: Lap, mode: str):
     return return_y, return_x, return_z
 
 
+CARS_CSV_FILENAME = "db/cars.csv"
+
+
+def get_car_name_for_car_id(car_id: int) -> str:
+    # check if variable is int
+    if not isinstance(car_id, int):
+        raise ValueError("car_id must be an integer")
+
+    # check if file exists
+    if not os.path.isfile(CARS_CSV_FILENAME):
+        logging.info("Could not find file %s" % CARS_CSV_FILENAME)
+        return "CAR-ID-%d" % car_id
+
+    # read csv from file
+    with open(CARS_CSV_FILENAME, 'r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for row in csv_reader:
+            if row[0] == str(car_id):
+                return row[1]
 
     return ""
 
 
-def get_data_dict_from_lap(lap: Lap, distance_mode: bool) -> dict[str, list]:
-    # Use empty lap if lap is none
-    if not lap:
-        lap = Lap()
-
-    raceline_y_throttle, raceline_x_throttle, raceline_z_throttle = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_THROTTLE_MODE)
-    raceline_y_braking, raceline_x_braking, raceline_z_braking = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_BRAKING_MODE)
-    raceline_y_coasting, raceline_x_coasting, raceline_z_coasting = get_race_line_coordinates_when_mode_is_active(lap, mode=RACE_LINE_COASTING_MODE)
-
-    data = {
-        "throttle": lap.data_throttle,
-        "brake": lap.data_braking,
-        "speed": lap.data_speed,
-        "time": lap.data_time,
-        "tires": lap.data_tires,
-        "ticks": list(range(len(lap.data_speed))),
-        "coast": lap.data_coasting,
-        "raceline_y": lap.data_position_y,
-        "raceline_x": lap.data_position_x,
-        "raceline_z": lap.data_position_z,
-        # For a raceline when throttle is engaged
-        "raceline_y_throttle": raceline_y_throttle,
-        "raceline_x_throttle": raceline_x_throttle,
-        "raceline_z_throttle": raceline_z_throttle,
-        # For a raceline when braking is engaged
-        "raceline_y_braking": raceline_y_braking,
-        "raceline_x_braking": raceline_x_braking,
-        "raceline_z_braking": raceline_z_braking,
-        # For a raceline when neither throttle nor brake is engaged
-        "raceline_y_coasting": raceline_y_coasting,
-        "raceline_x_coasting": raceline_x_coasting,
-        "raceline_z_coasting": raceline_z_coasting,
-
-        "distance": get_x_axis_depending_on_mode(lap, distance_mode),
-    }
-
-    return data
-
-
 def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
-    tuples = []
+    tuples = [""]  # Use empty first option which is default
     for lapfile in lapfiles:
         tuples.append(tuple((lapfile.path, lapfile.__str__())))
     return tuples
@@ -664,3 +661,49 @@ def get_fuel_on_consumption_by_relative_fuel_levels(lap: Lap) -> List[FuelMap]:
         i += 1
 
     return relative_fuel_maps
+
+
+def get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps: List[Lap], number_of_laps: int,
+                                                                 percent_threshold: float):
+    # FIXME Replace later with this line
+    # filtered_laps = [lap for lap in laps if not lap.is_replay]
+    filtered_laps = [lap for lap in laps if not (len(lap.data_speed) == 0 or lap.is_replay)]
+
+    if len(filtered_laps) == 0:
+        return []
+
+    # sort laps by finish time
+    filtered_laps.sort(key=lambda lap: lap.lap_finish_time)
+    fastest_lap = filtered_laps[0]
+    threshold_laps = [lap for lap in filtered_laps if
+                      lap.lap_finish_time <= fastest_lap.lap_finish_time * (1 + percent_threshold)]
+    return threshold_laps[:number_of_laps]
+
+
+DEFAULT_FASTEST_LAPS_PERCENT_THRESHOLD = 0.05
+def get_variance_for_fastest_laps(laps: List[Lap], number_of_laps: int = 3, percent_threshold: float = DEFAULT_FASTEST_LAPS_PERCENT_THRESHOLD) -> (DataFrame, list[Lap]):
+    fastest_laps: list[Lap] = get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps, number_of_laps, percent_threshold)
+    variance: DataFrame = get_variance_for_laps(fastest_laps)
+    return variance, fastest_laps
+
+
+def get_variance_for_laps(laps: List[Lap]) -> DataFrame:
+
+    dataframe_distance_columns = []
+    merged_df = pd.DataFrame(columns=['distance'])
+    for lap in laps:
+        d = {'speed': lap.data_speed, 'distance' : gt7helper.get_x_axis_for_distance(lap)}
+        df = pd.DataFrame(data=d)
+        dataframe_distance_columns.append(df)
+        merged_df = pd.merge(merged_df, df, on='distance', how='outer')
+
+    merged_df = merged_df.sort_values(by='distance')
+    merged_df = merged_df.set_index('distance')
+
+    # Interpolate missing values
+    merged_df = merged_df.interpolate()
+    dbs_df = merged_df.std(axis=1).abs()
+    dbs_df = dbs_df.reset_index().rename(columns={'index': 'distance'})
+    dbs_df.columns = ["distance", "speed_variance"]
+
+    return dbs_df

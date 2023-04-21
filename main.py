@@ -1,5 +1,8 @@
 import copy
+import itertools
+import logging
 import os
+import time
 from typing import List
 
 import bokeh.application
@@ -12,24 +15,25 @@ from bokeh.models import (
     TableColumn,
     DataTable,
     Button,
-    Div, CheckboxGroup,
+    Div, CheckboxGroup, TabPanel, Tabs,
 )
-from bokeh.models.widgets import Tabs, Panel
+from bokeh.palettes import Plasma11 as palette
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
-from bokeh.plotting.figure import Figure
 
-import gt7communication
-import gt7diagrams
-import gt7helper
-from gt7helper import (
-    get_speed_peaks_and_valleys,
+from gt7dashboard import gt7communication, gt7diagrams, gt7help, gt7helper, gt7lap
+
+from gt7dashboard.gt7help import get_help_div
+from gt7dashboard.gt7helper import (
     load_laps_from_pickle,
     save_laps_to_pickle,
     list_lap_files_from_path,
     calculate_time_diff_by_distance,
 )
-from gt7lap import Lap
+from gt7dashboard.gt7lap import Lap
+
+# set logging level to debug
+logging.getLogger().setLevel(logging.DEBUG)
 
 
 def update_connection_info():
@@ -62,39 +66,7 @@ def update_fuel_map(step):
         g_stored_fuel_map = last_lap
 
     # TODO Add real live data during a lap
-    fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
-
-    table = (
-        "<table><tr>"
-        "<th title='The fuel level relative to the current one'>Fuel Lvl.</th>"
-        "<th title='Fuel consumed'>Fuel Cons.</th>"
-        "<th title='Laps remaining with this setting'>Laps Rem.</th>"
-        "<th title='Time remaining with this setting' >Time Rem.</th>"
-        "<th title='Time Diff to last lap with this setting'>Time Diff</th></tr>"
-    )
-    for fuel_map in fuel_maps:
-        table += (
-            "<tr id='fuel_map_row_%d'>"
-            "<td style='text-align:center'>%d</td>"
-            "<td style='text-align:center'>%d</td>"
-            "<td style='text-align:center'>%.1f</td>"
-            "<td style='text-align:center'>%s</td>"
-            "<td style='text-align:center'>%s</td>"
-            "</tr>"
-            % (
-                fuel_map.mixture_setting,
-                fuel_map.mixture_setting,
-                fuel_map.fuel_consumed_per_lap,
-                fuel_map.laps_remaining_on_current_fuel,
-                gt7helper.seconds_to_lap_time(
-                    fuel_map.time_remaining_on_current_fuel / 1000
-                ),
-                gt7helper.seconds_to_lap_time(fuel_map.lap_time_diff / 1000),
-            )
-        )
-    table += "</table>"
-    table += "<p>Fuel Remaining: <b>%d</b></p>" % last_lap.fuel_at_end
-    div_fuel_map.text = table
+    div_fuel_map.text = gt7diagrams.get_fuel_map_html_table(last_lap)
 
 
 def update_race_lines(laps: List[Lap], reference_lap: Lap):
@@ -105,14 +77,14 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     global race_lines, race_lines_data
 
 
-    reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
+    reference_lap_data = reference_lap.get_data_dict()
 
     for i, lap in enumerate(laps[:len(race_lines)]):
         print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
 
-        race_lines[i].title.text = "Lap %d - %s, Reference Lap: %s" % (len(laps) - i, lap.title, reference_lap.title)
+        race_lines[i].title.text = "Lap %d - %s (%s), Reference Lap: %s (%s)" % (len(laps) - i, lap.title, lap.car_name(), reference_lap.title, reference_lap.car_name())
 
-        lap_data = gt7helper.get_data_dict_from_lap(lap, distance_mode=True)
+        lap_data = lap.get_data_dict()
         race_lines_data[i][0].data_source.data = lap_data
         race_lines_data[i][1].data_source.data = lap_data
         race_lines_data[i][2].data_source.data = lap_data
@@ -121,12 +93,17 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
         race_lines_data[i][4].data_source.data = reference_lap_data
         race_lines_data[i][5].data_source.data = reference_lap_data
 
-        race_lines[i].legend.visible = False
         race_lines[i].axis.visible = False
+
+        gt7diagrams.add_annotations_to_race_line(race_lines[i], lap, reference_lap)
 
         # Fixme not working
         race_lines[i].x_range = race_lines[0].x_range
 
+
+def update_header_line(div: Div, last_lap: Lap, reference_lap: Lap):
+    div.text = f"<p><b>Last Lap: {last_lap.title} ({last_lap.car_name()})<b></p>" \
+               f"<p><b>Reference Lap: {reference_lap.title} ({reference_lap.car_name()})<b></p>"
 
 @linear()
 def update_lap_change(step):
@@ -141,6 +118,8 @@ def update_lap_change(step):
     global g_telemetry_update_needed
     global g_reference_lap_selected
 
+    update_start_time = time.time()
+
     laps = app.gt7comm.get_laps()
 
     if app.gt7comm.session != g_session_stored:
@@ -154,6 +133,8 @@ def update_lap_change(step):
     # This saves on cpu time, 99.9% of the time this is true
     if laps == g_laps_stored and not g_telemetry_update_needed:
         return
+
+    logging.debug("Rerendering laps")
 
     reference_lap = Lap()
 
@@ -171,10 +152,31 @@ def update_lap_change(step):
                     div_reference_lap, reference_lap, "Reference Lap"
                 )
 
+        update_header_line(div_header_line, last_lap, reference_lap)
+
+    logging.debug("Start of updates have %d laps" % len(laps))
+
+    start_time = time.time()
+    logging.debug("Updating time table")
     update_time_table(laps)
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    start_time = time.time()
+    logging.debug("Updating reference lap select")
     update_reference_lap_select(laps)
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    start_time = time.time()
+    logging.debug("Updating speed velocity graph")
     update_speed_velocity_graph(laps)
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    start_time = time.time()
+    logging.debug("Updating race lines")
     update_race_lines(laps, reference_lap)
+    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+
+    logging.debug("Whole Update took %dms" % ((time.time() - update_start_time) * 1000))
 
 
     g_laps_stored = laps.copy()
@@ -186,21 +188,29 @@ def update_speed_velocity_graph(laps: List[Lap]):
         laps, reference_lap_selected=g_reference_lap_selected
     )
 
-    last_lap_data = gt7helper.get_data_dict_from_lap(last_lap, distance_mode=True)
-    reference_lap_data = gt7helper.get_data_dict_from_lap(reference_lap, distance_mode=True)
+    if last_lap:
+        last_lap_data = last_lap.get_data_dict()
+        race_diagram.source_last_lap.data = last_lap_data
+        last_lap_race_line.data_source.data = last_lap_data
 
     if reference_lap and len(reference_lap.data_speed) > 0:
-        data_sources[0].data = calculate_time_diff_by_distance(reference_lap, last_lap)
+        reference_lap_data = reference_lap.get_data_dict()
+        race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
+        race_diagram.source_reference_lap.data = reference_lap_data
+        reference_lap_race_line.data_source.data = reference_lap_data
 
-    data_sources[1].data = last_lap_data
-    data_sources[2].data = reference_lap_data
-    data_sources[3].data = gt7helper.get_data_dict_from_lap(median_lap, distance_mode=True)
+    if median_lap:
+        race_diagram.source_median_lap.data = median_lap.get_data_dict()
 
-    last_lap_race_line.data_source.data = last_lap_data
-    reference_lap_race_line.data_source.data = reference_lap_data
 
     s_race_line.legend.visible = False
     s_race_line.axis.visible = False
+
+    fastest_laps = race_diagram.update_fastest_laps_variance(laps)
+    print("Updating Speed Deviance with %d fastest laps" % len(fastest_laps))
+    div_deviance_laps_on_display.text = ""
+    for fastest_lap in fastest_laps:
+        div_deviance_laps_on_display.text += f"<b>Lap {fastest_lap.number}:</b> {fastest_lap.title}<br>"
 
     # Update breakpoints
     # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
@@ -213,7 +223,7 @@ def update_speed_velocity_graph(laps: List[Lap]):
         update_break_points(reference_lap, s_race_line, "magenta")
 
 
-def update_break_points(lap: Lap, race_line: Figure, color: str):
+def update_break_points(lap: Lap, race_line: figure, color: str):
     brake_points_x, brake_points_y = gt7helper.get_brake_points(lap)
 
     for i, _ in enumerate(brake_points_x):
@@ -227,19 +237,21 @@ def update_break_points(lap: Lap, race_line: Figure, color: str):
 
 
 def update_time_table(laps: List[Lap]):
+    global race_time_table
+    global lap_times_source
+    # FIXME time table is not updating
     print("Adding %d laps to table" % len(laps))
-    t_lap_times.source.data = ColumnDataSource.from_df(
-        gt7helper.pd_data_frame_from_lap(
-            laps, best_lap_time=app.gt7comm.session.best_lap
-        )
-    )
-    t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
+    race_time_table.show_laps(laps)
+
+    # t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
 
 def reset_button_handler(event):
     print("reset button clicked")
     div_reference_lap.text = ""
     div_last_lap.text = ""
+    race_diagram.delete_all_additional_laps()
+
     app.gt7comm.reset()
 def always_record_checkbox_handler(event, old, new):
     if len(new) == 2:
@@ -262,6 +274,7 @@ def save_button_handler(event):
 
 def load_laps_handler(attr, old, new):
     print("Loading %s" % new)
+    race_diagram.delete_all_additional_laps()
     app.gt7comm.load_laps(load_laps_from_pickle(new), replace_other_laps=True)
 
 
@@ -281,7 +294,7 @@ def load_reference_lap_handler(attr, old, new):
     update_lap_change()
 
 
-def update_speed_peak_and_valley_diagram(div, lap, title):
+def update_speed_peak_and_valley_diagram(div, lap: Lap, title):
     table = """<table>"""
 
     (
@@ -289,7 +302,7 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
         peak_speed_data_y,
         valley_speed_data_x,
         valley_speed_data_y,
-    ) = get_speed_peaks_and_valleys(lap)
+    ) = lap.get_speed_peaks_and_valleys()
 
     table += '<tr><th colspan="3">%s - %s</th></tr>' % (title, lap.title)
 
@@ -314,7 +327,8 @@ def update_speed_peak_and_valley_diagram(div, lap, title):
 
 
 def update_tuning_info():
-    div_tuning_info.text = """<p>Max Speed: <b>%d</b> kph</p>
+    div_tuning_info.text = """<h4>Tuning Info</h4>
+    <p>Max Speed: <b>%d</b> kph</p>
     <p>Min Body Height: <b>%d</b> mm</p>""" % (
         app.gt7comm.session.max_speed,
         app.gt7comm.session.min_body_height,
@@ -371,9 +385,12 @@ else:
         # Existing thread has connection, proceed
         pass
 
-source = ColumnDataSource(
-    gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
-)
+
+# def init_lap_times_source():
+#     global lap_times_source
+#     lap_times_source.data = gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
+#
+# init_lap_times_source()
 
 g_laps_stored = []
 g_session_stored = None
@@ -386,33 +403,37 @@ stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
     list_lap_files_from_path(os.path.join(os.getcwd(), "data"))
 )
 
-columns = [
-    TableColumn(field="number", title="#"),
-    TableColumn(field="time", title="Time"),
-    TableColumn(field="diff", title="Diff"),
-    TableColumn(field="fuelconsumed", title="Fuel Consumed"),
-    TableColumn(field="fullthrottle", title="Full Throttle"),
-    TableColumn(field="fullbreak", title="Full Break"),
-    TableColumn(field="nothrottle", title="No Throttle"),
-    TableColumn(field="tyrespinning", title="Tire Spin"),
-]
+race_diagram = gt7diagrams.RaceDiagram(width=1000)
+race_time_table = gt7diagrams.RaceTimeTable()
+colors = itertools.cycle(palette)
 
-(
-    f_time_diff,
-    f_speed,
-    f_throttle,
-    f_braking,
-    f_coasting,
-    data_sources,
-) = gt7diagrams.get_throttle_velocity_diagram_for_reference_lap_and_last_lap(width=1000)
 
-t_lap_times = DataTable(
-    source=source, columns=columns, index_position=None, css_classes=["lap_times_table"]
-)
-t_lap_times.autosize_mode = "fit_columns"
-# t_lap_times.width = 1000
-t_lap_times.min_height = 20
-t_lap_times.min_width = 630
+def table_row_selection_callback(attrname, old, new):
+    global g_laps_stored
+    global race_diagram
+    global race_time_table
+    global colors
+
+    selectionIndex=race_time_table.lap_times_source.selected.indices
+    print("you have selected the row nr "+str(selectionIndex))
+
+    colors = ["blue", "magenta", "green", "orange", "black", "purple"]
+    # max_additional_laps = len(palette)
+    colors_index = len(race_diagram.sources_additional_laps) + race_diagram.number_of_default_laps # which are the default colors
+
+    for index in selectionIndex:
+        if index >= len(colors):
+            colors_index = 0
+
+        # get element at index of iterator
+        color = colors[colors_index]
+        colors_index+=1
+        lap_to_add = g_laps_stored[index]
+        new_lap_data_source = race_diagram.add_lap_to_race_diagram(color, legend=g_laps_stored[index].title, visible=True)
+        new_lap_data_source.data = lap_to_add.get_data_dict()
+
+
+race_time_table.lap_times_source.selected.on_change('indices', table_row_selection_callback)
 
 # Race line
 
@@ -422,31 +443,36 @@ speed_diagram_width = 1200
 total_width = race_line_width + speed_diagram_width
 s_race_line = figure(
     title="Race Line",
-    x_axis_label="z",
-    y_axis_label="x",
+    x_axis_label="x",
+    y_axis_label="z",
     match_aspect=True,
     width=race_line_width,
     height=race_line_width,
     active_drag="box_zoom",
     tooltips=race_line_tooltips,
 )
+
+# We set this to true, since maps appear flipped in the game
+# compared to their actual coordinates
+s_race_line.y_range.flipped = True
+
 s_race_line.toolbar.autohide = True
 
 last_lap_race_line = s_race_line.line(
-    x="raceline_z",
-    y="raceline_x",
+    x="raceline_x",
+    y="raceline_z",
     legend_label="Last Lap",
     line_width=1,
     color="blue",
-    source=ColumnDataSource(data={"raceline_z": [], "raceline_x": []})
+    source=ColumnDataSource(data={"raceline_x": [], "raceline_z": []})
 )
 reference_lap_race_line = s_race_line.line(
-    x="raceline_z",
-    y="raceline_x",
+    x="raceline_x",
+    y="raceline_z",
     legend_label="Reference Lap",
     line_width=1,
     color="magenta",
-    source=ColumnDataSource(data={"raceline_z": [], "raceline_x": []})
+    source=ColumnDataSource(data={"raceline_x": [], "raceline_z": []})
 )
 
 select_title = Paragraph(text="Load Laps:", align="center")
@@ -468,27 +494,34 @@ reset_button.on_click(reset_button_handler)
 div_tuning_info = Div(width=200, height=100)
 
 div_last_lap = Div(width=200, height=125)
+div_gt7_dashboard = Div(width=120, height=30)
+div_header_line = Div(width=400, height=30)
 div_reference_lap = Div(width=200, height=125)
 div_connection_info = Div(width=30, height=30)
+div_deviance_laps_on_display = Div(width=200, height=race_diagram.f_speed_variance.height)
 
 div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
 
-LABELS = ["Always Record"]
+div_gt7_dashboard.text = f"<a href='https://github.com/snipem/gt7dashboard' target='_blank'>GT7 Dashboard</a>"
+
+LABELS = ["Record Replays"]
 
 checkbox_group = CheckboxGroup(labels=LABELS, active=[1])
 checkbox_group.on_change("active", always_record_checkbox_handler)
 
+race_time_table.t_lap_times.width=900
+
 l1 = layout(
     children=[
-        [div_connection_info, checkbox_group],
-        [f_time_diff, layout(children=[manual_log_button, reference_lap_select])],
-        [f_speed, s_race_line],
-        [f_throttle, [[div_last_lap, div_reference_lap]]],
-        [f_braking],
-        [f_coasting],
-        [t_lap_times, div_fuel_map],
-        [div_tuning_info],
-        [reset_button, save_button, select_title, select],
+        [get_help_div(gt7help.HEADER), div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select, get_help_div(gt7help.LAP_CONTROLS)],
+        [get_help_div(gt7help.TIME_DIFF), race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select]), get_help_div(gt7help.MANUAL_CONTROLS)],
+        [get_help_div(gt7help.SPEED_DIAGRAM), race_diagram.f_speed, s_race_line, get_help_div(gt7help.RACE_LINE_MINI)],
+        [get_help_div(gt7help.SPEED_VARIANCE), race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE)],
+        [get_help_div(gt7help.THROTTLE_DIAGRAM), race_diagram.f_throttle, [[div_last_lap, div_reference_lap]], get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS)],
+        [get_help_div(gt7help.BRAKING_DIAGRAM), race_diagram.f_braking],
+        [get_help_div(gt7help.COASTING_DIAGRAM), race_diagram.f_coasting],
+        [get_help_div(gt7help.TIRE_DIAGRAM), race_diagram.f_tires],
+        [get_help_div(gt7help.TIME_TABLE), race_time_table.t_lap_times, get_help_div(gt7help.FUEL_MAP), div_fuel_map, get_help_div(gt7help.TUNING_INFO), div_tuning_info],
     ]
 )
 
@@ -498,14 +531,16 @@ l1 = layout(
 l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=1)
 
 l3 = layout(
-    [[reset_button, save_button], [t_lap_times], [div_fuel_map]],
+    [[reset_button, save_button],
+     # [race_time_table.t_lap_times], # TODO Does not render twice, one rendering will be empty
+     [div_fuel_map]],
     sizing_mode="stretch_width",
 )
 
 #  Setup the tabs
-tab1 = Panel(child=l1, title="Get Faster")
-tab2 = Panel(child=l2, title="Race Lines")
-tab3 = Panel(child=l3, title="Race")
+tab1 = TabPanel(child=l1, title="Get Faster")
+tab2 = TabPanel(child=l2, title="Race Lines")
+tab3 = TabPanel(child=l3, title="Race")
 tabs = Tabs(tabs=[tab1, tab2, tab3])
 
 curdoc().add_root(tabs)

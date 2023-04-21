@@ -134,3 +134,4 @@ dmypy.json
 session.csv
 
 test_out
+db/cars.csv

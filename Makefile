@@ -9,13 +9,24 @@ race:
 normal:
 	python3 gt7telemetry.py 192.168.178.120
 
+doc:
+	python3 generate_doc.py
+
 deps:
-	pip3 install -r requirements.txt
+	python3 -m pip install -r requirements.txt
+
+test_deps:
+	python3 -m pip install pytest
+
+test: test_deps deps
+	python3 -m pytest .
+
+car_lists:
+	python3 helper/download_cars_csv.py
 
 serve:
-	GT7_PLAYSTATION_IP=192.168.178.120 bokeh serve .
+	GT7_PLAYSTATION_IP=ps5wifi bokeh serve .
 
 deploy:
 	git push
-	ssh ${MK_SERVER_HOST} "cd work/gt7telemetry; git pull; cd ~/git/conf/docker; sudo -S CONTAINER_NAME=gt7telemetry make build"
-
+	ssh ${MK_SERVER_USER}@${MK_SERVER_HOST} "cd work/gt7telemetry; git pull; cd ~/git/conf/docker; sudo -S CONTAINER_NAME=gt7telemetry make build"

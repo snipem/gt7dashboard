@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import socket
 import struct
 import time
@@ -10,8 +11,8 @@ from typing import List
 
 from salsa20 import Salsa20_xor
 
-from gt7helper import seconds_to_lap_time
-from gt7lap import Lap
+from gt7dashboard.gt7helper import seconds_to_lap_time
+from gt7dashboard.gt7lap import Lap
 
 
 class GTData:
@@ -234,15 +235,14 @@ class GT7Communication(Thread):
                             if package_nr > 100:
                                 self._send_hb(s)
                                 package_nr = 0
-                    except Exception as e:
+                    except (OSError, TimeoutError) as e:
                         # Handler for package exceptions
-                        print(traceback.format_exc())
                         self._send_hb(s)
                         package_nr = 0
 
             except Exception as e:
                 # Handler for general socket exceptions
-                print(traceback.format_exc())
+                logging.info("No connection to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
                 s.close()
                 # Wait before reconnect
                 time.sleep(5)
@@ -350,7 +350,7 @@ class GT7Communication(Thread):
         """
 
         if manual:
-            # Manual laps have no time assigned, so take current live time as lap finish time
+            # Manual laps have no time assigned, so take current live time as lap finish time.
             # Finish time is tracked in seconds while live time is tracked in ms
             self.current_lap.lap_finish_time = self.current_lap.lap_live_time * 1000
         else:
@@ -358,11 +358,16 @@ class GT7Communication(Thread):
             # have their lap time stored in last_lap
             self.current_lap.lap_finish_time = self.last_data.last_lap
 
+        # Track recording meta data
+        self.current_lap.is_replay = self.always_record_data
+        self.current_lap.is_manual = manual
+
         self.current_lap.fuel_at_end = self.last_data.current_fuel
         self.current_lap.fuel_consumed = self.current_lap.fuel_at_start - self.current_lap.fuel_at_end
         self.current_lap.lap_finish_time = self.current_lap.lap_finish_time
         self.current_lap.title = seconds_to_lap_time(self.current_lap.lap_finish_time / 1000)
-        self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game time table
+        self.current_lap.car_id = self.last_data.car_id
+        self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game timetable
         self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
 
         # Race is not in 0th lap, which is before starting the race.
@@ -371,7 +376,7 @@ class GT7Communication(Thread):
         if self.current_lap.lap_finish_time > 0:
             self.laps.insert(0, self.current_lap)
 
-
+        # Reset current lap with an empty one
         self.current_lap = Lap()
         self.current_lap.fuel_at_start = self.last_data.current_fuel
 
