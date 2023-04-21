@@ -141,8 +141,7 @@ class RaceTimeTable(object):
         )
         # This will lead to not being rendered
         # self.t_lap_times.autosize_mode = "fit_columns"
-        # self.t_lap_times.min_height = 20
-        # self.t_lap_times.min_width = 950
+        # Maybe this is related: https://github.com/bokeh/bokeh/issues/10512 ?
 
 
     def show_laps(self, laps: List[Lap]):

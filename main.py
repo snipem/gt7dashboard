@@ -504,7 +504,7 @@ div_fuel_map = Div(width=200, height=125, css_classes=["fuel_map"])
 
 div_gt7_dashboard.text = f"<a href='https://github.com/snipem/gt7dashboard' target='_blank'>GT7 Dashboard</a>"
 
-LABELS = ["Always Record"]
+LABELS = ["Record Replays"]
 
 checkbox_group = CheckboxGroup(labels=LABELS, active=[1])
 checkbox_group.on_change("active", always_record_checkbox_handler)
@@ -513,15 +513,15 @@ race_time_table.t_lap_times.width=900
 
 l1 = layout(
     children=[
-        [div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select],
-        [race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select])],
-        [race_diagram.f_speed, s_race_line],
-        [race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE_HELP)],
-        [race_diagram.f_throttle, [[div_last_lap, div_reference_lap]], get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS_HELP)],
-        [race_diagram.f_braking],
-        [race_diagram.f_coasting],
-        [race_diagram.f_tires],
-        [race_time_table.t_lap_times, div_fuel_map, div_tuning_info],
+        [get_help_div(gt7help.HEADER), div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select, get_help_div(gt7help.LAP_CONTROLS)],
+        [get_help_div(gt7help.TIME_DIFF), race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select]), get_help_div(gt7help.MANUAL_CONTROLS)],
+        [get_help_div(gt7help.SPEED_DIAGRAM), race_diagram.f_speed, s_race_line, get_help_div(gt7help.RACE_LINE_MINI)],
+        [get_help_div(gt7help.SPEED_VARIANCE), race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE)],
+        [get_help_div(gt7help.THROTTLE_DIAGRAM), race_diagram.f_throttle, [[div_last_lap, div_reference_lap]], get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS)],
+        [get_help_div(gt7help.BRAKING_DIAGRAM), race_diagram.f_braking],
+        [get_help_div(gt7help.COASTING_DIAGRAM), race_diagram.f_coasting],
+        [get_help_div(gt7help.TIRE_DIAGRAM), race_diagram.f_tires],
+        [get_help_div(gt7help.TIME_TABLE), race_time_table.t_lap_times, get_help_div(gt7help.FUEL_MAP), div_fuel_map, get_help_div(gt7help.TUNING_INFO), div_tuning_info],
     ]
 )
 
