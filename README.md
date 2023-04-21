@@ -11,13 +11,12 @@ See the [manual](#manual) for detailed instructions.
 
 * Time Diff Graph between Last Lap and Reference Lap
   * *Under dashed line* is better and *over dashed line* is worse than Reference Lap
-  
-* Speed/Distance Graph for Last Lap, Reference Lap and Median Lap.
+* Race Line view with speed peaks and valleys of last lap and reference lap
+* Speed/Distance Graph for Last Lap, Reference Lap and Median Lap
   * Median Lap is calculated by the median of all recent laps
-* Speed Variance Graph
+* Speed Variance Graph showing speed deviation in your best laps
 * Picker for Reference Lap
   * Default is Best Lap
-
 * Throttle/Distance Graph
 * Braking/Distance Graph
 * Coasting/Distance Graph
@@ -28,9 +27,9 @@ See the [manual](#manual) for detailed instructions.
 * Additional data for tuning such as Max Speed and Min Body Height
 * Ability to Save current laps and reset all laps
 * Race Lines for the most recent laps depicting throttling (green), braking (red) and coasting (blue)
-* Bigger Race Line view
 * Additional "Race view" with only fuel map
 * Optional Brake Points (slow) when setting `GT7_ADD_BRAKEPOINTS=true`
+* Add additional laps from the race lap table to the diagrams
 
 ### Get Telemetry of a Demonstration lap or Replay
 
@@ -47,7 +46,24 @@ If you run into `TimeoutError`s make sure to check your firewall. You may have t
 
 ## Docker
 
-There is a `Dockerfile` available. This is a sample `docker-compose` configuration:
+There is a `Dockerfile` available. Run it like this:
+
+```bash
+docker build -t gt7dashboard /home/user/work/gt7dashboard
+
+docker run -d --restart unless-stopped \
+  --name gt7dashboard \
+  --user 1002 \
+  -p 5006:5006/tcp \
+  -p 33740:33740/udp \
+  -v /home/user/gt7data/:/usr/src/app/data \
+  -e BOKEH_ALLOW_WS_ORIGIN=domain_of_server:5006 \
+  -e GT7_PLAYSTATION_IP=<playstation ip> \
+  -e TZ=Europe/Berlin \
+  gt7dashboard
+```
+
+This is a sample `docker-compose` configuration:
 
 ```yaml
     gt7dashboard:
@@ -125,7 +141,9 @@ You may get some insights for improvement on your consistency if you look at the
 The list on the right hand side shows your best laps that are token into consideration for the speed variance.
 
 
-#### Throttle
+I got inspired for this diagram by the [Your Data Driven Podcast](https://www.yourdatadriven.com/).
+On two different episodes of this podcast both [Peter Krause](https://www.yourdatadriven.com/ep12-go-faster-now-with-motorsports-data-analytics-guru-peter-krause/) and [Ross Bentley](https://www.yourdatadriven.com/ep3-tips-for-racing-faster-with-ross-bentley/) mentioned this visualization.
+If they had one graph it would be the deviation in the (best) laps of the same driver, to improve said drivers performance learning from the differences in already good laps. If they could do it once, they could do it every time.#### Throttle
 
 This is the amount of throttle pressure from 0% to 100% of the laps selected.
 
@@ -135,7 +153,7 @@ This is the amount of braking pressure from 0% to 100% of the laps selected.
 
 #### Coasting
 
-This is the amount of coasting from 0% to 100% of the laps selected. Coasting is when neither throttle or brake are engaged.
+This is the amount of coasting from 0% to 100% of the laps selected. Coasting is when neither throttle nor brake are engaged.
 
 #### Tire Speed / Car Speed
 
@@ -143,13 +161,13 @@ This is the relation between the speed of the tires and the speed of the car. If
 
 #### Time Table
 
-A table with logged information of the session. # is the number of the lap as reported by the game. There might be multiple laps of the same number if you restarted a session. Time and Diff are self-explaining. Info will hold addiotnal meta data, for example if this lap was a replay.
+A table with logged information of the session. # is the number of the lap as reported by the game. There might be multiple laps of the same number if you restarted a session. Time and Diff are self-explaining. Info will hold additional meta data, for example if this lap was a replay.
 Fuel Consumed is the amount of fuel consumed in the lap.
 
 What follows know are simple metrics for the characteristics of the lap. This is counted as ticks, which means instances when the game reported a state. For example Full Throttle = 500 means that you were on full throttle during 500 instances when the game sent its telemetry.
 The same goes for Full Break, Coast and Tire Spin. Use this to easily compare your laps.
 
-You can click on one of these laps to add them to the diagrams above.
+You can click on one of these laps to add them to the diagrams above. These laps will be deleted if you reset the view or reload the page.
 
 Car will hold the car name. You will have to have the `db/cars.csv` file downloaded for this to work.
 
@@ -169,3 +187,5 @@ Here is some useful information you may use for tuning. Such as Max Speed and mi
 This is a race line map with the last lap (blue) and the reference lap (magenta). This diagram does also feature spead peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
+
+

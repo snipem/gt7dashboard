@@ -38,17 +38,17 @@ LAP_CONTROLS = """You can reset all laps with the 'Reset Laps' button. This is h
 SPEED_DIAGRAM = """The total speed of the laps selected. This value is in km/h. or mph. depending on your in-game setting"""
 THROTTLE_DIAGRAM = """This is the amount of throttle pressure from 0% to 100% of the laps selected."""
 BRAKING_DIAGRAM = """This is the amount of braking pressure from 0% to 100% of the laps selected."""
-COASTING_DIAGRAM = """This is the amount of coasting from 0% to 100% of the laps selected. Coasting is when neither throttle or brake are engaged."""
+COASTING_DIAGRAM = """This is the amount of coasting from 0% to 100% of the laps selected. Coasting is when neither throttle nor brake are engaged."""
 TIRE_DIAGRAM = """This is the relation between the speed of the tires and the speed of the car. If your tires are faster than your car, your tires might be spinning. If they are slower, your tires might be blocking. Use this judge your car control."""
 
 SPEED_PEAKS_AND_VALLEYS = """A list of speed peaks and valleys for the selected laps. Use this to compare the difference in speed between the last lap and the reference lap on given positions of the race track. Peaks will be straights, will valleys will be corners."""
-TIME_TABLE = """A table with logged information of the session. # is the number of the lap as reported by the game. There might be multiple laps of the same number if you restarted a session. Time and Diff are self-explaining. Info will hold addiotnal meta data, for example if this lap was a replay.
+TIME_TABLE = """A table with logged information of the session. # is the number of the lap as reported by the game. There might be multiple laps of the same number if you restarted a session. Time and Diff are self-explaining. Info will hold additional meta data, for example if this lap was a replay.
 Fuel Consumed is the amount of fuel consumed in the lap.
 
 What follows know are simple metrics for the characteristics of the lap. This is counted as ticks, which means instances when the game reported a state. For example Full Throttle = 500 means that you were on full throttle during 500 instances when the game sent its telemetry.
 The same goes for Full Break, Coast and Tire Spin. Use this to easily compare your laps.
 
-You can click on one of these laps to add them to the diagrams above.
+You can click on one of these laps to add them to the diagrams above. These laps will be deleted if you reset the view or reload the page.
 
 Car will hold the car name. You will have to have the `db/cars.csv` file downloaded for this to work.
 """
@@ -61,6 +61,7 @@ RACE_LINE_BIG = """This is a race line map with the last lap (blue) and the refe
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
 """
+
 
 def get_help_div(help_text_resource):
     return Div(text=get_help_text_resource(help_text_resource), width=7, height=5)
