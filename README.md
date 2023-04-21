@@ -38,7 +38,7 @@ Enable the "Always Record" checkbox to always record replays. Otherwise will onl
 
 ## How to run
 1. `pip3 install -r requirements.txt` to install Python dependencies (once)
-2. (Optional) Download the list of car names with `python3 helper/download_cars_csv`
+2. (Optional) Download the list of car names with `python3 helper/download_cars_csv`. Without this file, car names will only show as `CAR-ID-123`.
 2. `GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS> bokeh serve .` (when inside the folder)
 
 ## Troubleshooting
