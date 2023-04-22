@@ -146,6 +146,9 @@ class RaceTimeTable(object):
 
     def show_laps(self, laps: List[Lap]):
         best_lap = gt7helper.get_best_lap(laps)
+        if best_lap == None:
+            return
+        
         new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=best_lap.lap_finish_time)
         self.lap_times_source.data = ColumnDataSource.from_df(new_df)
 
