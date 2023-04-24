@@ -22,6 +22,7 @@ from bokeh.plotting import curdoc
 from bokeh.plotting import figure
 
 from gt7dashboard import gt7communication, gt7diagrams, gt7help, gt7helper, gt7lap
+from gt7dashboard.gt7diagrams import get_speed_peak_and_valley_diagram
 
 from gt7dashboard.gt7help import get_help_div
 from gt7dashboard.gt7helper import (
@@ -141,16 +142,18 @@ def update_lap_change(step):
     if len(laps) > 0:
 
         last_lap = laps[0]
-        update_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
+        # get_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
 
         if len(laps) > 1:
             reference_lap = gt7helper.get_last_reference_median_lap(
                 laps, reference_lap_selected=g_reference_lap_selected
             )[1]
-            if reference_lap:
-                update_speed_peak_and_valley_diagram(
-                    div_reference_lap, reference_lap, "Reference Lap"
-                )
+            # if reference_lap:
+            #     get_speed_peak_and_valley_diagram(
+            #         div_reference_lap, reference_lap, "Reference Lap"
+            #     )
+
+            div_speed_peak_valley_diagram.text = get_speed_peak_and_valley_diagram(last_lap, reference_lap)
 
         update_header_line(div_header_line, last_lap, reference_lap)
 
@@ -248,8 +251,8 @@ def update_time_table(laps: List[Lap]):
 
 def reset_button_handler(event):
     print("reset button clicked")
-    div_reference_lap.text = ""
-    div_last_lap.text = ""
+    # div_reference_lap.text = ""
+    # div_last_lap.text = ""
     race_diagram.delete_all_additional_laps()
 
     app.gt7comm.reset()
@@ -293,37 +296,6 @@ def load_reference_lap_handler(attr, old, new):
     g_telemetry_update_needed = True
     update_lap_change()
 
-
-def update_speed_peak_and_valley_diagram(div, lap: Lap, title):
-    table = """<table>"""
-
-    (
-        peak_speed_data_x,
-        peak_speed_data_y,
-        valley_speed_data_x,
-        valley_speed_data_y,
-    ) = lap.get_speed_peaks_and_valleys()
-
-    table += '<tr><th colspan="3">%s - %s</th></tr>' % (title, lap.title)
-
-    table = table + "<tr><th>#</th><th>Peak</th><th>Position</th></tr>"
-    for i, dx in enumerate(peak_speed_data_x):
-        table = table + "<tr><td>%d.</td><td>%d kph</td><td>%d</td></tr>" % (
-            i + 1,
-            peak_speed_data_x[i],
-            peak_speed_data_y[i],
-        )
-
-    table = table + "<tr><th>#</th><th>Valley</th><th>Position</th></tr>"
-    for i, dx in enumerate(valley_speed_data_x):
-        table = table + "<tr><td>%d.</td><td>%d kph</td><td>%d</td></tr>" % (
-            i + 1,
-            valley_speed_data_x[i],
-            valley_speed_data_y[i],
-        )
-
-    table = table + """</table>"""
-    div.text = table
 
 
 def update_tuning_info():
@@ -388,7 +360,7 @@ else:
 
 # def init_lap_times_source():
 #     global lap_times_source
-#     lap_times_source.data = gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.best_lap)
+#     lap_times_source.data = gt7helper.pd_data_frame_from_lap([], best_lap_time=app.gt7comm.session.last_lap)
 #
 # init_lap_times_source()
 
@@ -493,10 +465,11 @@ reset_button.on_click(reset_button_handler)
 
 div_tuning_info = Div(width=200, height=100)
 
-div_last_lap = Div(width=200, height=125)
+# div_last_lap = Div(width=200, height=125)
+# div_reference_lap = Div(width=200, height=125)
+div_speed_peak_valley_diagram = Div(width=200, height=125)
 div_gt7_dashboard = Div(width=120, height=30)
 div_header_line = Div(width=400, height=30)
-div_reference_lap = Div(width=200, height=125)
 div_connection_info = Div(width=30, height=30)
 div_deviance_laps_on_display = Div(width=200, height=race_diagram.f_speed_variance.height)
 
@@ -517,7 +490,7 @@ l1 = layout(
         [get_help_div(gt7help.TIME_DIFF), race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select]), get_help_div(gt7help.MANUAL_CONTROLS)],
         [get_help_div(gt7help.SPEED_DIAGRAM), race_diagram.f_speed, s_race_line, get_help_div(gt7help.RACE_LINE_MINI)],
         [get_help_div(gt7help.SPEED_VARIANCE), race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE)],
-        [get_help_div(gt7help.THROTTLE_DIAGRAM), race_diagram.f_throttle, [[div_last_lap, div_reference_lap]], get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS)],
+        [get_help_div(gt7help.THROTTLE_DIAGRAM), race_diagram.f_throttle, div_speed_peak_valley_diagram, get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS)],
         [get_help_div(gt7help.BRAKING_DIAGRAM), race_diagram.f_braking],
         [get_help_div(gt7help.COASTING_DIAGRAM), race_diagram.f_coasting],
         [get_help_div(gt7help.TIRE_DIAGRAM), race_diagram.f_tires],

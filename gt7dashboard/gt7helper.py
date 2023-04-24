@@ -150,7 +150,7 @@ def format_laps_to_table(laps: List[Lap], best_lap: float) -> str:
         if best_lap == lap.lap_finish_time:
             lap_color = 35  # magenta
         elif lap.lap_finish_time < best_lap:
-            # lap_finish_time cannot be smaller than best_lap, best_lap is always the smallest.
+            # lap_finish_time cannot be smaller than last_lap, last_lap is always the smallest.
             # This can only mean that lap.lap_finish_time is from an earlier race on a different track
             time_diff = "-"
         elif best_lap > 0:
@@ -468,7 +468,7 @@ def pd_data_frame_from_lap(
             # TODO add some formatting
             pass
         elif lap.lap_finish_time < best_lap_time:
-            # lap_finish_time cannot be smaller than best_lap, best_lap is always the smallest.
+            # lap_finish_time cannot be smaller than last_lap, last_lap is always the smallest.
             # This can only mean that lap.lap_finish_time is from an earlier race on a different track
             time_diff = "-"
         elif best_lap_time > 0:
@@ -707,3 +707,23 @@ def get_variance_for_laps(laps: List[Lap]) -> DataFrame:
     dbs_df.columns = ["distance", "speed_variance"]
 
     return dbs_df
+
+PEAK = "PEAK"
+VALLEY = "VALLEY"
+
+def get_peaks_and_valleys_sorted_tuple_list(lap: Lap):
+    (
+        peak_speed_data_x,
+        peak_speed_data_y,
+        valley_speed_data_x,
+        valley_speed_data_y,
+    ) = lap.get_speed_peaks_and_valleys()
+
+    tuple_list = []
+
+    tuple_list += zip(peak_speed_data_x, peak_speed_data_y, [PEAK]*len(peak_speed_data_x))
+    tuple_list += zip(valley_speed_data_x, valley_speed_data_y, [VALLEY]*len(valley_speed_data_x))
+
+    tuple_list.sort(key=lambda a: a[1])
+
+    return tuple_list

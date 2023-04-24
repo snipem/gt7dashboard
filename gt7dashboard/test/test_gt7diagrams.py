@@ -199,3 +199,25 @@ class TestHelper(unittest.TestCase):
         # get file size, should be about 5MB
         file_size = os.path.getsize(out_file)
         self.assertAlmostEqual(file_size, 140000, delta=1000000)
+
+    def test_get_speed_peak_and_valley_diagram_different_size(self):
+        last_lap = self.test_laps[0]
+        reference_lap = self.test_laps[5]
+        div = Div()
+        div.text = gt7diagrams.get_speed_peak_and_valley_diagram(last_lap, reference_lap)
+
+        out_file = "test_out/test_get_speed_peak_and_valley_diagram_different_size.html"
+        print("View file for reference at %s" % out_file)
+        output_file(out_file)
+        save(layout(div))
+
+    def test_get_speed_peak_and_valley_diagram_same_size(self):
+        last_lap = self.test_laps[2]
+        reference_lap = self.test_laps[3]
+        div = Div()
+        div.text = gt7diagrams.get_speed_peak_and_valley_diagram(last_lap, reference_lap)
+
+        out_file = "test_out/test_get_speed_peak_and_valley_diagram_same_size.html"
+        print("View file for reference at %s" % out_file)
+        output_file(out_file)
+        save(layout(div))

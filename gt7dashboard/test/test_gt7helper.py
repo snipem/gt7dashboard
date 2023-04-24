@@ -345,3 +345,17 @@ class TestLaps(unittest.TestCase):
         filtered_laps = get_n_fastest_laps_within_percent_threshold_ignoring_replays(laps, number_of_laps=999, percent_threshold=1)
         self.assertEqual(1, len(filtered_laps))
         self.assertEqual([l3], filtered_laps)
+
+    def get_test_laps(self):
+        path = os.path.join(
+            os.getcwd(), "test_data", "brands_hatch_10_laps.laps"
+        )
+        with open(path, "rb") as f:
+            test_laps = pickle.load(f)
+
+        return test_laps
+    def test_get_peaks_and_valleys_sorted_tuple_list(self):
+        test_laps = self.get_test_laps()
+
+        tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(test_laps[3])
+        print(tuple_list)

@@ -148,7 +148,7 @@ class RaceTimeTable(object):
         best_lap = gt7helper.get_best_lap(laps)
         if best_lap == None:
             return
-        
+
         new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=best_lap.lap_finish_time)
         self.lap_times_source.data = ColumnDataSource.from_df(new_df)
 
@@ -582,3 +582,117 @@ def add_starting_line_to_diagram(race_line: figure, last_lap: Lap):
     )
     mytext.text = "===="
     race_line.center.append(mytext)
+
+def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap):
+    table = """<table>"""
+
+    ll_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(last_lap)
+    rl_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(reference_lap)
+
+    max_data = max(len(ll_tuple_list), len(rl_tuple_list))
+
+    table += '<tr>'
+
+    table += '<th></th>'
+    table += '<th colspan="4">%s - %s</th>' % ("Last Lap", last_lap.title)
+    table += '<th colspan="4">%s - %s</th>' % ("Reference Lap", reference_lap.title)
+    table += '<th colspan="2">Diff</th>'
+
+    table += '</tr>'
+
+    table += """<tr>
+    <td>#</td><td></td><td>Pos.</td><td>Speed</td>
+    <td>#</td><td></td><td>Pos.</td><td>Speed</td>
+    <td>Pos.</td><td>Speed</td>
+    </tr>"""
+
+    rl_and_ll_are_same_size = len(ll_tuple_list) == len(rl_tuple_list)
+
+    i = 0
+    while i < max_data:
+        diff_pos = 0
+        diff_speed = 0
+
+        if rl_and_ll_are_same_size:
+            diff_pos = ll_tuple_list[i][1] - rl_tuple_list[i][1]
+            diff_speed = ll_tuple_list[i][0] - rl_tuple_list[i][0]
+
+            if diff_speed > 0:
+                diff_style = f"background-color: rgba(0, 0, 255, .3)" # Blue
+            elif diff_speed >= -3:
+                diff_style = f"background-color: rgba(0, 255, 0, .3)" # Green
+            elif diff_speed >= -10:
+                diff_style = f"background-color: rgba(251, 192, 147, .3)" # Orange
+            else:
+                diff_style = f"background-color: rgba(255, 0, 0, .3)" # Red
+
+        else:
+            diff_style = f"background-color: rgba(255, 0, 0, .3)" # Red
+
+        table += '<tr>'
+        table += f'<td style="background-opacity:0.5; {diff_style}">'
+
+        if len(ll_tuple_list) > i:
+            table += f"""<td>{i+1}</td>
+                <td>{"▴" if ll_tuple_list[i][2] == gt7helper.PEAK else "▾"}</td>
+                <td>{ll_tuple_list[i][1]:d}</td>
+                <td>{ll_tuple_list[i][0]:.0f}</td>
+            """
+
+        if len(rl_tuple_list) > i:
+            table += f"""<td>{i+1}</td>
+                <td>{"▴" if rl_tuple_list[i][2] == gt7helper.PEAK else "▾"}</td>
+                <td>{rl_tuple_list[i][1]:d}</td>
+                <td>{rl_tuple_list[i][0]:.0f}</td>
+            """
+
+        if rl_and_ll_are_same_size:
+            table += f"""
+                <td>{diff_pos:d}</td>
+                <td>{diff_speed:.0f}</td>
+            """
+        else:
+            table += f"""
+                <td>-</td>
+                <td>-</td>
+            """
+
+
+
+        table += '</tr>'
+        i+=1
+
+
+
+    # table += get_speed_peak_and_valley_diagram_row(best_lap_peak_speed_data_x, best_lap_peak_speed_data_y, table, best_lap_valley_speed_data_x,
+    #                                               best_lap_valley_speed_data_y)
+    table += '</td>'
+    table += '<td>'
+
+    # table += get_speed_peak_and_valley_diagram_row(reference_lap_peak_speed_data_x, reference_lap_peak_speed_data_y, table, reference_lap_valley_speed_data_x,
+    #                                                reference_lap_valley_speed_data_y)
+    table += '</td>'
+
+    table = table + """</table>"""
+    return table
+
+
+def get_speed_peak_and_valley_diagram_row(peak_speed_data_x, peak_speed_data_y, table, valley_speed_data_x,
+                                          valley_speed_data_y):
+    row = ""
+
+    row += "<tr><th>#</th><th>Peak</th><th>Position</th></tr>"
+    for i, dx in enumerate(peak_speed_data_x):
+        row += "<tr><td>%d.</td><td>%d kph</td><td>%d</td></tr>" % (
+            i + 1,
+            peak_speed_data_x[i],
+            peak_speed_data_y[i],
+        )
+    row += "<tr><th>#</th><th>Valley</th><th>Position</th></tr>"
+    for i, dx in enumerate(valley_speed_data_x):
+        row += "<tr><td>%d.</td><td>%d kph</td><td>%d</td></tr>" % (
+            i + 1,
+            valley_speed_data_x[i],
+            valley_speed_data_y[i],
+        )
+    return row
