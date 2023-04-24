@@ -504,9 +504,10 @@ l1 = layout(
 l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=1)
 
 l3 = layout(
-    [[reset_button, save_button],
-     # [race_time_table.t_lap_times], # TODO Does not render twice, one rendering will be empty
-     [div_fuel_map]],
+    [
+        [reset_button, save_button],
+        [div_speed_peak_valley_diagram, div_fuel_map], # TODO Race table does not render twice, one rendering will be empty
+     ],
     sizing_mode="stretch_width",
 )
 
