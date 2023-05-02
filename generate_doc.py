@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     out_markdown += """I got inspired for this diagram by the [Your Data Driven Podcast](https://www.yourdatadriven.com/).
 On two different episodes of this podcast both [Peter Krause](https://www.yourdatadriven.com/ep12-go-faster-now-with-motorsports-data-analytics-guru-peter-krause/) and [Ross Bentley](https://www.yourdatadriven.com/ep3-tips-for-racing-faster-with-ross-bentley/) mentioned this visualization.
-If they had one graph it would be the deviation in the (best) laps of the same driver, to improve said drivers performance learning from the differences in already good laps. If they could do it once, they could do it every time."""
+If they had one graph it would be the deviation in the (best) laps of the same driver, to improve said drivers performance learning from the differences in already good laps. If they could do it once, they could do it every time.\n\n"""
 
     out_markdown += "#### Throttle\n\n"
     out_markdown += gt7help.THROTTLE_DIAGRAM + "\n\n"
