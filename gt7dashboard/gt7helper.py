@@ -411,8 +411,12 @@ def get_median_lap(laps: List[Lap]) -> Lap:
             # FIXME why is it sometimes string AND int?
             if not isinstance(attr, str) and attr != "" and attr != []:
                 attributes.append(getattr(lap, val))
+
         if len(attributes) == 0:
             continue
+        if isinstance(getattr(laps[0], val), datetime):
+            continue
+
         if isinstance(getattr(laps[0], val), list):
             median_attribute = [
                 none_ignoring_median(k)
