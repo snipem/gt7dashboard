@@ -1,3 +1,4 @@
+from datetime import datetime
 from gt7dashboard import gt7helper
 
 
@@ -26,6 +27,7 @@ class Lap:
         self.data_speed = []
         self.data_time = []
         self.data_rpm = []
+        self.data_gear = []
         self.data_tires = []
         # Positions on x,y,z
         self.data_position_x = []
@@ -41,6 +43,9 @@ class Lap:
         # Always record was set when recording the lap, likely a replay
         self.is_replay = False
         self.is_manual = False
+
+        self.lap_start_timestamp = datetime.now()
+        self.lap_end_timestamp = -1
 
     def __str__(self):
         return "\n %s, %2d, %1.f, %4d, %4d, %4d" % (

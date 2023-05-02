@@ -315,7 +315,6 @@ class GT7Communication(Thread):
         self.current_lap.data_braking.append(data.brake)
         self.current_lap.data_throttle.append(data.throttle)
         self.current_lap.data_speed.append(data.car_speed)
-        self.current_lap.data_rpm.append(data.rpm)
 
         delta_divisor = data.car_speed
         if data.car_speed == 0:
@@ -330,6 +329,11 @@ class GT7Communication(Thread):
             self.current_lap.tires_spinning_ticks += 1
 
         self.current_lap.data_tires.append(delta_fl + delta_fr + delta_rl + delta_rr)
+
+        ## RPM and shifting
+
+        self.current_lap.data_rpm.append(data.rpm)
+        self.current_lap.data_gear.append(data.current_gear)
 
         ## Log Position
 
@@ -370,6 +374,8 @@ class GT7Communication(Thread):
         self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game timetable
         self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
 
+        self.current_lap.lap_end_timestamp = datetime.datetime.now()
+
         # Race is not in 0th lap, which is before starting the race.
         # We will only persist those laps that have crossed the starting line at least once
         # TODO Correct this comment, this is about Laptime not lap numbers
@@ -379,6 +385,7 @@ class GT7Communication(Thread):
         # Reset current lap with an empty one
         self.current_lap = Lap()
         self.current_lap.fuel_at_start = self.last_data.current_fuel
+
 
     def reset(self):
         """
