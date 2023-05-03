@@ -359,3 +359,8 @@ class TestLaps(unittest.TestCase):
 
         tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(test_laps[3])
         print(tuple_list)
+
+    def test_calculate_fuel_left(self):
+        lap = Lap()
+        fuel_left = gt7helper.calculate_laps_left_on_fuel(lap, lap)
+        print(fuel_left)

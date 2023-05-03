@@ -521,7 +521,13 @@ def remove_all_annotation_text_from_figure(f: figure):
     f.center = [r for r in f.center if not isinstance(r, Label)]
 
 
-def get_fuel_map_html_table(last_lap):
+def get_fuel_map_html_table(last_lap: Lap) -> str:
+    """
+    Returns a html table of relative fuel map.
+    :param last_lap:
+    :return: html table
+    """
+
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
     table = (
         "<table><tr>"
@@ -583,7 +589,14 @@ def add_starting_line_to_diagram(race_line: figure, last_lap: Lap):
     mytext.text = "===="
     race_line.center.append(mytext)
 
-def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap):
+def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap) -> str:
+    """
+    Returns a html div with the speed peaks and valleys of the last lap and the reference lap
+    as a formatted html table
+    :param last_lap: Lap
+    :param reference_lap: Lap
+    :return: html table with peaks and valleys
+    """
     table = """<table>"""
 
     ll_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(last_lap)
@@ -664,13 +677,9 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap):
 
 
 
-    # table += get_speed_peak_and_valley_diagram_row(best_lap_peak_speed_data_x, best_lap_peak_speed_data_y, table, best_lap_valley_speed_data_x,
-    #                                               best_lap_valley_speed_data_y)
     table += '</td>'
     table += '<td>'
 
-    # table += get_speed_peak_and_valley_diagram_row(reference_lap_peak_speed_data_x, reference_lap_peak_speed_data_y, table, reference_lap_valley_speed_data_x,
-    #                                                reference_lap_valley_speed_data_y)
     table += '</td>'
 
     table = table + """</table>"""

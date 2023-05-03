@@ -727,3 +727,10 @@ def get_peaks_and_valleys_sorted_tuple_list(lap: Lap):
     tuple_list.sort(key=lambda a: a[1])
 
     return tuple_list
+
+
+def calculate_laps_left_on_fuel(current_lap, last_lap) -> float:
+    # TODO Like F1: A) Benzingemisch -0.72 Bunden
+    laps_left: float
+    fuel_consumed_last_lap = last_lap.fuel_at_start - last_lap.fuel_at_end
+    laps_left = current_lap.fuel - (last_lap.laps_to_go * fuel_consumed_last_lap)
