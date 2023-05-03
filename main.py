@@ -81,7 +81,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     reference_lap_data = reference_lap.get_data_dict()
 
     for i, lap in enumerate(laps[:len(race_lines)]):
-        print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
+        logging.info(f"Updating Race Line for Lap {len(laps) -i} - {lap.title} and reference lap {reference_lap.title}")
 
         race_lines[i].title.text = "Lap %d - %s (%s), Reference Lap: %s (%s)" % (len(laps) - i, lap.title, lap.car_name(), reference_lap.title, reference_lap.car_name())
 
@@ -106,8 +106,7 @@ def update_header_line(div: Div, last_lap: Lap, reference_lap: Lap):
     div.text = f"<p><b>Last Lap: {last_lap.title} ({last_lap.car_name()})<b></p>" \
                f"<p><b>Reference Lap: {reference_lap.title} ({reference_lap.car_name()})<b></p>"
 
-@linear()
-def update_lap_change(step):
+def update_lap_change():
     """
     Is called whenever a lap changes.
     It detects if the telemetry date retrieved is the same as the data displayed.
@@ -152,30 +151,25 @@ def update_lap_change(step):
 
         update_header_line(div_header_line, last_lap, reference_lap)
 
-    logging.debug("Start of updates have %d laps" % len(laps))
+    logging.debug("Start of updating of %d laps" % len(laps))
 
     start_time = time.time()
-    logging.debug("Updating time table")
     update_time_table(laps)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logging.debug("Updating time table took %dms" % ((time.time() - start_time) * 1000))
 
     start_time = time.time()
-    logging.debug("Updating reference lap select")
     update_reference_lap_select(laps)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logging.debug("Updating reference lap select took %dms" % ((time.time() - start_time) * 1000))
 
     start_time = time.time()
-    logging.debug("Updating speed velocity graph")
     update_speed_velocity_graph(laps)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logging.debug("Updating speed velocity graph took %dms" % ((time.time() - start_time) * 1000))
 
     start_time = time.time()
-    logging.debug("Updating race lines")
     update_race_lines(laps, reference_lap)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logging.debug("Updating race lines took %dms" % ((time.time() - start_time) * 1000))
 
     logging.debug("Whole Update took %dms" % ((time.time() - update_start_time) * 1000))
-
 
     g_laps_stored = laps.copy()
     g_telemetry_update_needed = False
