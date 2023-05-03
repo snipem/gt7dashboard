@@ -142,16 +142,11 @@ def update_lap_change(step):
     if len(laps) > 0:
 
         last_lap = laps[0]
-        # get_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
 
         if len(laps) > 1:
             reference_lap = gt7helper.get_last_reference_median_lap(
                 laps, reference_lap_selected=g_reference_lap_selected
             )[1]
-            # if reference_lap:
-            #     get_speed_peak_and_valley_diagram(
-            #         div_reference_lap, reference_lap, "Reference Lap"
-            #     )
 
             div_speed_peak_valley_diagram.text = get_speed_peak_and_valley_diagram(last_lap, reference_lap)
 
