@@ -157,6 +157,14 @@ This is the amount of braking pressure from 0% to 100% of the laps selected.
 
 This is the amount of coasting from 0% to 100% of the laps selected. Coasting is when neither throttle nor brake are engaged.
 
+#### Gear
+
+This is the current gear of the laps selected.
+
+#### RPM
+
+This is the current RPM of the laps selected.
+
 #### Tire Speed / Car Speed
 
 This is the relation between the speed of the tires and the speed of the car. If your tires are faster than your car, your tires might be spinning. If they are slower, your tires might be blocking. Use this judge your car control.

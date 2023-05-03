@@ -166,6 +166,8 @@ class RaceDiagram(object):
         self.coasting_lines = []
         self.throttle_lines = []
         self.tires_lines = []
+        self.rpm_lines = []
+        self.gears_lines = []
 
         # Data Sources
         self.source_time_diff = None
@@ -185,10 +187,12 @@ class RaceDiagram(object):
         tooltips = [
             ("index", "$index"),
             ("value", "$y"),
-            ("Speed", "@speed{0} kph"),
+            ("Speed", "@speed{0}"),
             ("Throttle", "@throttle%"),
             ("Brake", "@brake%"),
             ("Coast", "@coast%"),
+            ("Gear", "@gear"),
+            ("RPM", "@rpm RPM"),
             ("Distance", "@distance{0} m"),
         ]
 
@@ -269,6 +273,24 @@ class RaceDiagram(object):
             active_drag="box_zoom",
         )
 
+        self.f_rpm = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="RPM",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
+        self.f_gear = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="Gear",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
         self.f_speed.toolbar.autohide = True
 
         span_zero_time_diff = bokeh.models.Span(
@@ -297,6 +319,12 @@ class RaceDiagram(object):
         self.f_tires.xaxis.visible = False
         self.f_tires.toolbar.autohide = True
 
+        self.f_gear.xaxis.visible = False
+        self.f_gear.toolbar.autohide = True
+
+        self.f_rpm.xaxis.visible = False
+        self.f_rpm.toolbar.autohide = True
+
         self.source_time_diff = ColumnDataSource(data={"distance": [], "timedelta": []})
         self.f_time_diff.line(
             x="distance",
@@ -318,8 +346,22 @@ class RaceDiagram(object):
         self.f_braking.legend.click_policy = self.f_speed.legend.click_policy
         self.f_coasting.legend.click_policy = self.f_speed.legend.click_policy
         self.f_tires.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_gear.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_rpm.legend.click_policy = self.f_speed.legend.click_policy
 
-        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires)
+        # Leave padding on the left because rpm is 4 digits and diagrams will not start at the same position otherwise
+        min_border_left = 60
+        self.f_time_diff.min_border_left = min_border_left
+        self.f_speed.min_border_left = min_border_left
+        self.f_throttle.min_border_left = min_border_left
+        self.f_braking.min_border_left = min_border_left
+        self.f_coasting.min_border_left = min_border_left
+        self.f_tires.min_border_left = min_border_left
+        self.f_gear.min_border_left = min_border_left
+        self.f_rpm.min_border_left = min_border_left
+        self.f_speed_variance.min_border_left = min_border_left
+
+        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires, self.f_gear, self.f_rpm)
 
         self.source_speed_variance = ColumnDataSource(data={"distance": [], "speed_variance": []})
 
@@ -398,6 +440,28 @@ class RaceDiagram(object):
         self.tires_lines.append(self.f_tires.line(
             x="distance",
             y="tires",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
+        self.gears_lines.append(self.f_gear.line(
+            x="distance",
+            y="gear",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
+        self.rpm_lines.append(self.f_rpm.line(
+            x="distance",
+            y="rpm",
             source=source,
             legend_label=legend,
             line_width=1,

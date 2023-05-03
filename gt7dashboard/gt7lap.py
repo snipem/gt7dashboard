@@ -97,6 +97,8 @@ class Lap:
             "speed": self.data_speed,
             "time": self.data_time,
             "tires": self.data_tires,
+            "rpm": self.data_rpm,
+            "gear": self.data_gear,
             "ticks": list(range(len(self.data_speed))),
             "coast": self.data_coasting,
             "raceline_y": self.data_position_y,
