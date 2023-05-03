@@ -575,7 +575,7 @@ def get_car_name_for_car_id(car_id: int) -> str:
             if row[0] == str(car_id):
                 return row[1]
 
-    return ""
+    return "CAR-ID-%d" % car_id
 
 
 def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):

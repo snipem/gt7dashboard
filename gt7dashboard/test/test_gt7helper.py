@@ -264,7 +264,7 @@ class TestLaps(unittest.TestCase):
         self.assertEqual("SILVIA spec-R Aero (S15) '02", car_name)
 
         non_existing_car_name = gt7helper.get_car_name_for_car_id(89239843984983)
-        self.assertEqual(non_existing_car_name, "")
+        self.assertEqual(non_existing_car_name, "CAR-ID-89239843984983")
 
     def test_get_car_name_for_car_id_when_csv_file_does_not_exist(self):
         gt7helper.CARS_CSV_FILENAME = "not_existing_file"
