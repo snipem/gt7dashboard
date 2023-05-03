@@ -192,7 +192,7 @@ class RaceDiagram(object):
             ("Brake", "@brake%"),
             ("Coast", "@coast%"),
             ("Gear", "@gear"),
-            ("RPM", "@rpm RPM"),
+            ("Rev", "@rpm{0} RPM"),
             ("Distance", "@distance{0} m"),
         ]
 
