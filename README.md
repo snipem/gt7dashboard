@@ -46,11 +46,9 @@ If you run into `TimeoutError`s make sure to check your firewall. You may have t
 
 ## Docker
 
-There is a `Dockerfile` available. Run it like this:
+There is a docker image available at [`ghcr.io/snipem/gt7dashboard:main`](https://github.com/users/snipem/packages/container/package/gt7dashboard) available. Run it like this:
 
 ```bash
-docker build -t gt7dashboard /home/user/work/gt7dashboard
-
 docker run -d --restart unless-stopped \
   --name gt7dashboard \
   --user 1002 \
@@ -60,15 +58,14 @@ docker run -d --restart unless-stopped \
   -e BOKEH_ALLOW_WS_ORIGIN=domain_of_server:5006 \
   -e GT7_PLAYSTATION_IP=<playstation ip> \
   -e TZ=Europe/Berlin \
-  gt7dashboard
+  ghcr.io/snipem/gt7dashboard:main
 ```
 
 This is a sample `docker-compose` configuration:
 
 ```yaml
     gt7dashboard:
-        build:
-            context: /home/user/work/gt7dashboard
+        image: ghcr.io/snipem/gt7dashboard:main
         restart: unless-stopped
         container_name: gt7dashboard
         user: "1002"
@@ -189,5 +186,4 @@ Here is some useful information you may use for tuning. Such as Max Speed and mi
 This is a race line map with the last lap (blue) and the reference lap (magenta). This diagram does also feature spead peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
-
 
