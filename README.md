@@ -39,14 +39,19 @@ Enable the "Always Record" checkbox to always record replays. Otherwise will onl
 
 You will have to have a running Python installation. Look [here](https://wiki.python.org/moin/BeginnersGuide/Download) for instructions.
 
+If you are on MacOS/Linux edit the file `run.sh` and replace `<...>` with your IP address. Run the file with a double click afterwards.
+
+If you are on Windows edit the file `run.bat` and replace `<...>` with your IP address. Run the file with a double click afterwards.
+
 The commands `pip3` or `python3` may be different on your OS. Try `pip` or `python` instead.
 
+### Detailed Steps
+
 1. (Once) `pip3 install -r requirements.txt` to install Python dependencies
-2. (Optional) Download the list of car names with `python3 helper/download_cars_csv`. Without this file, car names will only show as `CAR-ID-123`.
+2. (Optional) Download the list of car names with `python3 helper/download_cars_csv.py`. Without this file, car names will only show as `CAR-ID-123`.
 3. Running the Dashboard
    - (Mac/Linux) `GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS> bokeh serve .` (when inside the  `gt7dashboard` folder)
    - (Windows) `set GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS>` and `python -m bokeh serve .`  (when inside the `gt7dashboard` folder)
-
 
 ## Troubleshooting
 
