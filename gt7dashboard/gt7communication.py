@@ -341,6 +341,10 @@ class GT7Communication(Thread):
         self.current_lap.data_position_y.append(data.position_y)
         self.current_lap.data_position_z.append(data.position_z)
 
+        ## Log Boost
+
+        self.current_lap.data_boost.append(data.boost)
+
         # Adapted from https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13810797
         self.current_lap.lap_live_time = (self.current_lap.lap_ticks * 1. / 60.) - (self.session.special_packet_time / 1000.)
 

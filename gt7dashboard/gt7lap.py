@@ -37,6 +37,10 @@ class Lap:
         self.fuel_at_start = 0
         self.fuel_at_end = -1
         self.fuel_consumed = -1
+        # Boost
+        self.data_boost = []
+        # Yaw Rate
+        self.data_yar_rate = []
         # Car
         self.car_id = 0
 
@@ -98,6 +102,7 @@ class Lap:
             "time": self.data_time,
             "tires": self.data_tires,
             "rpm": self.data_rpm,
+            "boost": self.data_boost,
             "gear": self.data_gear,
             "ticks": list(range(len(self.data_speed))),
             "coast": self.data_coasting,

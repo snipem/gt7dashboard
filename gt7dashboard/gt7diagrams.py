@@ -168,6 +168,7 @@ class RaceDiagram(object):
         self.tires_lines = []
         self.rpm_lines = []
         self.gears_lines = []
+        self.boost_lines = []
 
         # Data Sources
         self.source_time_diff = None
@@ -194,6 +195,7 @@ class RaceDiagram(object):
             ("Gear", "@gear"),
             ("Rev", "@rpm{0} RPM"),
             ("Distance", "@distance{0} m"),
+            ("Boost", "@boost{0.00} x 100 kPa"),
         ]
 
         tooltips_timedelta = [
@@ -291,6 +293,15 @@ class RaceDiagram(object):
             active_drag="box_zoom",
         )
 
+        self.f_boost = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="Boost",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
         self.f_speed.toolbar.autohide = True
 
         span_zero_time_diff = bokeh.models.Span(
@@ -325,6 +336,9 @@ class RaceDiagram(object):
         self.f_rpm.xaxis.visible = False
         self.f_rpm.toolbar.autohide = True
 
+        self.f_boost.xaxis.visible = False
+        self.f_boost.toolbar.autohide = True
+
         self.source_time_diff = ColumnDataSource(data={"distance": [], "timedelta": []})
         self.f_time_diff.line(
             x="distance",
@@ -348,6 +362,7 @@ class RaceDiagram(object):
         self.f_tires.legend.click_policy = self.f_speed.legend.click_policy
         self.f_gear.legend.click_policy = self.f_speed.legend.click_policy
         self.f_rpm.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_boost.legend.click_policy = self.f_speed.legend.click_policy
 
         # Leave padding on the left because rpm is 4 digits and diagrams will not start at the same position otherwise
         min_border_left = 60
@@ -360,8 +375,9 @@ class RaceDiagram(object):
         self.f_gear.min_border_left = min_border_left
         self.f_rpm.min_border_left = min_border_left
         self.f_speed_variance.min_border_left = min_border_left
+        self.f_boost.min_border_left = min_border_left
 
-        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires, self.f_gear, self.f_rpm)
+        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires, self.f_gear, self.f_rpm, self.f_boost)
 
         self.source_speed_variance = ColumnDataSource(data={"distance": [], "speed_variance": []})
 
@@ -462,6 +478,17 @@ class RaceDiagram(object):
         self.rpm_lines.append(self.f_rpm.line(
             x="distance",
             y="rpm",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
+        self.boost_lines.append(self.f_boost.line(
+            x="distance",
+            y="boost",
             source=source,
             legend_label=legend,
             line_width=1,

@@ -485,6 +485,7 @@ l1 = layout(
         [get_help_div(gt7help.COASTING_DIAGRAM), race_diagram.f_coasting],
         [get_help_div(gt7help.GEAR_DIAGRAM), race_diagram.f_gear],
         [get_help_div(gt7help.RPM_DIAGRAM), race_diagram.f_rpm],
+        [get_help_div(gt7help.BOOST_DIAGRAM), race_diagram.f_boost],
         [get_help_div(gt7help.TIRE_DIAGRAM), race_diagram.f_tires],
         [get_help_div(gt7help.TIME_TABLE), race_time_table.t_lap_times, get_help_div(gt7help.FUEL_MAP), div_fuel_map, get_help_div(gt7help.TUNING_INFO), div_tuning_info],
     ]
