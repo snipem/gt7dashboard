@@ -354,7 +354,7 @@ class GT7Communication(Thread):
 
         # Collect yaw rate, skip first interval with all zeroes
         if len(self.current_lap.data_rotation_yaw) > interval:
-            yaw_rate_per_second = data.rotation_yaw - self.current_lap.data_rotation_yaw[-interval]
+            yaw_rate_per_second = abs(data.rotation_yaw) - abs(self.current_lap.data_rotation_yaw[-interval])
         else:
             yaw_rate_per_second = 0
 
