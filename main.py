@@ -481,6 +481,7 @@ l1 = layout(
         [get_help_div(gt7help.SPEED_DIAGRAM), race_diagram.f_speed, s_race_line, get_help_div(gt7help.RACE_LINE_MINI)],
         [get_help_div(gt7help.SPEED_VARIANCE), race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE)],
         [get_help_div(gt7help.THROTTLE_DIAGRAM), race_diagram.f_throttle, div_speed_peak_valley_diagram, get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS)],
+        [get_help_div(gt7help.YAW_RATE_DIAGRAM), race_diagram.f_yaw_rate],
         [get_help_div(gt7help.BRAKING_DIAGRAM), race_diagram.f_braking],
         [get_help_div(gt7help.COASTING_DIAGRAM), race_diagram.f_coasting],
         [get_help_div(gt7help.GEAR_DIAGRAM), race_diagram.f_gear],

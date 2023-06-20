@@ -169,6 +169,7 @@ class RaceDiagram(object):
         self.rpm_lines = []
         self.gears_lines = []
         self.boost_lines = []
+        self.yaw_rate_lines = []
 
         # Data Sources
         self.source_time_diff = None
@@ -189,6 +190,7 @@ class RaceDiagram(object):
             ("index", "$index"),
             ("value", "$y"),
             ("Speed", "@speed{0}"),
+            ("Yaw Rate", "@yaw_rate{0.00}"),
             ("Throttle", "@throttle%"),
             ("Brake", "@brake%"),
             ("Coast", "@coast%"),
@@ -302,6 +304,15 @@ class RaceDiagram(object):
             active_drag="box_zoom",
         )
 
+        self.f_yaw_rate = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="Yaw Rate / Second",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
         self.f_speed.toolbar.autohide = True
 
         span_zero_time_diff = bokeh.models.Span(
@@ -339,6 +350,9 @@ class RaceDiagram(object):
         self.f_boost.xaxis.visible = False
         self.f_boost.toolbar.autohide = True
 
+        self.f_yaw_rate.xaxis.visible = False
+        self.f_yaw_rate.toolbar.autohide = True
+
         self.source_time_diff = ColumnDataSource(data={"distance": [], "timedelta": []})
         self.f_time_diff.line(
             x="distance",
@@ -363,6 +377,7 @@ class RaceDiagram(object):
         self.f_gear.legend.click_policy = self.f_speed.legend.click_policy
         self.f_rpm.legend.click_policy = self.f_speed.legend.click_policy
         self.f_boost.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_yaw_rate.legend.click_policy = self.f_speed.legend.click_policy
 
         # Leave padding on the left because rpm is 4 digits and diagrams will not start at the same position otherwise
         min_border_left = 60
@@ -376,8 +391,9 @@ class RaceDiagram(object):
         self.f_rpm.min_border_left = min_border_left
         self.f_speed_variance.min_border_left = min_border_left
         self.f_boost.min_border_left = min_border_left
+        self.f_yaw_rate.min_border_left = min_border_left
 
-        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires, self.f_gear, self.f_rpm, self.f_boost)
+        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_yaw_rate, self.f_braking, self.f_coasting, self.f_tires, self.f_gear, self.f_rpm, self.f_boost)
 
         self.source_speed_variance = ColumnDataSource(data={"distance": [], "speed_variance": []})
 
@@ -497,6 +513,17 @@ class RaceDiagram(object):
             visible=visible
         ))
 
+        self.yaw_rate_lines.append(self.f_yaw_rate.line(
+            x="distance",
+            y="yaw_rate",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
         return source
 
     def get_layout(self) -> Column:
@@ -513,6 +540,8 @@ class RaceDiagram(object):
                 self.f_braking.renderers.remove(self.f_braking.renderers[i])  # remove the line renderer
                 self.f_coasting.renderers.remove(self.f_coasting.renderers[i])  # remove the line renderer
                 self.f_tires.renderers.remove(self.f_tires.renderers[i])  # remove the line renderer
+                self.f_boost.renderers.remove(self.f_boost.renderers[i])  # remove the line renderer
+                self.f_yaw_rate.renderers.remove(self.f_yaw_rate.renderers[i])  # remove the line renderer
                 # self.f_time_diff.renderers.remove(self.f_time_diff.renderers[i])  # remove the line renderer
 
                 self.f_speed.legend.items.pop(i)
@@ -520,6 +549,8 @@ class RaceDiagram(object):
                 self.f_braking.legend.items.pop(i)
                 self.f_coasting.legend.items.pop(i)
                 self.f_tires.legend.items.pop(i)
+                self.f_yaw_rate.legend.items.pop(i)
+                self.f_boost.legend.items.pop(i)
                 # self.f_time_diff.legend.items.pop(i)
 
 

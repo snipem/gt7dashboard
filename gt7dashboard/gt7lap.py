@@ -40,7 +40,8 @@ class Lap:
         # Boost
         self.data_boost = []
         # Yaw Rate
-        self.data_yar_rate = []
+        self.data_rotation_yaw = []
+        self.data_absolute_yaw_rate_per_second = []
         # Car
         self.car_id = 0
 
@@ -103,6 +104,7 @@ class Lap:
             "tires": self.data_tires,
             "rpm": self.data_rpm,
             "boost": self.data_boost,
+            "yaw_rate": self.data_absolute_yaw_rate_per_second,
             "gear": self.data_gear,
             "ticks": list(range(len(self.data_speed))),
             "coast": self.data_coasting,

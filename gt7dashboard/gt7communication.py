@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import math
 import socket
 import struct
 import time
@@ -344,6 +345,20 @@ class GT7Communication(Thread):
         ## Log Boost
 
         self.current_lap.data_boost.append(data.boost)
+
+        ## Log Yaw Rate
+
+        # This is the interval to collection yaw rate
+        interval = 1 * 60 # 1 second has 60 fps and 60 data ticks
+        self.current_lap.data_rotation_yaw.append(data.rotation_yaw)
+
+        # Collect yaw rate, skip first interval with all zeroes
+        if len(self.current_lap.data_rotation_yaw) > interval:
+            yaw_rate_per_second = data.rotation_yaw - self.current_lap.data_rotation_yaw[-interval]
+        else:
+            yaw_rate_per_second = 0
+
+        self.current_lap.data_absolute_yaw_rate_per_second.append(abs(yaw_rate_per_second))
 
         # Adapted from https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13810797
         self.current_lap.lap_live_time = (self.current_lap.lap_ticks * 1. / 60.) - (self.session.special_packet_time / 1000.)
