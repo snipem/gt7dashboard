@@ -1,4 +1,4 @@
-name: Batch File Workflow
+name: Testing Windows run file
 
 on: [ push, pull_request ]
 
