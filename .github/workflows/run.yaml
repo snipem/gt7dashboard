@@ -12,7 +12,7 @@ jobs:
 
       - name: Run Batch File
         run: |
-          .\run.bat > output.txt
+          .\run.ps1 > output.txt
           echo "::set-output name=output_file::output.txt"
 
       - name: Check Output

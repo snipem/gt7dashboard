@@ -39,7 +39,7 @@ Enable the "Always Record" checkbox to always record replays. Otherwise will onl
 
 You will have to have a running Python installation. Look [here](https://wiki.python.org/moin/BeginnersGuide/Download) for instructions.
 
-* If you are on Windows edit the file `run.bat` and replace `<...>` with your IP address. Run the file with a double click afterwards.
+* If you are on Windows edit the file `run.ps1` and replace `<...>` with your IP address. Run the file with a double click afterwards.
 
 * If you are on MacOS edit the file `run.command` and replace `<...>` with your IP address. Run the file with a double click afterwards.
 
