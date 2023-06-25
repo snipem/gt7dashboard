@@ -1,10 +1,5 @@
 name: Batch File Workflow
 
-on:
-  push:
-    branches:
-      - main
-
 jobs:
   build:
     runs-on: windows-latest
