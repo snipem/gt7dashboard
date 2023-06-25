@@ -1,0 +1,29 @@
+name: Batch File Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Batch File
+        run: |
+          run.bat > output.txt
+          echo "::set-output name=output_file::output.txt"
+
+      - name: Check Output
+        run: |
+          $errorFound = Select-String -Pattern "Your specific error message" -Path $env:output_file
+          if ($errorFound) {
+            echo "Error found in the output."
+            exit 1
+          } else {
+            echo "No error found in the output."
+          }
