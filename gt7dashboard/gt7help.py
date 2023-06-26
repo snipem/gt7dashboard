@@ -65,7 +65,7 @@ RACE_LINE_BIG = """This is a race line map with the last lap (blue) and the refe
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
 """
 
-YAW_RATE_DIAGRAM = """TODO"""
+YAW_RATE_DIAGRAM = """This is the yaw rate per second of your car. Use this to determine the Maximum Rotation Point (MRP). At this point you should normally accelerate."""
 
 
 def get_help_div(help_text_resource):

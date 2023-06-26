@@ -186,7 +186,9 @@ This is the amount of throttle pressure from 0% to 100% of the laps selected.
 
 #### Yaw Rate / Second
 
-TODO
+This is the yaw rate per second of your car. Use this to determine the Maximum Rotation Point (MRP). At this point you should normally accelerate.
+
+[Suellio Almeida](https://suellioalmeida.ca) introduced this concept to me. See [here](https://www.youtube.com/watch?v=B92vFKKjyB0) for more information.
 
 #### Braking
 

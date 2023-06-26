@@ -55,6 +55,7 @@ If they had one graph it would be the deviation in the (best) laps of the same d
 
     out_markdown += "#### Yaw Rate / Second\n\n"
     out_markdown += gt7help.YAW_RATE_DIAGRAM + "\n\n"
+    out_markdown += "[Suellio Almeida](https://suellioalmeida.ca) introduced this concept to me. See [here](https://www.youtube.com/watch?v=B92vFKKjyB0) for more information.\n\n"
 
     out_markdown += "#### Braking\n\n"
     out_markdown += add_screenshot("screenshot_braking.png") + "\n\n"
