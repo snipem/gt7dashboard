@@ -34,11 +34,23 @@ If they had one graph it would be the deviation in the (best) laps of the same d
     out_markdown += "#### Throttle\n\n"
     out_markdown += gt7help.THROTTLE_DIAGRAM + "\n\n"
 
+    out_markdown += "#### Yaw Rate / Second\n\n"
+    out_markdown += gt7help.YAW_RATE_DIAGRAM + "\n\n"
+
     out_markdown += "#### Braking\n\n"
     out_markdown += gt7help.BRAKING_DIAGRAM + "\n\n"
 
     out_markdown += "#### Coasting\n\n"
     out_markdown += gt7help.COASTING_DIAGRAM + "\n\n"
+
+    out_markdown += "#### Gear\n\n"
+    out_markdown += gt7help.GEAR_DIAGRAM + "\n\n"
+
+    out_markdown += "#### RPM\n\n"
+    out_markdown += gt7help.RPM_DIAGRAM + "\n\n"
+
+    out_markdown += "#### Boost\n\n"
+    out_markdown += gt7help.BOOST_DIAGRAM + "\n\n"
 
     out_markdown += "#### Tire Speed / Car Speed\n\n"
     out_markdown += gt7help.TIRE_DIAGRAM + "\n\n"
