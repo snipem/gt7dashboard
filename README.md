@@ -184,6 +184,10 @@ If they had one graph it would be the deviation in the (best) laps of the same d
 
 This is the amount of throttle pressure from 0% to 100% of the laps selected.
 
+#### Yaw Rate / Second
+
+TODO
+
 #### Braking
 
 ![screenshot_header](README.assets/screenshot_braking.png)
@@ -203,6 +207,10 @@ This is the current gear of the laps selected.
 #### RPM
 
 This is the current RPM of the laps selected.
+
+#### Boost
+
+This is the current Boost in x100 kPa of the laps selected.
 
 #### Tire Speed / Car Speed
 
