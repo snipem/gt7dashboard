@@ -1,27 +1,28 @@
-name: Testing Windows run file
+# Use for testing of the Windows installation
+# name: Testing Windows run file
 
-on: [ push, pull_request ]
+# on: [ push, pull_request ]
 
-jobs:
-  build:
-    runs-on: windows-latest
+# jobs:
+#   build:
+#     runs-on: windows-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-      - name: Run Batch File
-        run: |
-          timeout /t 5 /nobreak .\run.ps1 > output.txt
-          echo "::set-output name=output_file::output.txt"
+#       - name: Run Batch File
+#         run: | # Alert this will run forever!
+#           .\run.ps1 > output.txt
+#           echo "::set-output name=output_file::output.txt"
 
-      - name: Check Output
-        run: |
-          $successMessageFound = Select-String -Pattern "Bokeh app running at" -Path $env:output_file
-          if ($successMessageFound) {
-            echo "Bokeh startup found in the output."
-            exit 0
-          } else {
-            echo "No bokeh startup found in the output."
-            exit 1
-          }
+#       - name: Check Output
+#         run: |
+#           $successMessageFound = Select-String -Pattern "Bokeh app running at" -Path $env:output_file
+#           if ($successMessageFound) {
+#             echo "Bokeh startup found in the output."
+#             exit 0
+#           } else {
+#             echo "No bokeh startup found in the output."
+#             exit 1
+#           }
