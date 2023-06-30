@@ -39,7 +39,10 @@ Enable the "Always Record" checkbox to always record replays. Otherwise will onl
 
 You will have to have a running Python installation. Look [here](https://wiki.python.org/moin/BeginnersGuide/Download) for instructions.
 
-* If you are on Windows edit the file `run.ps1` and replace `<...>` with your IP address. Run the file with a double click afterwards.
+* If you are on Windows 
+  * Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
+  * edit the file `run.ps1` and replace `<...>` with your IP address. Run the file with a double click afterwards.
 
 * If you are on MacOS edit the file `run.command` and replace `<...>` with your IP address. Run the file with a double click afterwards.
 
@@ -50,6 +53,8 @@ The commands `pip3` or `python3` may be different on your OS. Try `pip` or `pyth
 ## How to run for experienced users
 
 1. (Once) `pip3 install -r requirements.txt` to install Python dependencies
+   1. On Windows: Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
 2. (Optional) Download the list of car names with `python3 helper/download_cars_csv.py`. Without this file, car names will only show as `CAR-ID-123`.
 3. Running the Dashboard
    - (Mac/Linux) `GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS> bokeh serve .` (when inside the  `gt7dashboard` folder)
@@ -256,5 +261,4 @@ Here is some useful information you may use for tuning. Such as Max Speed and mi
 This is a race line map with the last lap (blue) and the reference lap (magenta). This diagram does also feature spead peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
-
 
