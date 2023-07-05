@@ -11,4 +11,4 @@ COPY . .
 ADD https://raw.githubusercontent.com/ddm999/gt7info/web-new/_data/db/cars.csv db/cars.csv
 RUN chmod -R 755 db
 
-CMD [ "python3", "gt7dashboard.py"]
+CMD [ "bokeh", "serve", "." ]
