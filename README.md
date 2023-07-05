@@ -103,6 +103,9 @@ This is a sample `docker-compose` configuration:
             - GT7_PLAYSTATION_IP=<playstation ip>
             - TZ=Europe/Berlin
 ```
+
+Hint: You should set the `GT7_PLAYSTATION_IP` env var since Docker containers are not allowed to send UDP broadcasts by default. This is the default behaviour when no IP is set.
+
 ## Contributing
 
 Please add unit tests for all new features, calculations etc.
