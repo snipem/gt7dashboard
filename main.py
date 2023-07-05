@@ -200,7 +200,7 @@ def update_speed_velocity_graph(laps: List[Lap]):
     s_race_line.axis.visible = False
 
     fastest_laps = race_diagram.update_fastest_laps_variance(laps)
-    print("Updating Speed Deviance with %d fastest laps" % len(fastest_laps))
+    logger.info("Updating Speed Deviance with %d fastest laps" % len(fastest_laps))
     div_deviance_laps_on_display.text = ""
     for fastest_lap in fastest_laps:
         div_deviance_laps_on_display.text += f"<b>Lap {fastest_lap.number}:</b> {fastest_lap.title}<br>"
@@ -233,14 +233,14 @@ def update_time_table(laps: List[Lap]):
     global race_time_table
     global lap_times_source
     # FIXME time table is not updating
-    print("Adding %d laps to table" % len(laps))
+    logger.info("Adding %d laps to table" % len(laps))
     race_time_table.show_laps(laps)
 
     # t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
 
 def reset_button_handler(event):
-    print("reset button clicked")
+    logger.info("reset button clicked")
     # div_reference_lap.text = ""
     # div_last_lap.text = ""
     race_diagram.delete_all_additional_laps()
@@ -248,25 +248,25 @@ def reset_button_handler(event):
     app.gt7comm.reset()
 def always_record_checkbox_handler(event, old, new):
     if len(new) == 2:
-        print("Set always record data to True")
+        logger.info("Set always record data to True")
         app.gt7comm.always_record_data = True
     else:
-        print("Set always record data to False")
+        logger.info("Set always record data to False")
         app.gt7comm.always_record_data = False
 
 
 def log_lap_button_handler(event):
     app.gt7comm.finish_lap(manual=True)
-    print("Added a lap manually to the list of laps: %s" % app.gt7comm.laps[0])
+    logger.info("Added a lap manually to the list of laps: %s" % app.gt7comm.laps[0])
 
 
 def save_button_handler(event):
     path = save_laps_to_pickle(app.gt7comm.laps)
-    print("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
+    logger.info("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
 
 
 def load_laps_handler(attr, old, new):
-    print("Loading %s" % new)
+    logger.info("Loading %s" % new)
     race_diagram.delete_all_additional_laps()
     app.gt7comm.load_laps(load_laps_from_pickle(new), replace_other_laps=True)
 
@@ -281,7 +281,7 @@ def load_reference_lap_handler(attr, old, new):
         g_reference_lap_selected = None
     else:
         g_reference_lap_selected = g_laps_stored[int(new)]
-        print("Loading %s as reference" % g_laps_stored[int(new)].format())
+        logger.info("Loading %s as reference" % g_laps_stored[int(new)].format())
 
     g_telemetry_update_needed = True
     update_lap_change()
@@ -342,7 +342,7 @@ if not hasattr(app, "gt7comm"):
 else:
     # Reuse existing thread
     if not app.gt7comm.is_connected():
-        print("Restarting gt7communcation")
+        logger.info("Restarting gt7communcation because of no connection")
         app.gt7comm.restart()
     else:
         # Existing thread has connection, proceed
@@ -378,7 +378,7 @@ def table_row_selection_callback(attrname, old, new):
     global colors
 
     selectionIndex=race_time_table.lap_times_source.selected.indices
-    print("you have selected the row nr "+str(selectionIndex))
+    logger.info("you have selected the row nr "+str(selectionIndex))
 
     colors = ["blue", "magenta", "green", "orange", "black", "purple"]
     # max_additional_laps = len(palette)
