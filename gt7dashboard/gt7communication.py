@@ -190,6 +190,10 @@ class GT7Communication(Thread):
             try:
                 self._shall_restart = False
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+                if self.playstation_ip == "255.255.255.255":
+                    s.setsockopt (socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
                 s.bind(('0.0.0.0', self.receive_port))
                 self._send_hb(s)
                 s.settimeout(10)

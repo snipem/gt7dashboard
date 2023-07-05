@@ -328,7 +328,8 @@ if not hasattr(app, "gt7comm"):
     load_laps_path = os.environ.get("GT7_LOAD_LAPS_PATH")
 
     if not playstation_ip:
-        raise Exception("No IP set in env var GT7_PLAYSTATION_IP")
+        playstation_ip = "255.255.255.255"
+        logger.info(f"No IP set in env var GT7_PLAYSTATION_IP using broadcast at {playstation_ip}")
 
     app.gt7comm = gt7communication.GT7Communication(playstation_ip)
 
