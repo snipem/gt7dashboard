@@ -29,7 +29,7 @@ from gt7dashboard.gt7helper import (
     load_laps_from_pickle,
     save_laps_to_pickle,
     list_lap_files_from_path,
-    calculate_time_diff_by_distance,
+    calculate_time_diff_by_distance, save_laps_to_json, load_laps_from_json,
 )
 from gt7dashboard.gt7lap import Lap
 
@@ -261,14 +261,15 @@ def log_lap_button_handler(event):
 
 
 def save_button_handler(event):
-    path = save_laps_to_pickle(app.gt7comm.laps)
-    logger.info("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
+    if len(app.gt7comm.laps) > 0:
+        path = save_laps_to_json(app.gt7comm.laps)
+        logger.info("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
 
 
 def load_laps_handler(attr, old, new):
     logger.info("Loading %s" % new)
     race_diagram.delete_all_additional_laps()
-    app.gt7comm.load_laps(load_laps_from_pickle(new), replace_other_laps=True)
+    app.gt7comm.load_laps(load_laps_from_json(new), replace_other_laps=True)
 
 
 def load_reference_lap_handler(attr, old, new):
