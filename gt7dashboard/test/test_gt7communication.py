@@ -5,7 +5,7 @@ import unittest
 from gt7dashboard import gt7communication
 from gt7dashboard.gt7lap import Lap
 
-PLAYSTATION_IP = "ps5wifi"
+PLAYSTATION_IP = "255.255.255.255"
 
 
 # check if host is up
