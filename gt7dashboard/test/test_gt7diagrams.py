@@ -207,8 +207,8 @@ class TestHelper(unittest.TestCase):
         save(layout(div))
 
     def test_get_speed_peak_and_valley_diagram_same_size(self):
-        last_lap = self.test_laps[2]
-        reference_lap = self.test_laps[3]
+        last_lap = self.test_laps[0]
+        reference_lap = self.test_laps[1]
         div = Div()
         div.text = gt7diagrams.get_speed_peak_and_valley_diagram(last_lap, reference_lap)
 

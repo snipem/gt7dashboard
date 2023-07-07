@@ -719,7 +719,20 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap) -> str:
     :param reference_lap: Lap
     :return: html table with peaks and valleys
     """
-    table = """<table>"""
+    table = """<table style='border-spacing: 10px; text-align:center'>"""
+
+    table += """<colgroup>
+    <col/>
+    <col style='border-left: 1px solid #cdd0d4;'/>
+    <col/>
+    <col/>
+    <col style="background-color: lightblue;"/>
+    <col/>
+    <col/>
+    <col/>
+    <col style="background-color: thistle;"/>
+    <col/>
+  </colgroup>"""
 
     ll_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(last_lap)
     rl_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(reference_lap)
@@ -729,14 +742,14 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap) -> str:
     table += '<tr>'
 
     table += '<th></th>'
-    table += '<th colspan="4">%s - %s</th>' % ("Last Lap", last_lap.title)
-    table += '<th colspan="4">%s - %s</th>' % ("Reference Lap", reference_lap.title)
+    table += '<th colspan="4">%s - %s</th>' % ("Last", last_lap.title)
+    table += '<th colspan="4">%s - %s</th>' % ("Ref.", reference_lap.title)
     table += '<th colspan="2">Diff</th>'
 
     table += '</tr>'
 
     table += """<tr>
-    <td>#</td><td></td><td>Pos.</td><td>Speed</td>
+    <td></td><td>#</td><td></td><td>Pos.</td><td>Speed</td>
     <td>#</td><td></td><td>Pos.</td><td>Speed</td>
     <td>Pos.</td><td>Speed</td>
     </tr>"""
@@ -765,18 +778,18 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap) -> str:
             diff_style = f"background-color: rgba(255, 0, 0, .3)" # Red
 
         table += '<tr>'
-        table += f'<td style="background-opacity:0.5; {diff_style}">'
+        table += f'<td style="width:15px; background-opacity:0.5; {diff_style}"></td>'
 
         if len(ll_tuple_list) > i:
             table += f"""<td>{i+1}</td>
-                <td>{"▴" if ll_tuple_list[i][2] == gt7helper.PEAK else "▾"}</td>
+                <td>{"S" if ll_tuple_list[i][2] == gt7helper.PEAK else "T"}</td>
                 <td>{ll_tuple_list[i][1]:d}</td>
                 <td>{ll_tuple_list[i][0]:.0f}</td>
             """
 
         if len(rl_tuple_list) > i:
             table += f"""<td>{i+1}</td>
-                <td>{"▴" if rl_tuple_list[i][2] == gt7helper.PEAK else "▾"}</td>
+                <td>{"S" if rl_tuple_list[i][2] == gt7helper.PEAK else "T"}</td>
                 <td>{rl_tuple_list[i][1]:d}</td>
                 <td>{rl_tuple_list[i][0]:.0f}</td>
             """
