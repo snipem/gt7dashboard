@@ -766,19 +766,19 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap) -> str:
             diff_speed = ll_tuple_list[i][0] - rl_tuple_list[i][0]
 
             if diff_speed > 0:
-                diff_style = f"background-color: rgba(0, 0, 255, .3)" # Blue
+                diff_style = f"color: rgba(0, 0, 255, .3)" # Blue
             elif diff_speed >= -3:
-                diff_style = f"background-color: rgba(0, 255, 0, .3)" # Green
+                diff_style = f"color: rgba(0, 255, 0, .3)" # Green
             elif diff_speed >= -10:
-                diff_style = f"background-color: rgba(251, 192, 147, .3)" # Orange
+                diff_style = f"color: rgba(251, 192, 147, .3)" # Orange
             else:
-                diff_style = f"background-color: rgba(255, 0, 0, .3)" # Red
+                diff_style = f"color: rgba(255, 0, 0, .3)" # Red
 
         else:
-            diff_style = f"background-color: rgba(255, 0, 0, .3)" # Red
+            diff_style = f"text-color: rgba(255, 0, 0, .3)" # Red
 
         table += '<tr>'
-        table += f'<td style="width:15px; background-opacity:0.5; {diff_style}"></td>'
+        table += f'<td style="width:15px; text-opacity:0.5; {diff_style}">█</td>'
 
         if len(ll_tuple_list) > i:
             table += f"""<td>{i+1}</td>
