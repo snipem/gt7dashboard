@@ -186,11 +186,11 @@ def update_speed_velocity_graph(laps: List[Lap]):
         race_diagram.source_last_lap.data = last_lap_data
         last_lap_race_line.data_source.data = last_lap_data
 
-    if reference_lap and len(reference_lap.data_speed) > 0:
-        reference_lap_data = reference_lap.get_data_dict()
-        race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
-        race_diagram.source_reference_lap.data = reference_lap_data
-        reference_lap_race_line.data_source.data = reference_lap_data
+        if reference_lap and len(reference_lap.data_speed) > 0:
+            reference_lap_data = reference_lap.get_data_dict()
+            race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
+            race_diagram.source_reference_lap.data = reference_lap_data
+            reference_lap_race_line.data_source.data = reference_lap_data
 
     if median_lap:
         race_diagram.source_median_lap.data = median_lap.get_data_dict()
@@ -240,12 +240,15 @@ def update_time_table(laps: List[Lap]):
 
 
 def reset_button_handler(event):
+    global g_telemetry_update_needed
     logger.info("reset button clicked")
-    # div_reference_lap.text = ""
-    # div_last_lap.text = ""
     race_diagram.delete_all_additional_laps()
 
+    app.gt7comm.load_laps([], replace_other_laps=True)
     app.gt7comm.reset()
+    g_telemetry_update_needed = True
+
+
 def always_record_checkbox_handler(event, old, new):
     if len(new) == 2:
         logger.info("Set always record data to True")
