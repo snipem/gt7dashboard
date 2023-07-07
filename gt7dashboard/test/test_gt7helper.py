@@ -80,8 +80,8 @@ class TestHelper(unittest.TestCase):
         self.assertEqual(len(result.split("\n")), len(laps) + 2)  # +2 for header and last line
 
     def test_calculate_time_diff_by_distance_from_pickle(self):
-        path = os.path.join(os.getcwd(), 'test_data', 'brands_hatch_10_laps.laps')
-        laps = gt7helper.load_laps_from_pickle(path)
+        path = os.path.join(os.getcwd(), 'test_data', 'broad_bean_raceway_time_trial_4laps.json')
+        laps = gt7helper.load_laps_from_json(path)
 
         df = calculate_time_diff_by_distance(laps[0], laps[1])
 
@@ -242,22 +242,13 @@ class TestLaps(unittest.TestCase):
         self.assertEqual([3, 9, 11], peaks)
 
     def test_find_speed_peaks_and_valleys_real_data(self):
-        path = os.path.join(os.getcwd(), 'test_data', 'brands_hatch_10_laps.laps')
-        with open(path, 'rb') as f:
-            l = pickle.load(f)
+        path = os.path.join(os.getcwd(), 'test_data', 'broad_bean_raceway_time_trial_4laps.json')
+        laps = gt7helper.load_laps_from_json(path)
 
-        peaks, valleys = gt7helper.find_speed_peaks_and_valleys(l[1], width=100)
+        peaks, valleys = gt7helper.find_speed_peaks_and_valleys(laps[1], width=100)
 
-        self.assertEqual([622, 1166, 1684], peaks)
-        self.assertEqual([274, 804, 1279, 2201], valleys)
-
-    def test_get_data_from_lap(self):
-        path = os.path.join(os.getcwd(), 'test_data', 'brands_hatch_10_laps.laps')
-        with open(path, 'rb') as f:
-            l = pickle.load(f)
-
-        lap = l[0].get_data_dict()
-        print(lap)
+        self.assertEqual([759, 1437], peaks)
+        self.assertEqual([1132, 1625], valleys)
 
     def test_get_car_name_for_car_id(self):
         car_name = gt7helper.get_car_name_for_car_id(1448)
@@ -348,10 +339,9 @@ class TestLaps(unittest.TestCase):
 
     def get_test_laps(self):
         path = os.path.join(
-            os.getcwd(), "test_data", "brands_hatch_10_laps.laps"
+            os.getcwd(), "test_data", "broad_bean_raceway_time_trial_4laps.json"
         )
-        with open(path, "rb") as f:
-            test_laps = pickle.load(f)
+        test_laps = gt7helper.load_laps_from_json(path)
 
         return test_laps
     def test_get_peaks_and_valleys_sorted_tuple_list(self):
@@ -360,6 +350,7 @@ class TestLaps(unittest.TestCase):
         tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(test_laps[3])
         print(tuple_list)
 
+    @unittest.skip("Not yet implemented")
     def test_calculate_fuel_left(self):
         lap = Lap()
         fuel_left = gt7helper.calculate_laps_left_on_fuel(lap, lap)

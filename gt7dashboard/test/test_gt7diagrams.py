@@ -18,11 +18,7 @@ from gt7dashboard.gt7lap import Lap
 
 class TestHelper(unittest.TestCase):
     def setUp(self) -> None:
-        self.path = os.path.join(
-            os.getcwd(), "test_data", "brands_hatch_10_laps.laps"
-        )
-        with open(self.path, "rb") as f:
-            self.test_laps = pickle.load(f)
+        self.test_laps = gt7helper.load_laps_from_json("test_data/broad_bean_raceway_time_trial_4laps.json")
 
     def test_get_throttle_braking_race_line_diagram(self):
         (
@@ -56,9 +52,8 @@ class TestHelper(unittest.TestCase):
         save(race_line)
         print("View file for reference at %s" % out_file)
 
-        # get file size, should be about 3.5MB
         file_size = os.path.getsize(out_file)
-        self.assertAlmostEqual(file_size, 4500000, delta=1000000)
+        self.assertAlmostEqual(file_size, 3000000, delta=1000000)
 
     def helper_get_race_diagram(self):
         rd = gt7diagrams.RaceDiagram(600)
@@ -202,7 +197,7 @@ class TestHelper(unittest.TestCase):
 
     def test_get_speed_peak_and_valley_diagram_different_size(self):
         last_lap = self.test_laps[0]
-        reference_lap = self.test_laps[5]
+        reference_lap = self.test_laps[3]
         div = Div()
         div.text = gt7diagrams.get_speed_peak_and_valley_diagram(last_lap, reference_lap)
 
