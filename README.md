@@ -172,6 +172,10 @@ This map is helpful if you are using the index number of a graph to quickly dete
 
 See the tab 'Race Line' for a more detailed race line.
 
+#### Peaks and Valleys
+
+A list of speed peaks and valleys for the selected laps. We assume peaks are straights (s) and valleys are turns (T). Use this to compare the difference in speed between the last lap and the reference lap on given positions of the race track.
+
 #### Speed Deviation (Spd. Dev.)
 
 ![screenshot_header](README.assets/screenshot_speeddeviation.png)
@@ -269,3 +273,5 @@ Here is some useful information you may use for tuning. Such as Max Speed and mi
 This is a race line map with the last lap (blue) and the reference lap (magenta). This diagram does also feature spead peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
+
+

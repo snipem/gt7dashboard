@@ -44,7 +44,7 @@ RPM_DIAGRAM = "This is the current RPM of the laps selected."
 BOOST_DIAGRAM = "This is the current Boost in x100 kPa of the laps selected."
 TIRE_DIAGRAM = """This is the relation between the speed of the tires and the speed of the car. If your tires are faster than your car, your tires might be spinning. If they are slower, your tires might be blocking. Use this judge your car control."""
 
-SPEED_PEAKS_AND_VALLEYS = """A list of speed peaks and valleys for the selected laps. Use this to compare the difference in speed between the last lap and the reference lap on given positions of the race track. Peaks will be straights, will valleys will be corners."""
+SPEED_PEAKS_AND_VALLEYS = """A list of speed peaks and valleys for the selected laps. We assume peaks are straights (s) and valleys are turns (T). Use this to compare the difference in speed between the last lap and the reference lap on given positions of the race track."""
 TIME_TABLE = """A table with logged information of the session. # is the number of the lap as reported by the game. There might be multiple laps of the same number if you restarted a session. Time and Diff are self-explaining. Info will hold additional meta data, for example if this lap was a replay.
 Fuel Consumed is the amount of fuel consumed in the lap.
 

@@ -41,6 +41,10 @@ if __name__ == '__main__':
     out_markdown += add_screenshot("screenshot_raceline.png") + "\n\n"
     out_markdown += gt7help.RACE_LINE_MINI + "\n\n"
 
+    out_markdown += "#### Peaks and Valleys\n\n"
+    # out_markdown += add_screenshot("screenshot_peaks_and_valleys.png") + "\n\n"
+    out_markdown += gt7help.SPEED_PEAKS_AND_VALLEYS + "\n\n"
+
     out_markdown += "#### Speed Deviation (Spd. Dev.)\n\n"
     out_markdown += add_screenshot("screenshot_speeddeviation.png") + "\n\n"
     out_markdown += gt7help.SPEED_VARIANCE + "\n\n"
