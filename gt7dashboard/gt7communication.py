@@ -4,6 +4,7 @@ import logging
 import socket
 import struct
 import time
+import copy
 import traceback
 from datetime import timedelta
 from threading import Thread
@@ -244,7 +245,7 @@ class GT7Communication(Thread):
 
             except Exception as e:
                 # Handler for general socket exceptions
-                logging.info("No connection to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
+                logging.info("Error while connecting to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
                 s.close()
                 # Wait before reconnect
                 time.sleep(5)
@@ -367,16 +368,23 @@ class GT7Communication(Thread):
         self.current_lap.fuel_at_end = self.last_data.current_fuel
         self.current_lap.fuel_consumed = self.current_lap.fuel_at_start - self.current_lap.fuel_at_end
         self.current_lap.lap_finish_time = self.current_lap.lap_finish_time
+        self.current_lap.total_laps = self.last_data.total_laps
         self.current_lap.title = seconds_to_lap_time(self.current_lap.lap_finish_time / 1000)
         self.current_lap.car_id = self.last_data.car_id
         self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game timetable
+        # TODO Proper pythonic name
         self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
 
         # Race is not in 0th lap, which is before starting the race.
         # We will only persist those laps that have crossed the starting line at least once
+        # And those laps which have data for speed logged. This will prevent empty laps.
         # TODO Correct this comment, this is about Laptime not lap numbers
-        if self.current_lap.lap_finish_time > 0:
+        if self.current_lap.lap_finish_time > 0 and len(self.current_lap.data_speed) > 0:
             self.laps.insert(0, self.current_lap)
+
+            # Make a copy of this lap and call the callback function if set
+            if self.lap_callback_function:
+                self.lap_callback_function(copy.copy(self.current_lap))
 
         # Reset current lap with an empty one
         self.current_lap = Lap()
@@ -390,6 +398,9 @@ class GT7Communication(Thread):
         self.session = Session()
         self.last_data = GTData(None)
         self.laps = []
+
+    def set_lap_callback(self, new_lap_callback):
+        self.lap_callback_function = new_lap_callback
 
 
 # data stream decoding
