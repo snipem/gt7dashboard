@@ -11,6 +11,7 @@
 # specification here:
 # https://packaging.python.org/specifications/core-metadata/#name
 name = "gt7dashboard"  # Required
+dynamic = ["dependencies"]
 
 # Versions should comply with PEP 440:
 # https://www.python.org/dev/peps/pep-0440/
@@ -144,6 +145,9 @@ authors = [
 # If there are data files included in your packages that need to be
 # installed, specify them here.
 package-data = {"sample" = ["*.dat"]}
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [build-system]
 # These are the assumed default build requirements from pip:
