@@ -413,7 +413,7 @@ class GT7Communication(Thread):
 
             # Make a copy of this lap and call the callback function if set
             if self.lap_callback_function:
-                self.lap_callback_function(copy.copy(self.current_lap))
+                self.lap_callback_function(copy.deepcopy(self.current_lap))
 
         # Reset current lap with an empty one
         self.current_lap = Lap()
