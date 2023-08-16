@@ -11,9 +11,6 @@ class Lap:
         self.lap_finish_time = 0
         # Live time during a live lap
         self.lap_live_time = 0
-        # Total number of laps
-        self.total_laps = 0
-        # Number of current lap
         self.number = 0
         # Aggregated number of instances where condition is true
         self.throttle_and_brake_ticks = 0
