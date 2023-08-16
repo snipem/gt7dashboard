@@ -239,8 +239,6 @@ class GT7Communication(Thread):
                         # Handler for package exceptions
                         self._send_hb(s)
                         package_nr = 0
-                        # Reset package id for new connections
-                        package_id = 0
 
             except Exception as e:
                 # Handler for general socket exceptions
