@@ -168,6 +168,9 @@ class GT7Communication(Thread):
         # True will always quit with the main process
         self.daemon = True
 
+        # Set lap callback function as none
+        self.lap_callback_function = None
+
         self.playstation_ip = playstation_ip
         self.send_port = 33739
         self.receive_port = 33740
@@ -250,7 +253,8 @@ class GT7Communication(Thread):
 
             except Exception as e:
                 # Handler for general socket exceptions
-                logging.info("Error while connecting to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
+                # TODO logging not working
+                print("Error while connecting to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
                 s.close()
                 # Wait before reconnect
                 time.sleep(5)
