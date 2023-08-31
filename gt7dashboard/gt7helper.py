@@ -513,6 +513,7 @@ def pd_data_frame_from_lap(
                     "number": lap.number,
                     "time": seconds_to_lap_time(lap.lap_finish_time / 1000),
                     "diff": time_diff,
+                    "timestamp": lap.lap_start_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                     "info": info,
                     "car_name": lap.car_name(),
                     "fuelconsumed": "%d" % lap.fuel_consumed,

@@ -122,6 +122,7 @@ class RaceTimeTable(object):
             TableColumn(field="number", title="#"),
             TableColumn(field="time", title="Time"),
             TableColumn(field="diff", title="Diff"),
+            TableColumn(field="timestamp", title="Timestamp"),
             TableColumn(field="info", title="Info"),
             TableColumn(field="fuelconsumed", title="Fuel Cons."),
             TableColumn(field="fullthrottle", title="Full Throt."),
