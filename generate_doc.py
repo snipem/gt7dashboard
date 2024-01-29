@@ -42,7 +42,7 @@ if __name__ == '__main__':
     out_markdown += gt7help.RACE_LINE_MINI + "\n\n"
 
     out_markdown += "#### Peaks and Valleys\n\n"
-    # out_markdown += add_screenshot("screenshot_peaks_and_valleys.png") + "\n\n"
+    out_markdown += add_screenshot("screenshot_peaks_and_valleys.png") + "\n\n"
     out_markdown += gt7help.SPEED_PEAKS_AND_VALLEYS + "\n\n"
 
     out_markdown += "#### Speed Deviation (Spd. Dev.)\n\n"
@@ -58,6 +58,7 @@ If they had one graph it would be the deviation in the (best) laps of the same d
     out_markdown += gt7help.THROTTLE_DIAGRAM + "\n\n"
 
     out_markdown += "#### Yaw Rate / Second\n\n"
+    out_markdown += add_screenshot("screenshot_yaw.png") + "\n\n"
     out_markdown += gt7help.YAW_RATE_DIAGRAM + "\n\n"
     out_markdown += "[Suellio Almeida](https://suellioalmeida.ca) introduced this concept to me. See [here](https://www.youtube.com/watch?v=B92vFKKjyB0) for more information.\n\n"
 
@@ -70,12 +71,15 @@ If they had one graph it would be the deviation in the (best) laps of the same d
     out_markdown += gt7help.COASTING_DIAGRAM + "\n\n"
 
     out_markdown += "#### Gear\n\n"
+    out_markdown += add_screenshot("screenshot_gear.png") + "\n\n"
     out_markdown += gt7help.GEAR_DIAGRAM + "\n\n"
 
     out_markdown += "#### RPM\n\n"
+    out_markdown += add_screenshot("screenshot_rpm.png") + "\n\n"
     out_markdown += gt7help.RPM_DIAGRAM + "\n\n"
 
     out_markdown += "#### Boost\n\n"
+    out_markdown += add_screenshot("screenshot_boost.png") + "\n\n"
     out_markdown += gt7help.BOOST_DIAGRAM + "\n\n"
 
     out_markdown += "#### Tire Speed / Car Speed\n\n"

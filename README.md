@@ -33,7 +33,7 @@ See the [Manual](#manual) for detailed instructions.
 
 ### Get Telemetry of a Demonstration lap or Replay
 
-Enable the "Always Record" checkbox to always record replays. Otherwise will only the laps you are actually driving are recorded.
+Enable the "Always Record" checkbox to always record replays. Otherwise, will only the laps you are actually driving are recorded.
 
 ## How to run
 
@@ -174,6 +174,8 @@ See the tab 'Race Line' for a more detailed race line.
 
 #### Peaks and Valleys
 
+![screenshot_header](README.assets/screenshot_peaks_and_valleys.png)
+
 A list of speed peaks and valleys for the selected laps. We assume peaks are straights (s) and valleys are turns (T). Use this to compare the difference in speed between the last lap and the reference lap on given positions of the race track.
 
 #### Speed Deviation (Spd. Dev.)
@@ -203,6 +205,8 @@ This is the amount of throttle pressure from 0% to 100% of the laps selected.
 
 #### Yaw Rate / Second
 
+![screenshot_header](README.assets/screenshot_yaw.png)
+
 This is the yaw rate per second of your car. Use this to determine the Maximum Rotation Point (MRP). At this point you should normally accelerate.
 
 [Suellio Almeida](https://suellioalmeida.ca) introduced this concept to me. See [here](https://www.youtube.com/watch?v=B92vFKKjyB0) for more information.
@@ -221,13 +225,19 @@ This is the amount of coasting from 0% to 100% of the laps selected. Coasting is
 
 #### Gear
 
+![screenshot_header](README.assets/screenshot_gear.png)
+
 This is the current gear of the laps selected.
 
 #### RPM
 
+![screenshot_header](README.assets/screenshot_rpm.png)
+
 This is the current RPM of the laps selected.
 
 #### Boost
+
+![screenshot_header](README.assets/screenshot_boost.png)
 
 This is the current Boost in x100 kPa of the laps selected.
 
@@ -273,5 +283,3 @@ Here is some useful information you may use for tuning. Such as Max Speed and mi
 This is a race line map with the last lap (blue) and the reference lap (magenta). This diagram does also feature spead peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
-
-
