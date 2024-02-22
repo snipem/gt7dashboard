@@ -1,5 +1,6 @@
 import csv
 import itertools
+import json
 import logging
 import os
 import pickle
@@ -17,12 +18,6 @@ from tabulate import tabulate
 
 from gt7dashboard.gt7lap import Lap
 from gt7dashboard import gt7helper
-
-
-def save_laps(laps: List[Lap]):
-    path = os.path.join(os.getcwd(), 'data', 'all_laps.pickle')
-    with open(path, "wb") as f:
-        pickle.dump(laps, f)
 
 
 def calculate_remaining_fuel(
@@ -314,7 +309,7 @@ def list_lap_files_from_path(root: str):
     lap_files = []
     for path, sub_dirs, files in os.walk(root):
         for name in files:
-            if name.endswith(".laps"):
+            if name.endswith(".json"):
                 lf = LapFile()
                 lf.name = name
                 lf.path = os.path.join(path, name)
@@ -330,6 +325,22 @@ def load_laps_from_pickle(path: str) -> List[Lap]:
         return pickle.load(f)
 
 
+def load_laps_from_json(json_file):
+    with open(json_file, 'r') as file:
+        data = json.load(file)
+
+    laps = []
+    for lap_data in data:
+        lap = Lap()
+        lap.__dict__.update(lap_data)
+        for key, value in lap_data.items():
+            if key.endswith('_timestamp') and isinstance(value, str):
+                value = datetime.fromisoformat(value)
+                setattr(lap, key, value)
+        laps.append(lap)
+
+    return laps
+
 def save_laps_to_pickle(laps: List[Lap]) -> str:
     storage_folder = "data"
     local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
@@ -342,6 +353,22 @@ def save_laps_to_pickle(laps: List[Lap]) -> str:
 
     with open(path, "wb") as f:
         pickle.dump(laps, f)
+
+    return path
+
+def save_laps_to_json(laps: List[Lap]) -> str:
+
+    storage_folder = "data"
+    local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
+    dt = datetime.now(tz=local_timezone)
+    str_date_time = dt.strftime("%Y-%m-%d_%H_%M_%S")
+    storage_filename = "%s_%s.json" % (str_date_time, get_safe_filename(laps[0].car_name()))
+    Path(storage_folder).mkdir(parents=True, exist_ok=True)
+
+    path = os.path.join(os.getcwd(), storage_folder, storage_filename)
+
+    with open(path, "w") as f:
+        json.dump([ob.__dict__ for ob in laps], f, default=str)
 
     return path
 
@@ -411,8 +438,12 @@ def get_median_lap(laps: List[Lap]) -> Lap:
             # FIXME why is it sometimes string AND int?
             if not isinstance(attr, str) and attr != "" and attr != []:
                 attributes.append(getattr(lap, val))
+
         if len(attributes) == 0:
             continue
+        if isinstance(getattr(laps[0], val), datetime):
+            continue
+
         if isinstance(getattr(laps[0], val), list):
             median_attribute = [
                 none_ignoring_median(k)
@@ -482,6 +513,7 @@ def pd_data_frame_from_lap(
                     "number": lap.number,
                     "time": seconds_to_lap_time(lap.lap_finish_time / 1000),
                     "diff": time_diff,
+                    "timestamp": lap.lap_start_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                     "info": info,
                     "car_name": lap.car_name(),
                     "fuelconsumed": "%d" % lap.fuel_consumed,
@@ -571,7 +603,7 @@ def get_car_name_for_car_id(car_id: int) -> str:
             if row[0] == str(car_id):
                 return row[1]
 
-    return ""
+    return "CAR-ID-%d" % car_id
 
 
 def bokeh_tuple_for_list_of_lapfiles(lapfiles: List[LapFile]):
@@ -727,3 +759,10 @@ def get_peaks_and_valleys_sorted_tuple_list(lap: Lap):
     tuple_list.sort(key=lambda a: a[1])
 
     return tuple_list
+
+
+def calculate_laps_left_on_fuel(current_lap, last_lap) -> float:
+    # TODO Like F1: A) Benzingemisch -0.72 Bunden
+    laps_left: float
+    fuel_consumed_last_lap = last_lap.fuel_at_start - last_lap.fuel_at_end
+    laps_left = current_lap.fuel - (last_lap.laps_to_go * fuel_consumed_last_lap)

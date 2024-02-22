@@ -29,12 +29,13 @@ from gt7dashboard.gt7helper import (
     load_laps_from_pickle,
     save_laps_to_pickle,
     list_lap_files_from_path,
-    calculate_time_diff_by_distance,
+    calculate_time_diff_by_distance, save_laps_to_json, load_laps_from_json,
 )
 from gt7dashboard.gt7lap import Lap
 
 # set logging level to debug
-logging.getLogger().setLevel(logging.DEBUG)
+logger = logging.getLogger('main.py')
+logger.setLevel(logging.DEBUG)
 
 
 def update_connection_info():
@@ -81,7 +82,7 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     reference_lap_data = reference_lap.get_data_dict()
 
     for i, lap in enumerate(laps[:len(race_lines)]):
-        print("Updating Race Line for Lap %d - %s" % (len(laps) - i, lap.title))
+        logger.info(f"Updating Race Line for Lap {len(laps) -i} - {lap.title} and reference lap {reference_lap.title}")
 
         race_lines[i].title.text = "Lap %d - %s (%s), Reference Lap: %s (%s)" % (len(laps) - i, lap.title, lap.car_name(), reference_lap.title, reference_lap.car_name())
 
@@ -106,8 +107,7 @@ def update_header_line(div: Div, last_lap: Lap, reference_lap: Lap):
     div.text = f"<p><b>Last Lap: {last_lap.title} ({last_lap.car_name()})<b></p>" \
                f"<p><b>Reference Lap: {reference_lap.title} ({reference_lap.car_name()})<b></p>"
 
-@linear()
-def update_lap_change(step):
+def update_lap_change():
     """
     Is called whenever a lap changes.
     It detects if the telemetry date retrieved is the same as the data displayed.
@@ -135,52 +135,42 @@ def update_lap_change(step):
     if laps == g_laps_stored and not g_telemetry_update_needed:
         return
 
-    logging.debug("Rerendering laps")
+    logger.debug("Rerendering laps")
 
     reference_lap = Lap()
 
     if len(laps) > 0:
 
         last_lap = laps[0]
-        # get_speed_peak_and_valley_diagram(div_last_lap, last_lap, "Last Lap")
 
         if len(laps) > 1:
             reference_lap = gt7helper.get_last_reference_median_lap(
                 laps, reference_lap_selected=g_reference_lap_selected
             )[1]
-            # if reference_lap:
-            #     get_speed_peak_and_valley_diagram(
-            #         div_reference_lap, reference_lap, "Reference Lap"
-            #     )
 
             div_speed_peak_valley_diagram.text = get_speed_peak_and_valley_diagram(last_lap, reference_lap)
 
         update_header_line(div_header_line, last_lap, reference_lap)
 
-    logging.debug("Start of updates have %d laps" % len(laps))
+    logger.debug("Updating of %d laps" % len(laps))
 
     start_time = time.time()
-    logging.debug("Updating time table")
     update_time_table(laps)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logger.debug("Updating time table took %dms" % ((time.time() - start_time) * 1000))
 
     start_time = time.time()
-    logging.debug("Updating reference lap select")
     update_reference_lap_select(laps)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logger.debug("Updating reference lap select took %dms" % ((time.time() - start_time) * 1000))
 
     start_time = time.time()
-    logging.debug("Updating speed velocity graph")
     update_speed_velocity_graph(laps)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logger.debug("Updating speed velocity graph took %dms" % ((time.time() - start_time) * 1000))
 
     start_time = time.time()
-    logging.debug("Updating race lines")
     update_race_lines(laps, reference_lap)
-    logging.debug("Took %dms" % ((time.time() - start_time) * 1000))
+    logger.debug("Updating race lines took %dms" % ((time.time() - start_time) * 1000))
 
-    logging.debug("Whole Update took %dms" % ((time.time() - update_start_time) * 1000))
-
+    logger.debug("End of updating laps, whole Update took %dms" % ((time.time() - update_start_time) * 1000))
 
     g_laps_stored = laps.copy()
     g_telemetry_update_needed = False
@@ -196,11 +186,11 @@ def update_speed_velocity_graph(laps: List[Lap]):
         race_diagram.source_last_lap.data = last_lap_data
         last_lap_race_line.data_source.data = last_lap_data
 
-    if reference_lap and len(reference_lap.data_speed) > 0:
-        reference_lap_data = reference_lap.get_data_dict()
-        race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
-        race_diagram.source_reference_lap.data = reference_lap_data
-        reference_lap_race_line.data_source.data = reference_lap_data
+        if reference_lap and len(reference_lap.data_speed) > 0:
+            reference_lap_data = reference_lap.get_data_dict()
+            race_diagram.source_time_diff.data = calculate_time_diff_by_distance(reference_lap, last_lap)
+            race_diagram.source_reference_lap.data = reference_lap_data
+            reference_lap_race_line.data_source.data = reference_lap_data
 
     if median_lap:
         race_diagram.source_median_lap.data = median_lap.get_data_dict()
@@ -210,7 +200,7 @@ def update_speed_velocity_graph(laps: List[Lap]):
     s_race_line.axis.visible = False
 
     fastest_laps = race_diagram.update_fastest_laps_variance(laps)
-    print("Updating Speed Deviance with %d fastest laps" % len(fastest_laps))
+    logger.info("Updating Speed Deviance with %d fastest laps" % len(fastest_laps))
     div_deviance_laps_on_display.text = ""
     for fastest_lap in fastest_laps:
         div_deviance_laps_on_display.text += f"<b>Lap {fastest_lap.number}:</b> {fastest_lap.title}<br>"
@@ -243,42 +233,46 @@ def update_time_table(laps: List[Lap]):
     global race_time_table
     global lap_times_source
     # FIXME time table is not updating
-    print("Adding %d laps to table" % len(laps))
+    logger.info("Adding %d laps to table" % len(laps))
     race_time_table.show_laps(laps)
 
     # t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
 
 def reset_button_handler(event):
-    print("reset button clicked")
-    # div_reference_lap.text = ""
-    # div_last_lap.text = ""
+    global g_telemetry_update_needed
+    logger.info("reset button clicked")
     race_diagram.delete_all_additional_laps()
 
+    app.gt7comm.load_laps([], replace_other_laps=True)
     app.gt7comm.reset()
+    g_telemetry_update_needed = True
+
+
 def always_record_checkbox_handler(event, old, new):
     if len(new) == 2:
-        print("Set always record data to True")
+        logger.info("Set always record data to True")
         app.gt7comm.always_record_data = True
     else:
-        print("Set always record data to False")
+        logger.info("Set always record data to False")
         app.gt7comm.always_record_data = False
 
 
 def log_lap_button_handler(event):
     app.gt7comm.finish_lap(manual=True)
-    print("Added a lap manually to the list of laps: %s" % app.gt7comm.laps[0])
+    logger.info("Added a lap manually to the list of laps: %s" % app.gt7comm.laps[0])
 
 
 def save_button_handler(event):
-    path = save_laps_to_pickle(app.gt7comm.laps)
-    print("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
+    if len(app.gt7comm.laps) > 0:
+        path = save_laps_to_json(app.gt7comm.laps)
+        logger.info("Saved %d laps as %s" % (len(app.gt7comm.laps), path))
 
 
 def load_laps_handler(attr, old, new):
-    print("Loading %s" % new)
+    logger.info("Loading %s" % new)
     race_diagram.delete_all_additional_laps()
-    app.gt7comm.load_laps(load_laps_from_pickle(new), replace_other_laps=True)
+    app.gt7comm.load_laps(load_laps_from_json(new), replace_other_laps=True)
 
 
 def load_reference_lap_handler(attr, old, new):
@@ -291,7 +285,7 @@ def load_reference_lap_handler(attr, old, new):
         g_reference_lap_selected = None
     else:
         g_reference_lap_selected = g_laps_stored[int(new)]
-        print("Loading %s as reference" % g_laps_stored[int(new)].format())
+        logger.info("Loading %s as reference" % g_laps_stored[int(new)].format())
 
     g_telemetry_update_needed = True
     update_lap_change()
@@ -338,7 +332,8 @@ if not hasattr(app, "gt7comm"):
     load_laps_path = os.environ.get("GT7_LOAD_LAPS_PATH")
 
     if not playstation_ip:
-        raise Exception("No IP set in env var GT7_PLAYSTATION_IP")
+        playstation_ip = "255.255.255.255"
+        logger.info(f"No IP set in env var GT7_PLAYSTATION_IP using broadcast at {playstation_ip}")
 
     app.gt7comm = gt7communication.GT7Communication(playstation_ip)
 
@@ -351,7 +346,7 @@ if not hasattr(app, "gt7comm"):
 else:
     # Reuse existing thread
     if not app.gt7comm.is_connected():
-        print("Restarting gt7communcation")
+        logger.info("Restarting gt7communcation because of no connection")
         app.gt7comm.restart()
     else:
         # Existing thread has connection, proceed
@@ -387,7 +382,7 @@ def table_row_selection_callback(attrname, old, new):
     global colors
 
     selectionIndex=race_time_table.lap_times_source.selected.indices
-    print("you have selected the row nr "+str(selectionIndex))
+    logger.info("you have selected the row nr "+str(selectionIndex))
 
     colors = ["blue", "magenta", "green", "orange", "black", "purple"]
     # max_additional_laps = len(palette)
@@ -491,8 +486,12 @@ l1 = layout(
         [get_help_div(gt7help.SPEED_DIAGRAM), race_diagram.f_speed, s_race_line, get_help_div(gt7help.RACE_LINE_MINI)],
         [get_help_div(gt7help.SPEED_VARIANCE), race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE)],
         [get_help_div(gt7help.THROTTLE_DIAGRAM), race_diagram.f_throttle, div_speed_peak_valley_diagram, get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS)],
+        [get_help_div(gt7help.YAW_RATE_DIAGRAM), race_diagram.f_yaw_rate],
         [get_help_div(gt7help.BRAKING_DIAGRAM), race_diagram.f_braking],
         [get_help_div(gt7help.COASTING_DIAGRAM), race_diagram.f_coasting],
+        [get_help_div(gt7help.GEAR_DIAGRAM), race_diagram.f_gear],
+        [get_help_div(gt7help.RPM_DIAGRAM), race_diagram.f_rpm],
+        [get_help_div(gt7help.BOOST_DIAGRAM), race_diagram.f_boost],
         [get_help_div(gt7help.TIRE_DIAGRAM), race_diagram.f_tires],
         [get_help_div(gt7help.TIME_TABLE), race_time_table.t_lap_times, get_help_div(gt7help.FUEL_MAP), div_fuel_map, get_help_div(gt7help.TUNING_INFO), div_tuning_info],
     ]

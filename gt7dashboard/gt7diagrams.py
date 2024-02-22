@@ -122,6 +122,7 @@ class RaceTimeTable(object):
             TableColumn(field="number", title="#"),
             TableColumn(field="time", title="Time"),
             TableColumn(field="diff", title="Diff"),
+            TableColumn(field="timestamp", title="Timestamp"),
             TableColumn(field="info", title="Info"),
             TableColumn(field="fuelconsumed", title="Fuel Cons."),
             TableColumn(field="fullthrottle", title="Full Throt."),
@@ -166,6 +167,10 @@ class RaceDiagram(object):
         self.coasting_lines = []
         self.throttle_lines = []
         self.tires_lines = []
+        self.rpm_lines = []
+        self.gears_lines = []
+        self.boost_lines = []
+        self.yaw_rate_lines = []
 
         # Data Sources
         self.source_time_diff = None
@@ -185,11 +190,15 @@ class RaceDiagram(object):
         tooltips = [
             ("index", "$index"),
             ("value", "$y"),
-            ("Speed", "@speed{0} kph"),
+            ("Speed", "@speed{0}"),
+            ("Yaw Rate", "@yaw_rate{0.00}"),
             ("Throttle", "@throttle%"),
             ("Brake", "@brake%"),
             ("Coast", "@coast%"),
+            ("Gear", "@gear"),
+            ("Rev", "@rpm{0} RPM"),
             ("Distance", "@distance{0} m"),
+            ("Boost", "@boost{0.00} x 100 kPa"),
         ]
 
         tooltips_timedelta = [
@@ -269,6 +278,42 @@ class RaceDiagram(object):
             active_drag="box_zoom",
         )
 
+        self.f_rpm = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="RPM",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
+        self.f_gear = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="Gear",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
+        self.f_boost = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="Boost",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
+        self.f_yaw_rate = figure(
+            x_range=self.f_speed.x_range,
+            y_axis_label="Yaw Rate / Second",
+            width=width,
+            height=int(self.f_speed.height / 2),
+            tooltips=tooltips,
+            active_drag="box_zoom",
+        )
+
         self.f_speed.toolbar.autohide = True
 
         span_zero_time_diff = bokeh.models.Span(
@@ -297,6 +342,18 @@ class RaceDiagram(object):
         self.f_tires.xaxis.visible = False
         self.f_tires.toolbar.autohide = True
 
+        self.f_gear.xaxis.visible = False
+        self.f_gear.toolbar.autohide = True
+
+        self.f_rpm.xaxis.visible = False
+        self.f_rpm.toolbar.autohide = True
+
+        self.f_boost.xaxis.visible = False
+        self.f_boost.toolbar.autohide = True
+
+        self.f_yaw_rate.xaxis.visible = False
+        self.f_yaw_rate.toolbar.autohide = True
+
         self.source_time_diff = ColumnDataSource(data={"distance": [], "timedelta": []})
         self.f_time_diff.line(
             x="distance",
@@ -318,8 +375,26 @@ class RaceDiagram(object):
         self.f_braking.legend.click_policy = self.f_speed.legend.click_policy
         self.f_coasting.legend.click_policy = self.f_speed.legend.click_policy
         self.f_tires.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_gear.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_rpm.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_boost.legend.click_policy = self.f_speed.legend.click_policy
+        self.f_yaw_rate.legend.click_policy = self.f_speed.legend.click_policy
 
-        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_braking, self.f_coasting, self.f_tires)
+        # Leave padding on the left because rpm is 4 digits and diagrams will not start at the same position otherwise
+        min_border_left = 60
+        self.f_time_diff.min_border_left = min_border_left
+        self.f_speed.min_border_left = min_border_left
+        self.f_throttle.min_border_left = min_border_left
+        self.f_braking.min_border_left = min_border_left
+        self.f_coasting.min_border_left = min_border_left
+        self.f_tires.min_border_left = min_border_left
+        self.f_gear.min_border_left = min_border_left
+        self.f_rpm.min_border_left = min_border_left
+        self.f_speed_variance.min_border_left = min_border_left
+        self.f_boost.min_border_left = min_border_left
+        self.f_yaw_rate.min_border_left = min_border_left
+
+        self.layout = layout(self.f_time_diff, self.f_speed, self.f_speed_variance, self.f_throttle, self.f_yaw_rate, self.f_braking, self.f_coasting, self.f_tires, self.f_gear, self.f_rpm, self.f_boost)
 
         self.source_speed_variance = ColumnDataSource(data={"distance": [], "speed_variance": []})
 
@@ -406,6 +481,50 @@ class RaceDiagram(object):
             visible=visible
         ))
 
+        self.gears_lines.append(self.f_gear.line(
+            x="distance",
+            y="gear",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
+        self.rpm_lines.append(self.f_rpm.line(
+            x="distance",
+            y="rpm",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
+        self.boost_lines.append(self.f_boost.line(
+            x="distance",
+            y="boost",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
+        self.yaw_rate_lines.append(self.f_yaw_rate.line(
+            x="distance",
+            y="yaw_rate",
+            source=source,
+            legend_label=legend,
+            line_width=1,
+            color=color,
+            line_alpha=1,
+            visible=visible
+        ))
+
         return source
 
     def get_layout(self) -> Column:
@@ -422,6 +541,8 @@ class RaceDiagram(object):
                 self.f_braking.renderers.remove(self.f_braking.renderers[i])  # remove the line renderer
                 self.f_coasting.renderers.remove(self.f_coasting.renderers[i])  # remove the line renderer
                 self.f_tires.renderers.remove(self.f_tires.renderers[i])  # remove the line renderer
+                self.f_boost.renderers.remove(self.f_boost.renderers[i])  # remove the line renderer
+                self.f_yaw_rate.renderers.remove(self.f_yaw_rate.renderers[i])  # remove the line renderer
                 # self.f_time_diff.renderers.remove(self.f_time_diff.renderers[i])  # remove the line renderer
 
                 self.f_speed.legend.items.pop(i)
@@ -429,6 +550,8 @@ class RaceDiagram(object):
                 self.f_braking.legend.items.pop(i)
                 self.f_coasting.legend.items.pop(i)
                 self.f_tires.legend.items.pop(i)
+                self.f_yaw_rate.legend.items.pop(i)
+                self.f_boost.legend.items.pop(i)
                 # self.f_time_diff.legend.items.pop(i)
 
 
@@ -521,7 +644,13 @@ def remove_all_annotation_text_from_figure(f: figure):
     f.center = [r for r in f.center if not isinstance(r, Label)]
 
 
-def get_fuel_map_html_table(last_lap):
+def get_fuel_map_html_table(last_lap: Lap) -> str:
+    """
+    Returns a html table of relative fuel map.
+    :param last_lap:
+    :return: html table
+    """
+
     fuel_maps = gt7helper.get_fuel_on_consumption_by_relative_fuel_levels(last_lap)
     table = (
         "<table><tr>"
@@ -583,8 +712,28 @@ def add_starting_line_to_diagram(race_line: figure, last_lap: Lap):
     mytext.text = "===="
     race_line.center.append(mytext)
 
-def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap):
-    table = """<table>"""
+def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap) -> str:
+    """
+    Returns a html div with the speed peaks and valleys of the last lap and the reference lap
+    as a formatted html table
+    :param last_lap: Lap
+    :param reference_lap: Lap
+    :return: html table with peaks and valleys
+    """
+    table = """<table style='border-spacing: 10px; text-align:center'>"""
+
+    table += """<colgroup>
+    <col/>
+    <col style='border-left: 1px solid #cdd0d4;'/>
+    <col/>
+    <col/>
+    <col style="background-color: lightblue;"/>
+    <col/>
+    <col/>
+    <col/>
+    <col style="background-color: thistle;"/>
+    <col/>
+  </colgroup>"""
 
     ll_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(last_lap)
     rl_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(reference_lap)
@@ -594,14 +743,14 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap):
     table += '<tr>'
 
     table += '<th></th>'
-    table += '<th colspan="4">%s - %s</th>' % ("Last Lap", last_lap.title)
-    table += '<th colspan="4">%s - %s</th>' % ("Reference Lap", reference_lap.title)
+    table += '<th colspan="4">%s - %s</th>' % ("Last", last_lap.title)
+    table += '<th colspan="4">%s - %s</th>' % ("Ref.", reference_lap.title)
     table += '<th colspan="2">Diff</th>'
 
     table += '</tr>'
 
     table += """<tr>
-    <td>#</td><td></td><td>Pos.</td><td>Speed</td>
+    <td></td><td>#</td><td></td><td>Pos.</td><td>Speed</td>
     <td>#</td><td></td><td>Pos.</td><td>Speed</td>
     <td>Pos.</td><td>Speed</td>
     </tr>"""
@@ -618,30 +767,30 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap):
             diff_speed = ll_tuple_list[i][0] - rl_tuple_list[i][0]
 
             if diff_speed > 0:
-                diff_style = f"background-color: rgba(0, 0, 255, .3)" # Blue
+                diff_style = f"color: rgba(0, 0, 255, .3)" # Blue
             elif diff_speed >= -3:
-                diff_style = f"background-color: rgba(0, 255, 0, .3)" # Green
+                diff_style = f"color: rgba(0, 255, 0, .3)" # Green
             elif diff_speed >= -10:
-                diff_style = f"background-color: rgba(251, 192, 147, .3)" # Orange
+                diff_style = f"color: rgba(251, 192, 147, .3)" # Orange
             else:
-                diff_style = f"background-color: rgba(255, 0, 0, .3)" # Red
+                diff_style = f"color: rgba(255, 0, 0, .3)" # Red
 
         else:
-            diff_style = f"background-color: rgba(255, 0, 0, .3)" # Red
+            diff_style = f"text-color: rgba(255, 0, 0, .3)" # Red
 
         table += '<tr>'
-        table += f'<td style="background-opacity:0.5; {diff_style}">'
+        table += f'<td style="width:15px; text-opacity:0.5; {diff_style}">█</td>'
 
         if len(ll_tuple_list) > i:
             table += f"""<td>{i+1}</td>
-                <td>{"▴" if ll_tuple_list[i][2] == gt7helper.PEAK else "▾"}</td>
+                <td>{"S" if ll_tuple_list[i][2] == gt7helper.PEAK else "T"}</td>
                 <td>{ll_tuple_list[i][1]:d}</td>
                 <td>{ll_tuple_list[i][0]:.0f}</td>
             """
 
         if len(rl_tuple_list) > i:
             table += f"""<td>{i+1}</td>
-                <td>{"▴" if rl_tuple_list[i][2] == gt7helper.PEAK else "▾"}</td>
+                <td>{"S" if rl_tuple_list[i][2] == gt7helper.PEAK else "T"}</td>
                 <td>{rl_tuple_list[i][1]:d}</td>
                 <td>{rl_tuple_list[i][0]:.0f}</td>
             """
@@ -664,13 +813,9 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap):
 
 
 
-    # table += get_speed_peak_and_valley_diagram_row(best_lap_peak_speed_data_x, best_lap_peak_speed_data_y, table, best_lap_valley_speed_data_x,
-    #                                               best_lap_valley_speed_data_y)
     table += '</td>'
     table += '<td>'
 
-    # table += get_speed_peak_and_valley_diagram_row(reference_lap_peak_speed_data_x, reference_lap_peak_speed_data_y, table, reference_lap_valley_speed_data_x,
-    #                                                reference_lap_valley_speed_data_y)
     table += '</td>'
 
     table = table + """</table>"""

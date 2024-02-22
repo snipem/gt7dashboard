@@ -25,8 +25,8 @@ car_lists:
 	python3 helper/download_cars_csv.py
 
 serve:
-	GT7_PLAYSTATION_IP=ps5wifi bokeh serve .
+	bokeh serve .
 
 deploy:
 	git push
-	ssh ${MK_SERVER_USER}@${MK_SERVER_HOST} "cd work/gt7telemetry; git pull; cd ~/git/conf/docker; sudo -S CONTAINER_NAME=gt7telemetry make build"
+	ssh ${MK_SERVER_USER}@${MK_SERVER_HOST} "cd work/gt7dashboard && git pull && git switch '$(shell git rev-parse --abbrev-ref HEAD)' && cd ~/git/conf/docker && sudo -S CONTAINER_NAME=gt7dashboard make build"

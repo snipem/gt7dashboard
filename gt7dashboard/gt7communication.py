@@ -1,9 +1,11 @@
 import datetime
 import json
 import logging
+import math
 import socket
 import struct
 import time
+import copy
 import traceback
 from datetime import timedelta
 from threading import Thread
@@ -166,6 +168,9 @@ class GT7Communication(Thread):
         # True will always quit with the main process
         self.daemon = True
 
+        # Set lap callback function as none
+        self.lap_callback_function = None
+
         self.playstation_ip = playstation_ip
         self.send_port = 33739
         self.receive_port = 33740
@@ -189,6 +194,10 @@ class GT7Communication(Thread):
             try:
                 self._shall_restart = False
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+                if self.playstation_ip == "255.255.255.255":
+                    s.setsockopt (socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
                 s.bind(('0.0.0.0', self.receive_port))
                 self._send_hb(s)
                 s.settimeout(10)
@@ -239,10 +248,13 @@ class GT7Communication(Thread):
                         # Handler for package exceptions
                         self._send_hb(s)
                         package_nr = 0
+                        # Reset package id for new connections
+                        package_id = 0
 
             except Exception as e:
                 # Handler for general socket exceptions
-                logging.info("No connection to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
+                # TODO logging not working
+                print("Error while connecting to %s:%d: %s" % (self.playstation_ip, self.send_port, e))
                 s.close()
                 # Wait before reconnect
                 time.sleep(5)
@@ -315,7 +327,6 @@ class GT7Communication(Thread):
         self.current_lap.data_braking.append(data.brake)
         self.current_lap.data_throttle.append(data.throttle)
         self.current_lap.data_speed.append(data.car_speed)
-        self.current_lap.data_rpm.append(data.rpm)
 
         delta_divisor = data.car_speed
         if data.car_speed == 0:
@@ -331,11 +342,34 @@ class GT7Communication(Thread):
 
         self.current_lap.data_tires.append(delta_fl + delta_fr + delta_rl + delta_rr)
 
+        ## RPM and shifting
+
+        self.current_lap.data_rpm.append(data.rpm)
+        self.current_lap.data_gear.append(data.current_gear)
+
         ## Log Position
 
         self.current_lap.data_position_x.append(data.position_x)
         self.current_lap.data_position_y.append(data.position_y)
         self.current_lap.data_position_z.append(data.position_z)
+
+        ## Log Boost
+
+        self.current_lap.data_boost.append(data.boost)
+
+        ## Log Yaw Rate
+
+        # This is the interval to collection yaw rate
+        interval = 1 * 60 # 1 second has 60 fps and 60 data ticks
+        self.current_lap.data_rotation_yaw.append(data.rotation_yaw)
+
+        # Collect yaw rate, skip first interval with all zeroes
+        if len(self.current_lap.data_rotation_yaw) > interval:
+            yaw_rate_per_second = data.rotation_yaw - self.current_lap.data_rotation_yaw[-interval]
+        else:
+            yaw_rate_per_second = 0
+
+        self.current_lap.data_absolute_yaw_rate_per_second.append(abs(yaw_rate_per_second))
 
         # Adapted from https://www.gtplanet.net/forum/threads/gt7-is-compatible-with-motion-rig.410728/post-13810797
         self.current_lap.lap_live_time = (self.current_lap.lap_ticks * 1. / 60.) - (self.session.special_packet_time / 1000.)
@@ -365,20 +399,30 @@ class GT7Communication(Thread):
         self.current_lap.fuel_at_end = self.last_data.current_fuel
         self.current_lap.fuel_consumed = self.current_lap.fuel_at_start - self.current_lap.fuel_at_end
         self.current_lap.lap_finish_time = self.current_lap.lap_finish_time
+        self.current_lap.total_laps = self.last_data.total_laps
         self.current_lap.title = seconds_to_lap_time(self.current_lap.lap_finish_time / 1000)
         self.current_lap.car_id = self.last_data.car_id
         self.current_lap.number = self.last_data.current_lap - 1  # Is not counting the same way as the in-game timetable
+        # TODO Proper pythonic name
         self.current_lap.EstimatedTopSpeed = self.last_data.estimated_top_speed
+
+        self.current_lap.lap_end_timestamp = datetime.datetime.now()
 
         # Race is not in 0th lap, which is before starting the race.
         # We will only persist those laps that have crossed the starting line at least once
+        # And those laps which have data for speed logged. This will prevent empty laps.
         # TODO Correct this comment, this is about Laptime not lap numbers
-        if self.current_lap.lap_finish_time > 0:
+        if self.current_lap.lap_finish_time > 0 and len(self.current_lap.data_speed) > 0:
             self.laps.insert(0, self.current_lap)
+
+            # Make a copy of this lap and call the callback function if set
+            if self.lap_callback_function:
+                self.lap_callback_function(copy.deepcopy(self.current_lap))
 
         # Reset current lap with an empty one
         self.current_lap = Lap()
         self.current_lap.fuel_at_start = self.last_data.current_fuel
+
 
     def reset(self):
         """
@@ -388,6 +432,9 @@ class GT7Communication(Thread):
         self.session = Session()
         self.last_data = GTData(None)
         self.laps = []
+
+    def set_lap_callback(self, new_lap_callback):
+        self.lap_callback_function = new_lap_callback
 
 
 # data stream decoding

@@ -33,25 +33,31 @@ See the [Manual](#manual) for detailed instructions.
 
 ### Get Telemetry of a Demonstration lap or Replay
 
-Enable the "Always Record" checkbox to always record replays. Otherwise will only the laps you are actually driving are recorded.
+Enable the "Always Record" checkbox to always record replays. Otherwise, will only the laps you are actually driving are recorded.
 
 ## How to run
 
 You will have to have a running Python installation. Look [here](https://wiki.python.org/moin/BeginnersGuide/Download) for instructions.
 
-* If you are on Windows edit the file `run.bat` and replace `<...>` with your IP address. Run the file with a double click afterwards.
+* If you are on Windows 
+  * Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
 
-* If you are on MacOS edit the file `run.command` and replace `<...>` with your IP address. Run the file with a double click afterwards.
-
-* If you are on Linux edit the file `run.sh` and replace `<...>` with your IP address. Run the file with a double click afterwards.
+  * Run the file `run.bat` with a double click
+* If you are on MacOS run the file `run.command`
+* If you are on Linux run the file `run.sh`
 
 The commands `pip3` or `python3` may be different on your OS. Try `pip` or `python` instead.
 
 ## How to run for experienced users
 
 1. (Once) `pip3 install -r requirements.txt` to install Python dependencies
-2. (Optional) Download the list of car names with `python3 helper/download_cars_csv.py`. Without this file, car names will only show as `CAR-ID-123`.
+   1. On Windows: Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
+2. (Optional, Once) Download the list of car names with `python3 helper/download_cars_csv.py`. Without this file, car names will only show as `CAR-ID-123`.
 3. Running the Dashboard
+    - (Mac/Linux) `bokeh serve .` (when inside the  `gt7dashboard` folder)
+    - (Windows) `python -m bokeh serve .`  (when inside the `gt7dashboard` folder)
+4. (Optional) Running the Dashboard with a custom IP
    - (Mac/Linux) `GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS> bokeh serve .` (when inside the  `gt7dashboard` folder)
    - (Windows) `set GT7_PLAYSTATION_IP=<CONSOLE IP ADDRESS>` and `python -m bokeh serve .`  (when inside the `gt7dashboard` folder)
 
@@ -97,6 +103,13 @@ This is a sample `docker-compose` configuration:
             - GT7_PLAYSTATION_IP=<playstation ip>
             - TZ=Europe/Berlin
 ```
+
+Hint: You should set the `GT7_PLAYSTATION_IP` env var since Docker containers are not allowed to send UDP broadcasts by default. This is the default behaviour when no IP is set.
+
+## Lap Files
+
+If you want to edit your lap files, use a JSON editor. For example ` cat ... | jq -c '.[0:4]' > ...` will shorten the laps to the first 4 laps in the save file.
+
 ## Contributing
 
 Please add unit tests for all new features, calculations etc.
@@ -159,6 +172,12 @@ This map is helpful if you are using the index number of a graph to quickly dete
 
 See the tab 'Race Line' for a more detailed race line.
 
+#### Peaks and Valleys
+
+![screenshot_header](README.assets/screenshot_peaks_and_valleys.png)
+
+A list of speed peaks and valleys for the selected laps. We assume peaks are straights (s) and valleys are turns (T). Use this to compare the difference in speed between the last lap and the reference lap on given positions of the race track.
+
 #### Speed Deviation (Spd. Dev.)
 
 ![screenshot_header](README.assets/screenshot_speeddeviation.png)
@@ -184,6 +203,14 @@ If they had one graph it would be the deviation in the (best) laps of the same d
 
 This is the amount of throttle pressure from 0% to 100% of the laps selected.
 
+#### Yaw Rate / Second
+
+![screenshot_header](README.assets/screenshot_yaw.png)
+
+This is the yaw rate per second of your car. Use this to determine the Maximum Rotation Point (MRP). At this point you should normally accelerate.
+
+[Suellio Almeida](https://suellioalmeida.ca) introduced this concept to me. See [here](https://www.youtube.com/watch?v=B92vFKKjyB0) for more information.
+
 #### Braking
 
 ![screenshot_header](README.assets/screenshot_braking.png)
@@ -195,6 +222,24 @@ This is the amount of braking pressure from 0% to 100% of the laps selected.
 ![screenshot_header](README.assets/screenshot_coasting.png)
 
 This is the amount of coasting from 0% to 100% of the laps selected. Coasting is when neither throttle nor brake are engaged.
+
+#### Gear
+
+![screenshot_header](README.assets/screenshot_gear.png)
+
+This is the current gear of the laps selected.
+
+#### RPM
+
+![screenshot_header](README.assets/screenshot_rpm.png)
+
+This is the current RPM of the laps selected.
+
+#### Boost
+
+![screenshot_header](README.assets/screenshot_boost.png)
+
+This is the current Boost in x100 kPa of the laps selected.
 
 #### Tire Speed / Car Speed
 
@@ -238,5 +283,3 @@ Here is some useful information you may use for tuning. Such as Max Speed and mi
 This is a race line map with the last lap (blue) and the reference lap (magenta). This diagram does also feature spead peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
-
-

@@ -1,3 +1,4 @@
+from datetime import datetime
 from gt7dashboard import gt7helper
 
 
@@ -11,6 +12,9 @@ class Lap:
         self.lap_finish_time = 0
         # Live time during a live lap
         self.lap_live_time = 0
+        # Total number of laps
+        self.total_laps = 0
+        # Number of current lap
         self.number = 0
         # Aggregated number of instances where condition is true
         self.throttle_and_brake_ticks = 0
@@ -26,6 +30,7 @@ class Lap:
         self.data_speed = []
         self.data_time = []
         self.data_rpm = []
+        self.data_gear = []
         self.data_tires = []
         # Positions on x,y,z
         self.data_position_x = []
@@ -35,12 +40,20 @@ class Lap:
         self.fuel_at_start = 0
         self.fuel_at_end = -1
         self.fuel_consumed = -1
+        # Boost
+        self.data_boost = []
+        # Yaw Rate
+        self.data_rotation_yaw = []
+        self.data_absolute_yaw_rate_per_second = []
         # Car
         self.car_id = 0
 
         # Always record was set when recording the lap, likely a replay
         self.is_replay = False
         self.is_manual = False
+
+        self.lap_start_timestamp = datetime.now()
+        self.lap_end_timestamp = -1
 
     def __str__(self):
         return "\n %s, %2d, %1.f, %4d, %4d, %4d" % (
@@ -92,6 +105,10 @@ class Lap:
             "speed": self.data_speed,
             "time": self.data_time,
             "tires": self.data_tires,
+            "rpm": self.data_rpm,
+            "boost": self.data_boost,
+            "yaw_rate": self.data_absolute_yaw_rate_per_second,
+            "gear": self.data_gear,
             "ticks": list(range(len(self.data_speed))),
             "coast": self.data_coasting,
             "raceline_y": self.data_position_y,
