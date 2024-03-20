@@ -67,10 +67,14 @@ If you run into `TimeoutError`s make sure to check your firewall. You may have t
 
 ## Docker
 
-There is a `Dockerfile` available. Run it like this:
+There is a `Dockerfile` and [readily made images](https://github.com/snipem/gt7dashboard/pkgs/container/gt7dashboard) available. 
 
 ```bash
+# If building from the Dockerfile
 docker build -t gt7dashboard /home/user/work/gt7dashboard
+
+# If pulling from this repo
+docker pull ghcr.io/snipem/gt7dashboard:main
 
 docker run -d --restart unless-stopped \
   --name gt7dashboard \
