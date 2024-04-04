@@ -42,7 +42,7 @@ You will have to have a running Python installation. Look [here](https://wiki.py
 * If you are on Windows 
   * Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
 
-  * Run the file `run.bat` with a double click
+  * Run the file `run.ps1` with a double click
 * If you are on MacOS run the file `run.command`
 * If you are on Linux run the file `run.sh`
 
