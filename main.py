@@ -434,7 +434,8 @@ s_race_line = figure(
     match_aspect=True,
     width=race_line_width,
     height=race_line_width,
-    active_drag="box_zoom",
+    active_drag="auto",
+active_scroll="wheel_zoom",
     tooltips=race_line_tooltips,
 )
 

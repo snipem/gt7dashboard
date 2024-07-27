@@ -220,7 +220,8 @@ class RaceDiagram(object):
             width=width,
             height=250,
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_speed_variance = figure(
@@ -230,7 +231,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 4),
             tooltips=self.tooltips_speed_variance,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_time_diff = figure(
@@ -240,7 +242,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips_timedelta,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_throttle = figure(
@@ -249,7 +252,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
         self.f_braking = figure(
             x_range=self.f_speed.x_range,
@@ -257,7 +261,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_coasting = figure(
@@ -266,7 +271,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_tires = figure(
@@ -275,7 +281,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_rpm = figure(
@@ -284,7 +291,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_gear = figure(
@@ -293,7 +301,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_boost = figure(
@@ -302,7 +311,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_yaw_rate = figure(
@@ -311,7 +321,8 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
+            active_scroll="wheel_zoom",
         )
 
         self.f_speed.toolbar.autohide = True
