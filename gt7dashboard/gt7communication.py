@@ -44,6 +44,11 @@ class GTData:
 
         self.car_speed = 3.6 * struct.unpack('f', ddata[0x4C:0x4C + 4])[0]
 
+        self.tyre_slip_ratio_FL = 0
+        self.tyre_slip_ratio_FR = 0
+        self.tyre_slip_ratio_RL = 0
+        self.tyre_slip_ratio_RR = 0
+        
         if self.car_speed > 0:
             self.tyre_slip_ratio_FL = '{:6.2f}'.format(self.type_speed_FL / self.car_speed)
             self.tyre_slip_ratio_FR = '{:6.2f}'.format(self.type_speed_FR / self.car_speed)
@@ -179,6 +184,7 @@ class GT7Communication(Thread):
         self.current_lap = Lap()
         self.session = Session()
         self.laps = []
+        self.package_id = 0
         self.last_data = GTData(None)
 
         # This is used to record race data in any case. This will override the "in_race" flag.
@@ -201,49 +207,123 @@ class GT7Communication(Thread):
                 s.bind(('0.0.0.0', self.receive_port))
                 self._send_hb(s)
                 s.settimeout(10)
-                previous_lap = -1
                 package_id = 0
                 package_nr = 0
+                get_lap_time_from_telemery = False
                 while not self._shall_restart and self._shall_run:
                     try:
+                        # Receive data from the socket
                         data, address = s.recvfrom(4096)
+                        # Increment the package number
                         package_nr = package_nr + 1
+
+                        # Decrypt the received data using Salsa20
                         ddata = salsa20_dec(data)
+
+                        # Check if the decrypted data length is greater than 0 and if the package ID is greater than the current package ID
                         if len(ddata) > 0 and struct.unpack('i', ddata[0x70:0x70 + 4])[0] > package_id:
-
-                            self.last_data = GTData(ddata)
+                            # Update the last time data was received to the current time
                             self._last_time_data_received = time.time()
+                            new_data_tl = GTData(ddata)
+                            # print(new_data_tl.to_json())
 
-                            package_id = struct.unpack('i', ddata[0x70:0x70 + 4])[0]
+                            # Load old values
+                            try:
+                                self.last_data.package_id
+                            except Exception as e:
+                                self.last_data = new_data_tl
 
-                            bstlap = struct.unpack('i', ddata[0x78:0x78 + 4])[0]
-                            lstlap = struct.unpack('i', ddata[0x7C:0x7C + 4])[0]
-                            curlap = struct.unpack('h', ddata[0x74:0x74 + 2])[0]
+                            package_id = new_data_tl.package_id
 
-                            if curlap == 0:
+                            bstlap = new_data_tl.best_lap
+                            lstlap = new_data_tl.last_lap
+
+
+
+                            if new_data_tl.current_lap == 0:
                                 self.session.special_packet_time = 0
 
-                            if curlap > 0 and (self.last_data.in_race or self.always_record_data):
 
-                                if curlap != previous_lap:
-                                    # New lap
-                                    previous_lap = curlap
+                            # print("Current lap: %d, Total laps: %d, Final lap: %s, OLD_Final lap: %s" % (curlap, totallap, final_lap, old_final_lap))
+                            # 0/0 - 
+                            # 0/1 - Antes de começar
+                            # 1/0 - Menu
+                            # 1/1 - Correndo
 
+                            # Salvar
+                            # 1/1 - 0/1
+                            # 1/1 - 1/0
+
+                            # Não salvar
+                            # 1/0 - 0/1
+                            # 0/1 - 1/1
+
+    
+
+
+
+
+                            if new_data_tl.current_lap > 0 and (new_data_tl.in_race or self.always_record_data):
+
+                                if new_data_tl.current_lap > self.last_data.current_lap:
                                     self.session.special_packet_time += lstlap - self.current_lap.lap_ticks * 1000.0 / 60.0
                                     self.session.best_lap = bstlap
+                                    print(f"Current Lap: {new_data_tl.current_lap}, Total Laps: {new_data_tl.total_laps}, Old Final Lap: {self.last_data.current_lap}, Final Lap: {new_data_tl.current_lap}")
+                                    self.finish_lap(normal_race=True)
 
-                                    self.finish_lap()
 
                             else:
                                 curLapTime = 0
                                 # Reset lap
                                 self.current_lap = Lap()
 
-                            self._log_data(self.last_data)
+
+
+                            # corrida_nornal - nova volta - 1++/x
+
+
+                            # print(f"Current Lap: {curlap}, Total Laps: {totallap}, Old Final Lap: {old_final_lap}, Final Lap: {final_lap}, Previous Lap: {previous_lap}")
+
+                            # if (curlap != 0 or previous_lap != 0) and (self.last_data.in_race or self.always_record_data):
+                            #if self.last_data.in_race or self.always_record_data:
+                                
+                                # if curlap > 0:
+                                #     get_lap_time_from_telemery = True
+
+                            #     if (old_final_lap and not final_lap):
+
+                            #         if old_final_lap:
+                            #             get_lap_time_from_telemery = False
+                            #         else:
+                            #             get_lap_time_from_telemery = True
+
+                            #         print(str(curlap) + "->" +str(previous_lap))
+
+
+                            #         # New lap
+                            #         previous_lap = curlap
+
+                            #         if old_final_lap:
+                            #             previous_lap = -1
+
+                            #         self.session.special_packet_time += lstlap - self.current_lap.lap_ticks * 1000.0 / 60.0
+                            #         self.session.best_lap = bstlap
+
+
+                            #         self.finish_lap(get_lap_time_from_telemery)
+                            # else:
+                            #     curLapTime = 0
+                            #     # Reset lap
+                            #     self.current_lap = Lap()
+
+                            # Update the last received data with the new GTData
+                            self.last_data = new_data_tl
+                            self._log_data(new_data_tl)
 
                             if package_nr > 100:
                                 self._send_hb(s)
                                 package_nr = 0
+
                     except (OSError, TimeoutError) as e:
                         # Handler for package exceptions
                         self._send_hb(s)
@@ -279,6 +359,10 @@ class GT7Communication(Thread):
             if time.time() > timeout:
                 break
 
+    def get_last_data_once(self) -> GTData:
+        if self.last_data is not None:
+            return self.last_data
+
     def get_laps(self) -> List[Lap]:
         return self.laps
 
@@ -293,6 +377,7 @@ class GT7Communication(Thread):
     def _log_data(self, data):
 
         if not (data.in_race or self.always_record_data):
+            # print('Erro v1')
             return
 
         if data.is_paused:
@@ -378,19 +463,21 @@ class GT7Communication(Thread):
 
         self.current_lap.car_id = data.car_id
 
-    def finish_lap(self, manual=False):
+    def finish_lap(self, manual=False,normal_race=False):
         """
         Finishes a lap with info we only know after crossing the line after each lap
         """
 
-        if manual:
+        if manual or not normal_race:
             # Manual laps have no time assigned, so take current live time as lap finish time.
             # Finish time is tracked in seconds while live time is tracked in ms
             self.current_lap.lap_finish_time = self.current_lap.lap_live_time * 1000
-        else:
+
+        if normal_race:
             # Regular finished laps (crossing the finish line in races or time trials)
             # have their lap time stored in last_lap
             self.current_lap.lap_finish_time = self.last_data.last_lap
+
 
         # Track recording meta data
         self.current_lap.is_replay = self.always_record_data
@@ -398,7 +485,7 @@ class GT7Communication(Thread):
 
         self.current_lap.fuel_at_end = self.last_data.current_fuel
         self.current_lap.fuel_consumed = self.current_lap.fuel_at_start - self.current_lap.fuel_at_end
-        self.current_lap.lap_finish_time = self.current_lap.lap_finish_time
+        # self.current_lap.lap_finish_time = self.current_lap.lap_finish_time
         self.current_lap.total_laps = self.last_data.total_laps
         self.current_lap.title = seconds_to_lap_time(self.current_lap.lap_finish_time / 1000)
         self.current_lap.car_id = self.last_data.car_id
