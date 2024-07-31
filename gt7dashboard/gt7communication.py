@@ -250,7 +250,7 @@ class GT7Communication(Thread):
                             # 1/0 - Menu
                             # 1/1 - Correndo
 
-                            # Salvar
+                            # Salvar 
                             # 1/1 - 0/1
                             # 1/1 - 1/0
 
@@ -261,7 +261,7 @@ class GT7Communication(Thread):
                             was_last_lap = (self.last_data.current_lap == self.last_data.total_laps) and (self.last_data.current_lap != 0 or self.last_data.total_laps != 0)
                             is_last_lap = (new_data_tl.current_lap == new_data_tl.total_laps) and (new_data_tl.current_lap != 0 or new_data_tl.total_laps != 0)
     
-                            print("Last Lap: %d, Total Laps: %d, Final Lap: %s, OLD_Final lap: %s" % (self.last_data.current_lap, self.last_data.total_laps, was_last_lap, is_last_lap))
+                            # print("Last Lap: %d, Total Laps: %d, Final Lap: %s, OLD_Final lap: %s" % (self.last_data.current_lap, self.last_data.total_laps, was_last_lap, is_last_lap))
                             if was_last_lap and not is_last_lap:
                                 print("Finish Lap")
                                 self.finish_lap(normal_race=False)
