@@ -27,13 +27,14 @@ from gt7dashboard.gt7diagrams import get_speed_peak_and_valley_diagram
 
 from gt7dashboard.gt7help import get_help_div
 from gt7dashboard.gt7helper import (
+    equalizer_lap,
     load_laps_from_pickle,
     save_laps_to_pickle,
     list_lap_files_from_path,
     calculate_time_diff_by_distance, save_laps_to_json, load_laps_from_json,
 )
 from gt7dashboard.gt7lap import Lap
-from helper.divide_laps_logic import equalizer_lap
+
 
 # set logging level to debug
 logger = logging.getLogger('main.py')

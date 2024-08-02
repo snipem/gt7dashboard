@@ -14,9 +14,9 @@ from typing import List
 from salsa20 import Salsa20_xor
 
 from gt7dashboard.gt7data import GTData
-from gt7dashboard.gt7helper import seconds_to_lap_time
+from gt7dashboard.gt7helper import divide_laps, seconds_to_lap_time, should_save_lap
 from gt7dashboard.gt7lap import Lap
-from helper.divide_laps_logic import divide_laps, equalizer_lap, should_save_lap
+
 
 
 class Session():
