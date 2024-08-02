@@ -33,6 +33,7 @@ from gt7dashboard.gt7helper import (
     calculate_time_diff_by_distance, save_laps_to_json, load_laps_from_json,
 )
 from gt7dashboard.gt7lap import Lap
+from helper.divide_laps_logic import equalizer_lap
 
 # set logging level to debug
 logger = logging.getLogger('main.py')
@@ -147,10 +148,13 @@ def update_lap_change():
         last_lap = laps[0]  # Get the most recent lap
 
         if len(laps) > 1:
+
             # Get the reference lap using a helper function
             reference_lap = gt7helper.get_last_reference_median_lap(
                 laps, reference_lap_selected=g_reference_lap_selected
             )[1]
+
+            last_lap = equalizer_lap(reference_lap, last_lap)
 
             # Update the speed peak and valley diagram with the last lap and reference lap
             div_speed_peak_valley_diagram.text = get_speed_peak_and_valley_diagram(last_lap, reference_lap)
@@ -220,13 +224,15 @@ def update_speed_velocity_graph(laps: List[Lap]):
     # Update breakpoints
     # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
     brake_points_enabled = os.environ.get("GT7_ADD_BRAKEPOINTS") == "true"
+    brake_points_enabled = True
+    try:
+        if brake_points_enabled and len(last_lap.data_braking) > 0:
+            update_break_points(last_lap, s_race_line, "blue")
 
-    if brake_points_enabled and len(last_lap.data_braking) > 0:
-        update_break_points(last_lap, s_race_line, "blue")
-
-    if brake_points_enabled and len(reference_lap.data_braking) > 0:
-        update_break_points(reference_lap, s_race_line, "magenta")
-
+        if brake_points_enabled and len(reference_lap.data_braking) > 0:
+            update_break_points(reference_lap, s_race_line, "magenta")
+    except Exception as e:
+        logger.error(f"Error adding brake points: {e}")
 
 def update_break_points(lap: Lap, race_line: figure, color: str):
     brake_points_x, brake_points_y = gt7helper.get_brake_points(lap)
@@ -435,7 +441,7 @@ s_race_line = figure(
     width=race_line_width,
     height=race_line_width,
     active_drag="auto",
-active_scroll="wheel_zoom",
+    active_scroll="wheel_zoom",
     tooltips=race_line_tooltips,
 )
 
@@ -516,9 +522,6 @@ l1 = layout(
         [get_help_div(gt7help.TIME_TABLE), race_time_table.t_lap_times, get_help_div(gt7help.FUEL_MAP), div_fuel_map, get_help_div(gt7help.TUNING_INFO), div_tuning_info],
     ]
 )
-
-
-
 
 l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=1)
 
@@ -625,7 +628,7 @@ def update_telemetry_table():
         # ("Tyre Diameter RR", telemetry.tyre_diameter_RR),
     ]
     
-    source.data = data_dict = {
+    source.data = {
     "metric": [item[0] for item in new_data_table],
     "values": [item[1] for item in new_data_table]
 }
@@ -650,7 +653,7 @@ curdoc().title = "GT7 Dashboard"
 curdoc().add_periodic_callback(update_lap_change, 1000)
 curdoc().add_periodic_callback(update_fuel_map, 5000)
 
-curdoc().add_periodic_callback(update_telemetry_table, 1000)
+curdoc().add_periodic_callback(update_telemetry_table, 200)
 
 # def update_packate_id():
 #     print(app.gt7comm.get_package_id())
