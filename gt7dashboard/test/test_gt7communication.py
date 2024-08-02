@@ -21,8 +21,8 @@ def is_host_up(ip: str) -> bool:
         return False
 
 
-# @unittest.skipIf(not is_host_up(PLAYSTATION_IP),
-#                  "Playstation host is not up on %s" % (PLAYSTATION_IP))
+@unittest.skipIf(not is_host_up(PLAYSTATION_IP),
+                 "Playstation host is not up on %s" % (PLAYSTATION_IP))
 class GT7CommunicationTest(unittest.TestCase):
     @classmethod
     def setUpClass(self) -> None:
