@@ -11,7 +11,7 @@ from datetime import timedelta
 from threading import Thread
 from typing import List
 
-from salsa20 import Salsa20_xor
+from Crypto.Cipher import Salsa20
 
 from gt7dashboard.gt7helper import seconds_to_lap_time
 from gt7dashboard.gt7lap import Lap
@@ -448,7 +448,8 @@ def salsa20_dec(dat):
     iv = bytearray()
     iv.extend(iv2.to_bytes(4, 'little'))
     iv.extend(iv1.to_bytes(4, 'little'))
-    ddata = Salsa20_xor(dat, bytes(iv), key[0:32])
+    cipher = Salsa20.new(key[0:32], bytes(iv))
+    ddata = cipher.decrypt(dat)
     magic = int.from_bytes(ddata[0:4], byteorder='little')
     if magic != 0x47375330:
         return bytearray(b'')
