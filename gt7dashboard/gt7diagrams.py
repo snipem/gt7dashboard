@@ -126,7 +126,7 @@ class RaceTimeTable(object):
             TableColumn(field="info", title="Info"),
             TableColumn(field="fuelconsumed", title="Fuel Cons."),
             TableColumn(field="fullthrottle", title="Full Throt."),
-            TableColumn(field="fullbreak", title="Full Break"),
+            TableColumn(field="fullbreak", title="Full Brake"),
             TableColumn(field="nothrottle", title="Coast"),
             TableColumn(field="tyrespinning", title="Tire Spin"),
             TableColumn(field="car_name", title="Car"),
