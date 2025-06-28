@@ -2,6 +2,7 @@ import copy
 import itertools
 import logging
 import os
+from random import randint
 import time
 from typing import List
 
@@ -26,12 +27,14 @@ from gt7dashboard.gt7diagrams import get_speed_peak_and_valley_diagram
 
 from gt7dashboard.gt7help import get_help_div
 from gt7dashboard.gt7helper import (
+    equalizer_lap,
     load_laps_from_pickle,
     save_laps_to_pickle,
     list_lap_files_from_path,
     calculate_time_diff_by_distance, save_laps_to_json, load_laps_from_json,
 )
 from gt7dashboard.gt7lap import Lap
+
 
 # set logging level to debug
 logger = logging.getLogger('main.py')
@@ -110,7 +113,7 @@ def update_header_line(div: Div, last_lap: Lap, reference_lap: Lap):
 def update_lap_change():
     """
     Is called whenever a lap changes.
-    It detects if the telemetry date retrieved is the same as the data displayed.
+    It detects if the telemetry data retrieved is the same as the data displayed.
     If true, it updates all the visual elements.
     """
     global g_laps_stored
@@ -119,61 +122,75 @@ def update_lap_change():
     global g_telemetry_update_needed
     global g_reference_lap_selected
 
-    update_start_time = time.time()
+    update_start_time = time.time()  # Record the start time of the update process
 
-    laps = app.gt7comm.get_laps()
-
+    laps = app.gt7comm.get_laps()  # Retrieve the latest laps from the telemetry
+    
+    # logger.debug(laps)
+    # Check if the session has changed and update tuning info if needed
     if app.gt7comm.session != g_session_stored:
         update_tuning_info()
         g_session_stored = copy.copy(app.gt7comm.session)
 
+    # Check if the connection status has changed and update connection info if needed
     if app.gt7comm.is_connected() != g_connection_status_stored:
         update_connection_info()
         g_connection_status_stored = copy.copy(app.gt7comm.is_connected())
 
-    # This saves on cpu time, 99.9% of the time this is true
+    # Save on CPU time, as 99.9% of the time the laps are the same and no update is needed
     if laps == g_laps_stored and not g_telemetry_update_needed:
         return
 
     logger.debug("Rerendering laps")
 
-    reference_lap = Lap()
+    reference_lap = Lap()  # Initialize a reference lap object
 
     if len(laps) > 0:
-
-        last_lap = laps[0]
+        last_lap = laps[0]  # Get the most recent lap
 
         if len(laps) > 1:
+
+            # Get the reference lap using a helper function
             reference_lap = gt7helper.get_last_reference_median_lap(
                 laps, reference_lap_selected=g_reference_lap_selected
             )[1]
 
+            last_lap = equalizer_lap(reference_lap, last_lap)
+
+            # Update the speed peak and valley diagram with the last lap and reference lap
             div_speed_peak_valley_diagram.text = get_speed_peak_and_valley_diagram(last_lap, reference_lap)
 
+        # Update the header line with the last lap and reference lap
         update_header_line(div_header_line, last_lap, reference_lap)
 
     logger.debug("Updating of %d laps" % len(laps))
 
+    # Update the time table and log the time taken
     start_time = time.time()
     update_time_table(laps)
     logger.debug("Updating time table took %dms" % ((time.time() - start_time) * 1000))
 
+    # Update the reference lap select and log the time taken
     start_time = time.time()
     update_reference_lap_select(laps)
     logger.debug("Updating reference lap select took %dms" % ((time.time() - start_time) * 1000))
 
+    # Update the speed velocity graph and log the time taken
     start_time = time.time()
     update_speed_velocity_graph(laps)
     logger.debug("Updating speed velocity graph took %dms" % ((time.time() - start_time) * 1000))
 
+    # Update the race lines and log the time taken
     start_time = time.time()
     update_race_lines(laps, reference_lap)
     logger.debug("Updating race lines took %dms" % ((time.time() - start_time) * 1000))
 
+    # Log the total time taken for the entire update process
     logger.debug("End of updating laps, whole Update took %dms" % ((time.time() - update_start_time) * 1000))
 
-    g_laps_stored = laps.copy()
-    g_telemetry_update_needed = False
+    g_laps_stored = laps.copy()  # Store the latest laps
+    g_telemetry_update_needed = False  # Reset the telemetry update flag
+
 
 
 def update_speed_velocity_graph(laps: List[Lap]):
@@ -208,13 +225,15 @@ def update_speed_velocity_graph(laps: List[Lap]):
     # Update breakpoints
     # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
     brake_points_enabled = os.environ.get("GT7_ADD_BRAKEPOINTS") == "true"
+    brake_points_enabled = True
+    try:
+        if brake_points_enabled and len(last_lap.data_braking) > 0:
+            update_break_points(last_lap, s_race_line, "blue")
 
-    if brake_points_enabled and len(last_lap.data_braking) > 0:
-        update_break_points(last_lap, s_race_line, "blue")
-
-    if brake_points_enabled and len(reference_lap.data_braking) > 0:
-        update_break_points(reference_lap, s_race_line, "magenta")
-
+        if brake_points_enabled and len(reference_lap.data_braking) > 0:
+            update_break_points(reference_lap, s_race_line, "magenta")
+    except Exception as e:
+        logger.error(f"Error adding brake points: {e}")
 
 def update_break_points(lap: Lap, race_line: figure, color: str):
     brake_points_x, brake_points_y = gt7helper.get_brake_points(lap)
@@ -328,29 +347,36 @@ app = bokeh.application.Application
 
 # Share the gt7comm connection between sessions by storing them as an application attribute
 if not hasattr(app, "gt7comm"):
+    # Retrieve the PlayStation IP address and the path to load laps from environment variables
     playstation_ip = os.environ.get("GT7_PLAYSTATION_IP")
     load_laps_path = os.environ.get("GT7_LOAD_LAPS_PATH")
 
+    # If no IP address is set in the environment variable, use the broadcast address
     if not playstation_ip:
         playstation_ip = "255.255.255.255"
         logger.info(f"No IP set in env var GT7_PLAYSTATION_IP using broadcast at {playstation_ip}")
 
+    # Initialize the GT7Communication object with the PlayStation IP address
     app.gt7comm = gt7communication.GT7Communication(playstation_ip)
 
+    # Load laps from a pickle file if the path is set
     if load_laps_path:
         app.gt7comm.load_laps(
             load_laps_from_pickle(load_laps_path), replace_other_laps=True
         )
 
+    # Start the GT7 communication thread
     app.gt7comm.start()
 else:
-    # Reuse existing thread
+    # Reuse the existing GT7 communication thread
     if not app.gt7comm.is_connected():
         logger.info("Restarting gt7communcation because of no connection")
+        # Restart the GT7 communication thread if there is no connection
         app.gt7comm.restart()
     else:
-        # Existing thread has connection, proceed
+        # If the existing thread has a connection, proceed without any action
         pass
+
 
 
 # def init_lap_times_source():
@@ -415,7 +441,8 @@ s_race_line = figure(
     match_aspect=True,
     width=race_line_width,
     height=race_line_width,
-    active_drag="box_zoom",
+    active_drag="auto",
+    active_scroll="wheel_zoom",
     tooltips=race_line_tooltips,
 )
 
@@ -497,9 +524,6 @@ l1 = layout(
     ]
 )
 
-
-
-
 l2, race_lines, race_lines_data = get_race_lines_layout(number_of_race_lines=1)
 
 l3 = layout(
@@ -510,11 +534,118 @@ l3 = layout(
     sizing_mode="stretch_width",
 )
 
+data_dict = {
+    "metric": [],
+    "values": []
+}
+
+source = ColumnDataSource(data=data_dict)
+
+
+columns = [
+    TableColumn(field="metric", title="Metric"),
+    TableColumn(field="values", title="Value")
+]
+
+data_table = DataTable(source=source, columns=columns, width=400, height=3000)
+
+def update_telemetry_table():
+    current_data = app.gt7comm.get_last_data_once()
+    
+    if current_data is None:
+        return
+
+    telemetry = current_data
+    
+    new_data_table = [
+        ("Package ID", telemetry.package_id),
+        ("Best Lap", telemetry.best_lap),
+        ("Last Lap", telemetry.last_lap),
+        ("Laps", f"{telemetry.current_lap}/{telemetry.total_laps}"),
+        ("Current Gear", telemetry.current_gear),
+        ("Suggested Gear", telemetry.suggested_gear),
+        ("Fuel Capacity", telemetry.fuel_capacity),
+        ("Current Fuel", telemetry.current_fuel),
+        ("Boost", telemetry.boost),
+        ("Type Speed FL", telemetry.type_speed_FL),
+        ("Type Speed FR", telemetry.type_speed_FR),
+        ("Type Speed RL", telemetry.type_speed_RL),
+        ("Tyre Speed RR", telemetry.tyre_speed_RR),
+        ("Car Speed", telemetry.car_speed),
+        ("Tyre Slip Ratio FL", telemetry.tyre_slip_ratio_FL),
+        ("Tyre Slip Ratio FR", telemetry.tyre_slip_ratio_FR),
+        ("Tyre Slip Ratio RL", telemetry.tyre_slip_ratio_RL),
+        ("Tyre Slip Ratio RR", telemetry.tyre_slip_ratio_RR),
+        ("Current Position", telemetry.current_position),
+        ("Total Positions", telemetry.total_positions),
+        ("Is Paused", telemetry.is_paused),
+        ("In Race", telemetry.in_race),
+        ("Car ID", telemetry.car_id),
+        ("Throttle", telemetry.throttle),
+        ("RPM", telemetry.rpm),
+        ("RPM Rev Warning", telemetry.rpm_rev_warning),
+        ("Brake", telemetry.brake),
+        ("RPM Rev Limiter", telemetry.rpm_rev_limiter),
+        ("Estimated Top Speed", telemetry.estimated_top_speed),
+        ("Clutch", telemetry.clutch),
+        ("Clutch Engaged", telemetry.clutch_engaged),
+        ("RPM After Clutch", telemetry.rpm_after_clutch),
+        ("Ride Height", telemetry.ride_height),
+        ("Tyre Temp FL", telemetry.tyre_temp_FL),
+        ("Tyre Temp FR", telemetry.tyre_temp_FR),
+        ("Suspension FL", telemetry.suspension_fl),
+        ("Suspension FR", telemetry.suspension_fr),
+        ("Tyre Temp RL", telemetry.tyre_temp_rl),
+        ("Tyre Temp RR", telemetry.tyre_temp_rr),
+        ("Suspension RL", telemetry.suspension_rl),
+        ("Suspension RR", telemetry.suspension_rr),
+        ("Position X", telemetry.position_x),
+        ("Position Y", telemetry.position_y),
+        ("Position Z", telemetry.position_z),
+        ("Velocity X", telemetry.velocity_x),
+        ("Velocity Y", telemetry.velocity_y),
+        ("Velocity Z", telemetry.velocity_z),
+        ("Rotation Pitch", telemetry.rotation_pitch),
+        ("Rotation Yaw", telemetry.rotation_yaw),
+        ("Rotation Roll", telemetry.rotation_roll),
+        ("Angular Velocity X", telemetry.angular_velocity_x),
+        ("Angular Velocity Y", telemetry.angular_velocity_y),
+        ("Angular Velocity Z", telemetry.angular_velocity_z),
+        ("Oil Temp", telemetry.oil_temp),
+        ("Water Temp", telemetry.water_temp),
+        ("Oil Pressure", telemetry.oil_pressure),
+        # ("Time on Track", telemetry.time_on_track),
+        # ("Gear 1", telemetry.gear_1),
+        # ("Gear 2", telemetry.gear_2),
+        # ("Gear 3", telemetry.gear_3),
+        # ("Gear 4", telemetry.gear_4),
+        # ("Gear 5", telemetry.gear_5),
+        # ("Gear 6", telemetry.gear_6),
+        # ("Gear 7", telemetry.gear_7),
+        # ("Gear 8", telemetry.gear_8),
+        # ("Tyre Diameter FL", telemetry.tyre_diameter_FL),
+        # ("Tyre Diameter FR", telemetry.tyre_diameter_FR),
+        # ("Tyre Diameter RL", telemetry.tyre_diameter_RL),
+        # ("Tyre Diameter RR", telemetry.tyre_diameter_RR),
+    ]
+    
+    source.data = {
+    "metric": [item[0] for item in new_data_table],
+    "values": [item[1] for item in new_data_table]
+}
+
+
+# Create a layout
+l4 = layout([
+    [data_table]
+])
+
 #  Setup the tabs
 tab1 = TabPanel(child=l1, title="Get Faster")
 tab2 = TabPanel(child=l2, title="Race Lines")
 tab3 = TabPanel(child=l3, title="Race")
-tabs = Tabs(tabs=[tab1, tab2, tab3])
+tab4 = TabPanel(child=l4, title="Dashboard")
+tabs = Tabs(tabs=[tab1, tab2, tab3, tab4])
 
 curdoc().add_root(tabs)
 curdoc().title = "GT7 Dashboard"
@@ -522,3 +653,12 @@ curdoc().title = "GT7 Dashboard"
 # This will only trigger once per lap, but we check every second if anything happened
 curdoc().add_periodic_callback(update_lap_change, 1000)
 curdoc().add_periodic_callback(update_fuel_map, 5000)
+
+curdoc().add_periodic_callback(update_telemetry_table, 200)
+
+# def update_packate_id():
+#     print(app.gt7comm.get_package_id())
+
+# curdoc().add_periodic_callback(update_packate_id, 500)
+
+# curdoc().add_periodic_callback

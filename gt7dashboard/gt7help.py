@@ -74,5 +74,5 @@ def get_help_div(help_text_resource):
 
 def get_help_text_resource(help_text_resource):
     return f"""
-    <div title="{help_text_resource}">?⃝</div>
+    <div title="{help_text_resource}">?</div>
     """
