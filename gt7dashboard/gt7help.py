@@ -49,7 +49,7 @@ TIME_TABLE = """A table with logged information of the session. # is the number 
 Fuel Consumed is the amount of fuel consumed in the lap.
 
 What follows know are simple metrics for the characteristics of the lap. This is counted as ticks, which means instances when the game reported a state. For example Full Throttle = 500 means that you were on full throttle during 500 instances when the game sent its telemetry.
-The same goes for Full Break, Coast and Tire Spin. Use this to easily compare your laps.
+The same goes for Full Brake, Coast and Tire Spin. Use this to easily compare your laps.
 
 You can click on one of these laps to add them to the diagrams above. These laps will be deleted if you reset the view or reload the page.
 
