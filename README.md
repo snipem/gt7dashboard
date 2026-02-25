@@ -35,6 +35,21 @@ See the [Manual](#manual) for detailed instructions.
 
 Enable the "Always Record" checkbox to always record replays. Otherwise, will only the laps you are actually driving are recorded.
 
+## Easy Installation (Windows)
+
+No Python required. Download the latest pre-built Windows package from the
+[Releases](https://github.com/snipem/gt7dashboard/releases) page:
+
+1. Download `gt7dashboard-windows.zip` from the latest release.
+2. Extract the zip to any folder.
+3. Double-click **`gt7dashboard.exe`**.
+4. A dialog will appear asking for your PlayStation IP address.
+   - Find it on your PS5 at **Settings → Network → View Connection Status**.
+   - Leave the field empty to use automatic broadcast discovery.
+5. The dashboard opens in your default browser automatically.
+
+> **Tip:** Your saved lap files are stored in the `data` folder next to `gt7dashboard.exe`.
+
 ## How to run
 
 You will have to have a running Python installation. Look [here](https://wiki.python.org/moin/BeginnersGuide/Download) for instructions.

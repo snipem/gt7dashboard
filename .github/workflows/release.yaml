@@ -1,0 +1,42 @@
+name: Build and Release Windows Executable
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Download car name database
+        run: python helper/download_cars_csv.py
+
+      - name: Build Windows executable
+        run: pyinstaller gt7dashboard.spec
+
+      - name: Create zip archive
+        run: Compress-Archive -Path dist\gt7dashboard\* -DestinationPath gt7dashboard-windows.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: gt7dashboard-windows.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
