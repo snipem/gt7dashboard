@@ -2,7 +2,7 @@ from typing import List
 
 import bokeh
 from bokeh.layouts import layout
-from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable, Range1d
+from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable, Range1d, WheelZoomTool, PanTool
 from bokeh.plotting import figure
 
 from gt7dashboard import gt7helper
@@ -39,6 +39,7 @@ def get_throttle_braking_race_line_diagram():
             data={"raceline_z_throttle": [], "raceline_x_throttle": []}
         ),
     )
+
     breaking_line = s_race_line.line(
         x="raceline_x_braking",
         y="raceline_z_braking",
@@ -185,6 +186,8 @@ class RaceDiagram(object):
         # This is the number of default laps,
         # last lap, best lap and median lap
         self.number_of_default_laps = 3
+        self.wheel_zoom_x = WheelZoomTool(dimensions='width')
+        self.x_pan = PanTool(dimensions='width')
 
 
         tooltips = [
@@ -220,8 +223,11 @@ class RaceDiagram(object):
             width=width,
             height=250,
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto"
         )
+        self.f_speed.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_speed.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_speed.toolbar.active_drag = self.x_pan
 
         self.f_speed_variance = figure(
             y_axis_label="Spd.Dev.",
@@ -230,8 +236,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 4),
             tooltips=self.tooltips_speed_variance,
-            active_drag="box_zoom",
+            active_drag="auto",
         )
+        self.f_speed_variance.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_speed_variance.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_speed_variance.toolbar.active_drag = self.x_pan
 
         self.f_time_diff = figure(
             title="Time Diff - Last, Reference",
@@ -240,8 +249,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips_timedelta,
-            active_drag="box_zoom",
+            active_drag="auto"
         )
+        self.f_time_diff.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_time_diff.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_time_diff.toolbar.active_drag = self.x_pan
 
         self.f_throttle = figure(
             x_range=self.f_speed.x_range,
@@ -249,16 +261,23 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto"
         )
+        self.f_throttle.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_throttle.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_throttle.toolbar.active_drag = self.x_pan
+
         self.f_braking = figure(
             x_range=self.f_speed.x_range,
             y_axis_label="Braking",
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto"
         )
+        self.f_braking.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_braking.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_braking.toolbar.active_drag = self.x_pan
 
         self.f_coasting = figure(
             x_range=self.f_speed.x_range,
@@ -266,8 +285,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
         )
+        self.f_coasting.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_coasting.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_coasting.toolbar.active_drag = self.x_pan
 
         self.f_tires = figure(
             x_range=self.f_speed.x_range,
@@ -275,8 +297,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
         )
+        self.f_tires.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_tires.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_tires.toolbar.active_drag = self.x_pan
 
         self.f_rpm = figure(
             x_range=self.f_speed.x_range,
@@ -284,8 +309,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
         )
+        self.f_rpm.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_rpm.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_rpm.toolbar.active_drag = self.x_pan
 
         self.f_gear = figure(
             x_range=self.f_speed.x_range,
@@ -293,8 +321,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
         )
+        self.f_gear.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_gear.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_gear.toolbar.active_drag = self.x_pan
 
         self.f_boost = figure(
             x_range=self.f_speed.x_range,
@@ -302,8 +333,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
         )
+        self.f_boost.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_boost.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_boost.toolbar.active_drag = self.x_pan
 
         self.f_yaw_rate = figure(
             x_range=self.f_speed.x_range,
@@ -311,8 +345,11 @@ class RaceDiagram(object):
             width=width,
             height=int(self.f_speed.height / 2),
             tooltips=tooltips,
-            active_drag="box_zoom",
+            active_drag="auto",
         )
+        self.f_yaw_rate.add_tools(self.wheel_zoom_x,self.x_pan)
+        self.f_yaw_rate.toolbar.active_scroll = self.wheel_zoom_x
+        self.f_yaw_rate.toolbar.active_drag = self.x_pan
 
         self.f_speed.toolbar.autohide = True
 

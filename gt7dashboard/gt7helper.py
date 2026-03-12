@@ -16,6 +16,7 @@ from pandas import DataFrame
 from scipy.signal import find_peaks
 from tabulate import tabulate
 
+from gt7dashboard.gt7data import GTData
 from gt7dashboard.gt7lap import Lap
 from gt7dashboard import gt7helper
 
@@ -766,3 +767,81 @@ def calculate_laps_left_on_fuel(current_lap, last_lap) -> float:
     laps_left: float
     fuel_consumed_last_lap = last_lap.fuel_at_start - last_lap.fuel_at_end
     laps_left = current_lap.fuel - (last_lap.laps_to_go * fuel_consumed_last_lap)
+
+
+
+def divide_laps(old_data: GTData, new_data: GTData):
+    if old_data.current_lap != new_data.current_lap or old_data.total_laps != new_data.total_laps:
+        print(f"new lap = {old_data.current_lap}/{old_data.total_laps} -> {new_data.current_lap}/{new_data.total_laps}")
+        return True
+    
+    if old_data.total_laps == new_data.total_laps and old_data.current_lap == new_data.current_lap:
+        return False
+    
+def should_save_lap(old_data: GTData, new_data: GTData, lap : Lap  ):
+
+    if old_data.current_lap <= 0 :
+        print(f"Lap not saved because old_data.current_lap = {old_data.current_lap}")
+        return False
+    
+    if old_data.in_race != 1 and not lap.is_replay:
+        print(f"Lap not saved because old_data.in_race = {old_data.in_race} or lap.is_replay = {lap.is_replay}")
+        return False
+
+    if lap.lap_live_time < 5:
+        print(f"Lap not saved because lap.lap_live_time = {lap.lap_live_time}")
+        return False
+    
+    if len(lap.data_speed) <= 0:
+        print(f"Lap not saved because len(lap.data_speed) = {len(lap.data_speed)}")
+        return False
+
+    print(f"Lap saved")
+    return True
+
+def equalizer_lap(reference_lap: Lap, current_lap:Lap):
+    when_to_cut = 0
+    start_position = {
+        "x": round(reference_lap.data_position_x[0],3),
+        "y": round(reference_lap.data_position_y[0],3),
+        "z": round(reference_lap.data_position_z[0],3)
+    }
+    print(f"Start position: {start_position}")
+    print(f"Reference data size: {len(reference_lap.data_position_x)} lap_ticks: {reference_lap.lap_ticks} is_replay: {reference_lap.is_replay}")
+    print(f"Current data size: {len(current_lap.data_position_x)} lap_ticks: {current_lap.lap_ticks} is_replay: {current_lap.is_replay}")
+
+    # check what lap is shorter
+    range_lap = min(len(reference_lap.data_position_x), len(current_lap.data_position_x))
+
+    for i in range(range_lap):
+
+        if round(current_lap.data_position_x[i],3) == start_position["x"]:
+            when_to_cut = i
+            print(f"Equalizing position x from tick {i} to {current_lap.lap_ticks}")
+        if round(current_lap.data_position_y[i],3) == start_position["y"]:
+            when_to_cut = i
+            print(f"Equalizing position y from tick {i} to {current_lap.lap_ticks}")
+        if round(current_lap.data_position_z[i],3) == start_position["z"]: 
+            when_to_cut = i
+            print(f"Equalizing position z from tick {i} to {current_lap.lap_ticks}")
+
+    print(f"Cutting lap at tick {when_to_cut}")
+
+    current_lap.data_position_x = current_lap.data_position_x[when_to_cut:]
+    current_lap.data_position_y = current_lap.data_position_y[when_to_cut:]
+    current_lap.data_position_z = current_lap.data_position_z[when_to_cut:]
+
+    current_lap.data_throttle = current_lap.data_throttle[when_to_cut:]
+    current_lap.data_braking = current_lap.data_braking[when_to_cut:]
+    current_lap.data_coasting = current_lap.data_coasting[when_to_cut:]
+    current_lap.data_speed = current_lap.data_speed[when_to_cut:]
+    current_lap.data_time = current_lap.data_time[when_to_cut:]
+    current_lap.data_rpm = current_lap.data_rpm[when_to_cut:]
+    current_lap.data_gear = current_lap.data_gear[when_to_cut:]
+    current_lap.data_tires = current_lap.data_tires[when_to_cut:]
+
+    current_lap.data_boost = current_lap.data_boost[when_to_cut:] 
+    current_lap.data_rotation_yaw = current_lap.data_rotation_yaw[when_to_cut:]
+    current_lap.data_absolute_yaw_rate_per_second = current_lap.data_absolute_yaw_rate_per_second[when_to_cut:]
+
+    return current_lap

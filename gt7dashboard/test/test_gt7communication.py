@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 import unittest
@@ -5,12 +6,13 @@ import unittest
 from gt7dashboard import gt7communication
 from gt7dashboard.gt7lap import Lap
 
-PLAYSTATION_IP = "ps5wifi"
+PLAYSTATION_IP = "192.168.15.96"
 
 
 # check if host is up
 def is_host_up(ip: str) -> bool:
     response = os.system("ping -c 1 " + PLAYSTATION_IP)
+    logging.debug("Response: %s" % response)
 
     #and then check the response...
     if response == 0:
@@ -30,8 +32,11 @@ class GT7CommunicationTest(unittest.TestCase):
         self.gt7comm.start()
         # Sleep until connection is setup
         # TODO Add timeout
+        logging.debug("Waiting for connection")
+        
         while not self.gt7comm.is_connected():
             time.sleep(0.1)
+        logging.debug("Is connected: %s" % self.gt7comm.is_connected())
 
     @classmethod
     def tearDownClass(self) -> None:
