@@ -620,6 +620,24 @@ def bokeh_tuple_for_list_of_laps(laps: List[Lap]):
     return tuples
 
 
+def reference_lap_after_dropdown_change(current_lap, laps: List[Lap], value, programmatic: bool):
+    """Resolve a reference-lap dropdown change.
+
+    ``"-1"`` means no lap is selected. A programmatic change keeps
+    ``current_lap`` so resetting the dropdown cannot reload a lap.
+    An index that is no longer in ``laps`` also yields no lap.
+    """
+    if programmatic:
+        return current_lap
+    try:
+        index = int(value)
+    except (TypeError, ValueError):
+        return None
+    if index < 0 or index >= len(laps):
+        return None
+    return laps[index]
+
+
 class FuelMap:
     """A Fuel Map with calculated attributes of the fuel setting
 

@@ -47,9 +47,18 @@ def update_connection_info():
 
 
 def update_reference_lap_select(laps):
-    reference_lap_select.options = [
+    global g_reference_select_programmatic
+    options = [
         tuple(("-1", "Best Lap"))
     ] + gt7helper.bokeh_tuple_for_list_of_laps(laps)
+    valid_values = {str(option[0]) for option in options}
+    g_reference_select_programmatic = True
+    try:
+        reference_lap_select.options = options
+        if len(laps) == 0 or str(reference_lap_select.value) not in valid_values:
+            reference_lap_select.value = "-1"
+    finally:
+        g_reference_select_programmatic = False
 
 
 @linear()
@@ -58,6 +67,7 @@ def update_fuel_map(step):
 
     if len(app.gt7comm.laps) == 0:
         div_fuel_map.text = ""
+        g_stored_fuel_map = None
         return
 
     last_lap = app.gt7comm.laps[0]
@@ -78,6 +88,10 @@ def update_race_lines(laps: List[Lap], reference_lap: Lap):
     """
     global race_lines, race_lines_data
 
+    if len(laps) == 0:
+        for i, line_group in enumerate(race_lines_data):
+            gt7diagrams.clear_race_line(race_lines[i], line_group)
+        return
 
     reference_lap_data = reference_lap.get_data_dict()
 
@@ -118,6 +132,7 @@ def update_lap_change():
     global g_connection_status_stored
     global g_telemetry_update_needed
     global g_reference_lap_selected
+    global g_stored_fuel_map
 
     update_start_time = time.time()
 
@@ -151,6 +166,12 @@ def update_lap_change():
             div_speed_peak_valley_diagram.text = get_speed_peak_and_valley_diagram(last_lap, reference_lap)
 
         update_header_line(div_header_line, last_lap, reference_lap)
+    else:
+        g_reference_lap_selected = None
+        div_header_line.text = ""
+        div_speed_peak_valley_diagram.text = ""
+        div_fuel_map.text = ""
+        g_stored_fuel_map = None
 
     logger.debug("Updating of %d laps" % len(laps))
 
@@ -192,6 +213,19 @@ def update_speed_velocity_graph(laps: List[Lap]):
             race_diagram.source_reference_lap.data = reference_lap_data
             reference_lap_race_line.data_source.data = reference_lap_data
 
+        # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
+        brake_points_enabled = os.environ.get("GT7_ADD_BRAKEPOINTS") == "true"
+        if brake_points_enabled and len(last_lap.data_braking) > 0:
+            update_break_points(last_lap, s_race_line, "blue")
+        if brake_points_enabled and reference_lap and len(reference_lap.data_braking) > 0:
+            update_break_points(reference_lap, s_race_line, "magenta")
+    else:
+        race_diagram.clear_lap_sources()
+        gt7diagrams.clear_source(last_lap_race_line.data_source)
+        gt7diagrams.clear_source(reference_lap_race_line.data_source)
+        gt7diagrams.remove_all_annotation_text_from_figure(s_race_line)
+        gt7diagrams.remove_scatter_glyphs(s_race_line)
+
     if median_lap:
         race_diagram.source_median_lap.data = median_lap.get_data_dict()
 
@@ -204,16 +238,6 @@ def update_speed_velocity_graph(laps: List[Lap]):
     div_deviance_laps_on_display.text = ""
     for fastest_lap in fastest_laps:
         div_deviance_laps_on_display.text += f"<b>Lap {fastest_lap.number}:</b> {fastest_lap.title}<br>"
-
-    # Update breakpoints
-    # Adding Brake Points is slow when rendering, this is on Bokehs side about 3s
-    brake_points_enabled = os.environ.get("GT7_ADD_BRAKEPOINTS") == "true"
-
-    if brake_points_enabled and len(last_lap.data_braking) > 0:
-        update_break_points(last_lap, s_race_line, "blue")
-
-    if brake_points_enabled and len(reference_lap.data_braking) > 0:
-        update_break_points(reference_lap, s_race_line, "magenta")
 
 
 def update_break_points(lap: Lap, race_line: figure, color: str):
@@ -247,6 +271,7 @@ def reset_button_handler(event):
     app.gt7comm.load_laps([], replace_other_laps=True)
     app.gt7comm.reset()
     g_telemetry_update_needed = True
+    update_lap_change()
 
 
 def always_record_checkbox_handler(event, old, new):
@@ -277,15 +302,19 @@ def load_laps_handler(attr, old, new):
 
 def load_reference_lap_handler(attr, old, new):
     global g_reference_lap_selected
-    global reference_lap_select
     global g_telemetry_update_needed
 
-    if int(new) == -1:
-        # Set no reference lap
-        g_reference_lap_selected = None
-    else:
-        g_reference_lap_selected = g_laps_stored[int(new)]
-        logger.info("Loading %s as reference" % g_laps_stored[int(new)].format())
+    g_reference_lap_selected = gt7helper.reference_lap_after_dropdown_change(
+        g_reference_lap_selected,
+        g_laps_stored,
+        new,
+        g_reference_select_programmatic,
+    )
+    if g_reference_select_programmatic:
+        return
+
+    if g_reference_lap_selected is not None:
+        logger.info("Loading %s as reference" % g_reference_lap_selected.format())
 
     g_telemetry_update_needed = True
     update_lap_change()
@@ -363,6 +392,7 @@ g_laps_stored = []
 g_session_stored = None
 g_connection_status_stored = None
 g_reference_lap_selected = None
+g_reference_select_programmatic = False
 g_stored_fuel_map = None
 g_telemetry_update_needed = False
 

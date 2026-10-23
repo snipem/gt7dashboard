@@ -148,6 +148,7 @@ class RaceTimeTable(object):
     def show_laps(self, laps: List[Lap]):
         best_lap = gt7helper.get_best_lap(laps)
         if best_lap == None:
+            clear_source(self.lap_times_source)
             return
 
         new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=best_lap.lap_finish_time)
@@ -419,6 +420,17 @@ class RaceDiagram(object):
         self.source_speed_variance.data = variance
         return fastest_laps
 
+    def clear_lap_sources(self):
+        """Drop plotted samples from the lap series without changing their columns."""
+        for source in (
+            self.source_last_lap,
+            self.source_reference_lap,
+            self.source_median_lap,
+            self.source_time_diff,
+            self.source_speed_variance,
+        ):
+            clear_source(source)
+
     def add_lap_to_race_diagram(self, color: str, legend: str, visible: bool = True):
 
         # Set empty data for avoiding warnings about missing columns
@@ -531,28 +543,31 @@ class RaceDiagram(object):
         return self.layout
 
     def delete_all_additional_laps(self):
-        # Delete all but first three in list
+        # Drop laps added after the last, reference, and median series.
+        # Remove the tracked renderers themselves so a shrinking list cannot
+        # skip entries, and so glyphs that are not lap lines stay in place.
         self.sources_additional_laps = []
-
-        for i, _ in enumerate(self.f_speed.renderers):
-            if i >= self.number_of_default_laps:
-                self.f_speed.renderers.remove(self.f_speed.renderers[i])  # remove the line renderer
-                self.f_throttle.renderers.remove(self.f_throttle.renderers[i])  # remove the line renderer
-                self.f_braking.renderers.remove(self.f_braking.renderers[i])  # remove the line renderer
-                self.f_coasting.renderers.remove(self.f_coasting.renderers[i])  # remove the line renderer
-                self.f_tires.renderers.remove(self.f_tires.renderers[i])  # remove the line renderer
-                self.f_boost.renderers.remove(self.f_boost.renderers[i])  # remove the line renderer
-                self.f_yaw_rate.renderers.remove(self.f_yaw_rate.renderers[i])  # remove the line renderer
-                # self.f_time_diff.renderers.remove(self.f_time_diff.renderers[i])  # remove the line renderer
-
-                self.f_speed.legend.items.pop(i)
-                self.f_throttle.legend.items.pop(i)
-                self.f_braking.legend.items.pop(i)
-                self.f_coasting.legend.items.pop(i)
-                self.f_tires.legend.items.pop(i)
-                self.f_yaw_rate.legend.items.pop(i)
-                self.f_boost.legend.items.pop(i)
-                # self.f_time_diff.legend.items.pop(i)
+        charts = (
+            (self.f_speed, self.speed_lines),
+            (self.f_throttle, self.throttle_lines),
+            (self.f_braking, self.braking_lines),
+            (self.f_coasting, self.coasting_lines),
+            (self.f_tires, self.tires_lines),
+            (self.f_gear, self.gears_lines),
+            (self.f_rpm, self.rpm_lines),
+            (self.f_boost, self.boost_lines),
+            (self.f_yaw_rate, self.yaw_rate_lines),
+        )
+        for plot, lines in charts:
+            additional = list(lines[self.number_of_default_laps:])
+            del lines[self.number_of_default_laps:]
+            for renderer in additional:
+                if renderer in plot.renderers:
+                    plot.renderers.remove(renderer)
+            plot.legend.items = [
+                item for item in plot.legend.items
+                if not any(renderer in item.renderers for renderer in additional)
+            ]
 
 
 
@@ -642,6 +657,23 @@ def _add_peaks_and_valley_decorations_for_lap(
 
 def remove_all_annotation_text_from_figure(f: figure):
     f.center = [r for r in f.center if not isinstance(r, Label)]
+
+
+def clear_source(source: ColumnDataSource):
+    """Empty a ColumnDataSource while keeping the columns it already has."""
+    source.data = {key: [] for key in source.data}
+
+
+def clear_race_line(race_line: figure, glyph_renderers):
+    """Clear one race-line plot, its lap glyphs, and its lap captions."""
+    for renderer in glyph_renderers:
+        clear_source(renderer.data_source)
+    remove_all_annotation_text_from_figure(race_line)
+    race_line.title.text = "Race Line"
+
+
+def remove_scatter_glyphs(f: figure):
+    f.renderers = [renderer for renderer in f.renderers if not isinstance(renderer.glyph, Scatter)]
 
 
 def get_fuel_map_html_table(last_lap: Lap) -> str:

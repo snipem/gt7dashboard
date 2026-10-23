@@ -4,7 +4,7 @@ import unittest
 
 from bokeh.io import output_file, show
 from bokeh.layouts import layout
-from bokeh.models import Div, Plot, Scatter, Label
+from bokeh.models import ColumnDataSource, Div, Plot, Scatter, Label
 from bokeh.plotting import save, figure
 
 import gt7dashboard.gt7diagrams
@@ -117,6 +117,60 @@ class TestHelper(unittest.TestCase):
             data = fp.read()
             self.assertNotIn("1:28.465", data)
 
+    def test_delete_additional_laps_removes_every_added_renderer(self):
+        rd = self.helper_get_race_diagram()
+        default_renderers = {
+            plot: list(getattr(rd, plot).renderers)
+            for plot in (
+                "f_speed",
+                "f_throttle",
+                "f_braking",
+                "f_coasting",
+                "f_tires",
+                "f_gear",
+                "f_rpm",
+                "f_boost",
+                "f_yaw_rate",
+                "f_time_diff",
+                "f_speed_variance",
+            )
+        }
+        unrelated_speed = rd.f_speed.scatter([0], [0], size=4, color="red")
+        unrelated_gear = rd.f_gear.line([0, 1], [1, 0], line_color="gray")
+
+        for index, lap in enumerate(self.test_laps):
+            source = rd.add_lap_to_race_diagram("black", "row-%d" % index, True)
+            source.data = lap.get_data_dict()
+        rd.add_additional_lap_to_race_diagram("gray", self.test_laps[0], True)
+        added = len(self.test_laps) + 1
+        self.assertEqual(1, len(rd.sources_additional_laps))
+        self.assertEqual(rd.number_of_default_laps + added, len(rd.speed_lines))
+        self.assertGreater(len(rd.f_speed.renderers), len(default_renderers["f_speed"]) + 1)
+        self.assertGreater(len(rd.f_gear.renderers), len(default_renderers["f_gear"]))
+
+        rd.delete_all_additional_laps()
+
+        self.assertEqual(0, len(rd.sources_additional_laps))
+        self.assertEqual(rd.number_of_default_laps, len(rd.speed_lines))
+        self.assertEqual(rd.number_of_default_laps, len(rd.gears_lines))
+        self.assertEqual(rd.number_of_default_laps, len(rd.rpm_lines))
+        for plot_name, renderers in default_renderers.items():
+            plot = getattr(rd, plot_name)
+            if plot_name == "f_speed":
+                self.assertEqual(renderers + [unrelated_speed], list(plot.renderers))
+            elif plot_name == "f_gear":
+                self.assertEqual(renderers + [unrelated_gear], list(plot.renderers))
+            else:
+                self.assertEqual(renderers, list(plot.renderers))
+        self.assertEqual(
+            ["Last Lap", "Reference Lap", "Median Lap"],
+            [item.label.value for item in rd.f_speed.legend.items],
+        )
+        self.assertEqual(
+            ["Last Lap", "Reference Lap", "Median Lap"],
+            [item.label.value for item in rd.f_gear.legend.items],
+        )
+
 
     def test_get_fuel_map_html_table(self):
         d = Div()
@@ -167,6 +221,136 @@ class TestHelper(unittest.TestCase):
         out_file = "test_out/test_race_table.html"
         output_file(out_file)
         save(rt.t_lap_times)
+
+    def test_race_table_clears_populated_rows_and_keeps_columns(self):
+        rt = gt7diagrams.RaceTimeTable()
+        rt.show_laps(self.test_laps)
+        keys = list(rt.lap_times_source.data.keys())
+        self.assertGreater(len(list(rt.lap_times_source.data["number"])), 0)
+
+        rt.show_laps([])
+
+        self.assertEqual(list(rt.lap_times_source.data.keys()), keys)
+        for key in keys:
+            self.assertEqual(len(list(rt.lap_times_source.data[key])), 0)
+
+        rt.show_laps(self.test_laps)
+        self.assertEqual(len(list(rt.lap_times_source.data["number"])), len(self.test_laps))
+
+    def test_race_diagram_clears_populated_sources_without_changing_columns(self):
+        rd = self.helper_get_race_diagram()
+        rd.update_fastest_laps_variance(self.test_laps)
+        sources = [
+            rd.source_last_lap,
+            rd.source_reference_lap,
+            rd.source_median_lap,
+            rd.source_time_diff,
+            rd.source_speed_variance,
+        ]
+        schemas = [list(source.data.keys()) for source in sources]
+        self.assertIn("speed", schemas[0])
+        self.assertIn("timedelta", schemas[3])
+        self.assertNotIn("speed", schemas[3])
+        self.assertIn("speed_variance", schemas[4])
+        self.assertNotIn("speed", schemas[4])
+
+        rd.clear_lap_sources()
+
+        for source, keys in zip(sources, schemas):
+            self.assertEqual(list(source.data.keys()), keys)
+            for key in keys:
+                self.assertEqual(len(list(source.data[key])), 0)
+
+        lap_data = self.test_laps[1].get_data_dict()
+        rd.source_last_lap.data = lap_data
+        self.assertGreater(len(list(rd.source_last_lap.data["speed"])), 0)
+
+    def test_diagram_and_table_repopulate_after_clear(self):
+        rd = self.helper_get_race_diagram()
+        rd.update_fastest_laps_variance(self.test_laps)
+        last_lap = self.test_laps[1]
+        reference_lap = self.test_laps[0]
+        median_lap = gt7helper.get_median_lap(self.test_laps)
+        self.assertGreater(len(list(rd.source_last_lap.data["speed"])), 0)
+
+        rd.clear_lap_sources()
+        self.assertEqual(len(list(rd.source_last_lap.data["speed"])), 0)
+        self.assertEqual(len(list(rd.source_time_diff.data["timedelta"])), 0)
+        self.assertEqual(len(list(rd.source_speed_variance.data["speed_variance"])), 0)
+
+        rd.source_last_lap.data = last_lap.get_data_dict()
+        rd.source_reference_lap.data = reference_lap.get_data_dict()
+        rd.source_median_lap.data = median_lap.get_data_dict()
+        rd.source_time_diff.data = gt7helper.calculate_time_diff_by_distance(reference_lap, last_lap)
+        rd.update_fastest_laps_variance(self.test_laps)
+
+        self.assertEqual(len(list(rd.source_last_lap.data["speed"])), len(last_lap.data_speed))
+        self.assertEqual(len(list(rd.source_reference_lap.data["speed"])), len(reference_lap.data_speed))
+        self.assertEqual(len(list(rd.source_median_lap.data["speed"])), len(median_lap.data_speed))
+        self.assertGreater(len(list(rd.source_time_diff.data["timedelta"])), 0)
+        self.assertGreater(len(list(rd.source_speed_variance.data["speed_variance"])), 0)
+        self.assertNotIn("speed", rd.source_time_diff.data.keys())
+
+        rt = gt7diagrams.RaceTimeTable()
+        rt.show_laps(self.test_laps)
+        rt.show_laps([])
+        rt.show_laps(self.test_laps)
+        expected_times = [
+            gt7helper.seconds_to_lap_time(lap.lap_finish_time / 1000) for lap in self.test_laps
+        ]
+        self.assertEqual(list(rt.lap_times_source.data["time"]), expected_times)
+        self.assertNotIn("0:00.000", expected_times)
+
+    def test_race_line_clears_glyphs_and_annotations(self):
+        (
+            race_line,
+            throttle_line,
+            breaking_line,
+            coasting_line,
+            reference_throttle_line,
+            reference_breaking_line,
+            reference_coasting_line,
+        ) = get_throttle_braking_race_line_diagram()
+        glyphs = [
+            throttle_line,
+            breaking_line,
+            coasting_line,
+            reference_throttle_line,
+            reference_breaking_line,
+            reference_coasting_line,
+        ]
+        lap_data = self.test_laps[1].get_data_dict()
+        for glyph in glyphs:
+            glyph.data_source.data = lap_data
+        gt7diagrams.add_annotations_to_race_line(race_line, self.test_laps[1], self.test_laps[0])
+        race_line.title.text = "Lap 2"
+        self.assertTrue(any(isinstance(item, Label) for item in race_line.center))
+        schemas = [list(glyph.data_source.data.keys()) for glyph in glyphs]
+        self.assertIn("raceline_x_throttle", schemas[0])
+
+        gt7diagrams.clear_race_line(race_line, glyphs)
+
+        self.assertEqual(race_line.title.text, "Race Line")
+        self.assertFalse(any(isinstance(item, Label) for item in race_line.center))
+        for glyph, keys in zip(glyphs, schemas):
+            self.assertEqual(list(glyph.data_source.data.keys()), keys)
+            for key in keys:
+                self.assertEqual(len(list(glyph.data_source.data[key])), 0)
+
+    def test_clear_source_keeps_non_lap_columns(self):
+        source = ColumnDataSource(data={"distance": [1.0, 2.0], "timedelta": [3.0, 4.0]})
+        gt7diagrams.clear_source(source)
+        self.assertEqual(set(source.data.keys()), {"distance", "timedelta"})
+        self.assertEqual(len(list(source.data["distance"])), 0)
+        self.assertEqual(len(list(source.data["timedelta"])), 0)
+
+    def test_remove_scatter_glyphs_leaves_lines(self):
+        plot = figure()
+        plot.line([0, 1], [0, 1])
+        plot.scatter([0], [0], marker="circle", size=10)
+        self.assertEqual(len(plot.renderers), 2)
+        gt7diagrams.remove_scatter_glyphs(plot)
+        self.assertEqual(len(plot.renderers), 1)
 
     def test_display_variance(self):
         rd = self.helper_get_race_diagram()

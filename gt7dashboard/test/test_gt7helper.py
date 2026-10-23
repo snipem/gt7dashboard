@@ -1,6 +1,7 @@
-import pickle
-import unittest
 import os
+import pickle
+import tempfile
+import unittest
 
 from gt7dashboard.gt7helper import calculate_remaining_fuel, format_laps_to_table, calculate_time_diff_by_distance, \
     get_n_fastest_laps_within_percent_threshold_ignoring_replays
@@ -363,11 +364,49 @@ class TestLaps(unittest.TestCase):
         l2.data_boost = [2.6, 2.7, 3.9]
 
         laps = [l1, l2]
-        json_path = gt7helper.save_laps_to_json(laps)
-        print(json_path)
+        app_data = os.path.join(os.getcwd(), "data")
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            os.chdir(temp_dir)
+            try:
+                json_path = gt7helper.save_laps_to_json(laps)
+            finally:
+                os.chdir(original_cwd)
 
-        laps_read = gt7helper.load_laps_from_json(json_path)
+            self.assertEqual(
+                os.path.realpath(temp_dir),
+                os.path.commonpath([os.path.realpath(temp_dir), os.path.realpath(json_path)]),
+            )
+            self.assertNotEqual(
+                os.path.realpath(app_data),
+                os.path.commonpath([os.path.realpath(app_data), os.path.realpath(json_path)]),
+            )
+            laps_read = gt7helper.load_laps_from_json(json_path)
 
         self.assertEqual(len(laps), len(laps_read))
         for obj1, obj2 in zip(laps, laps_read):
             self.assertEqual(obj1.__dict__, obj2.__dict__)
+
+
+class TestReferenceLapDropdown(unittest.TestCase):
+    def test_user_selection_returns_the_chosen_lap(self):
+        laps = [Lap(), Lap()]
+        selected = gt7helper.reference_lap_after_dropdown_change(None, laps, "1", programmatic=False)
+        self.assertIs(selected, laps[1])
+
+    def test_no_selection_value_clears_the_reference_lap(self):
+        laps = [Lap()]
+        selected = gt7helper.reference_lap_after_dropdown_change(laps[0], laps, "-1", programmatic=False)
+        self.assertIsNone(selected)
+
+    def test_programmatic_change_keeps_the_current_lap(self):
+        stale_lap = Lap()
+        stored_laps = [stale_lap]
+        selected = gt7helper.reference_lap_after_dropdown_change(
+            None, stored_laps, "0", programmatic=True
+        )
+        self.assertIsNone(selected)
+
+    def test_stale_index_after_laps_are_cleared_does_not_restore_a_lap(self):
+        selected = gt7helper.reference_lap_after_dropdown_change(None, [], "0", programmatic=False)
+        self.assertIsNone(selected)
