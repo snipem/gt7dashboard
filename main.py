@@ -32,6 +32,7 @@ from gt7dashboard.gt7helper import (
     calculate_time_diff_by_distance, save_laps_to_json, load_laps_from_json,
 )
 from gt7dashboard.gt7lap import Lap
+from gt7dashboard.gt7voice import LapAnnouncer, play_sample_announcement
 
 # set logging level to debug
 logger = logging.getLogger('main.py')
@@ -352,6 +353,11 @@ else:
         # Existing thread has connection, proceed
         pass
 
+# Speak each stored lap once. The callback fires from finish_lap, after the lap
+# is inserted, and does not change how laps are timed or stored.
+_lap_announcer = LapAnnouncer(lambda: app.gt7comm.laps)
+app.gt7comm.set_lap_callback(_lap_announcer.on_lap)
+
 
 # def init_lap_times_source():
 #     global lap_times_source
@@ -452,6 +458,12 @@ reference_lap_select.on_change("value", load_reference_lap_handler)
 manual_log_button = Button(label="Log Lap Now")
 manual_log_button.on_click(log_lap_button_handler)
 
+def test_voice_button_handler(event):
+    play_sample_announcement()
+
+test_voice_button = Button(label="Test Voice")
+test_voice_button.on_click(test_voice_button_handler)
+
 save_button = Button(label="Save Laps")
 save_button.on_click(save_button_handler)
 
@@ -482,7 +494,7 @@ race_time_table.t_lap_times.width=900
 l1 = layout(
     children=[
         [get_help_div(gt7help.HEADER), div_connection_info, div_gt7_dashboard, div_header_line, reset_button, save_button, select_title, select, get_help_div(gt7help.LAP_CONTROLS)],
-        [get_help_div(gt7help.TIME_DIFF), race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select]), get_help_div(gt7help.MANUAL_CONTROLS)],
+        [get_help_div(gt7help.TIME_DIFF), race_diagram.f_time_diff, layout(children=[manual_log_button, checkbox_group, reference_lap_select, test_voice_button]), get_help_div(gt7help.MANUAL_CONTROLS)],
         [get_help_div(gt7help.SPEED_DIAGRAM), race_diagram.f_speed, s_race_line, get_help_div(gt7help.RACE_LINE_MINI)],
         [get_help_div(gt7help.SPEED_VARIANCE), race_diagram.f_speed_variance, div_deviance_laps_on_display, get_help_div(gt7help.SPEED_VARIANCE)],
         [get_help_div(gt7help.THROTTLE_DIAGRAM), race_diagram.f_throttle, div_speed_peak_valley_diagram, get_help_div(gt7help.SPEED_PEAKS_AND_VALLEYS)],
