@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     out_markdown = "## Manual\n\n"
 
-    out_markdown += "### Tab 'Get Faster'\n\n"
+    out_markdown += "### Controls and charts\n\n"
 
     out_markdown += "#### Header\n\n"
     out_markdown += add_screenshot("screenshot_header.png") + "\n\n"
@@ -98,7 +98,7 @@ If they had one graph it would be the deviation in the (best) laps of the same d
     out_markdown += add_screenshot("screenshot_tuninginfo.png") + "\n\n"
     out_markdown += gt7help.TUNING_INFO + "\n\n"
 
-    out_markdown += "### Tab 'Race Line'\n\n"
+    out_markdown += "### Tab 'Racing Lines'\n\n"
 
     out_markdown += add_screenshot("screenshot_race_line.png") + "\n\n"
     out_markdown += gt7help.RACE_LINE_BIG + "\n\n"

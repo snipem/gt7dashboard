@@ -1,6 +1,8 @@
+import html
+
 from bokeh.models import Div
 
-from gt7dashboard import gt7helper
+from gt7dashboard import gt7helper, gt7theme
 
 SPEED_VARIANCE = f"""Displays the speed deviation of the fastest laps within a {gt7helper.DEFAULT_FASTEST_LAPS_PERCENT_THRESHOLD * 100}% time difference threshold of the fastest lap.
 Replay laps are ignored. The speed deviation is calculated as the standard deviation between these fastest laps.
@@ -13,14 +15,14 @@ You may get some insights for improvement on your consistency if you look at the
 The list on the right hand side shows your best laps that are taken into consideration for the speed variance.
 """
 
-HEADER = """The red or green button reflects the current connection status to Gran Turismo 7. i.e. if there was a packet received successfully in the last second, the button will turn green.
+HEADER = """The red or green indicator reflects the current connection status to Gran Turismo 7. i.e. if there was a packet received successfully in the last second, the indicator will turn green.
 
-Next is a brief description of the last and reference lap. The reference lap can be selected on the right side."""
-RACE_LINE_MINI = """This is a race line map with the last lap (blue) and the reference lap (magenta). Zoom in for more details.
+Next is a brief description of the last and reference lap. The reference lap can be selected in the control bar."""
+RACE_LINE_MINI = """This is a race line map of the last lap and the reference lap. Zoom in for more details.
 
 This map is helpful if you are using the index number of a graph to quickly determine where in the lap a measurement was taken.
 
-See the tab 'Race Line' for a more detailed race line."""
+The larger map on the Racing Lines tab shows throttle, brake, and coasting zones."""
 MANUAL_CONTROLS = """'Log Lap Now' will log a lap now even if you have not crossed the finish line. This is helpful for missions or license tests where the end of a test is not necessarily identical with the finish line.
 
 The checkbox 'Record Replays' will allow you to record replays. Be careful since also background action before and after a time trial is counted as a replay. This is when a car drives on the track in the background of the menu.
@@ -34,7 +36,7 @@ Everything under the solid bar at 0 is slower than the reference lap. Everything
 If you see a bump in this graph to the top or the bottom this means that you were slower or faster at this point respectively.
 """
 LAP_CONTROLS = """You can reset all laps with the 'Reset Laps' button. This is helpful if you are switching tracks or cars in a session. Otherwise the different tracks will mix in the dashboard.
-'Save Laps' will save your recorded laps to a file. You can load the laps afterwards with the dropdown list to the right."""
+'Save Laps' will save your recorded laps to a file. You can load the laps afterwards with the Load Laps dropdown in the control bar."""
 SPEED_DIAGRAM = """The total speed of the laps selected. This value is in km/h. or mph. depending on your in-game setting"""
 THROTTLE_DIAGRAM = """This is the amount of throttle pressure from 0% to 100% of the laps selected."""
 BRAKING_DIAGRAM = """This is the amount of braking pressure from 0% to 100% of the laps selected."""
@@ -51,7 +53,7 @@ Fuel Consumed is the amount of fuel consumed in the lap.
 What follows now are simple metrics for the characteristics of the lap. This is counted as ticks, which means instances when the game reported a state. For example Full Throttle = 500 means that you were on full throttle during 500 instances when the game sent its telemetry.
 The same goes for Full Brake, Coast and Tire Spin. Use this to easily compare your laps.
 
-You can click on one of these laps to add them to the diagrams above. These laps will be deleted if you reset the view or reload the page.
+You can click on one of these laps to add them to the Speed & Gears and Driver Inputs charts. These laps will be deleted if you reset the view or reload the page.
 
 Car will hold the car name. You will have to have the `db/cars.csv` file downloaded for this to work.
 """
@@ -60,7 +62,7 @@ The current fuel setting will always be at 0. If you want to change the fuel to 
 It will give you a raw assumption of the laps and time remaining and the assumed time difference in lap time for the new setting."""
 TUNING_INFO = """Here is some useful information you may use for tuning. Such as Max Speed and minimal body height in relation to the track. The latter seems to be helpful when determining the possible body height."""
 
-RACE_LINE_BIG = """This is a race line map with the last lap (blue) and the reference lap (magenta). This diagram does also feature speed peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
+RACE_LINE_BIG = """This is a race line map of the last lap and the reference lap. This diagram does also feature speed peaks (▴) and valleys (▾) as well as throttle, brake and coasting zones.
 
 The thinner line of the two is your last lap. The reference line is the thicker translucent line. If you want to make out differences in the race line have a look at the middle of the reference lap line and your line. You may zoom in to spot the differences and read the values on peaks and valleys.
 """
@@ -69,10 +71,34 @@ YAW_RATE_DIAGRAM = """This is the yaw rate per second of your car. Use this to d
 
 
 def get_help_div(help_text_resource):
-    return Div(text=get_help_text_resource(help_text_resource), width=7, height=5)
+    # Fixed so a stretch_width row does not give this tip half the viewport.
+    return Div(
+        text=get_help_text_resource(help_text_resource),
+        width=16,
+        height=16,
+        margin=0,
+        sizing_mode="fixed",
+        styles={"overflow": "hidden", "cursor": "help"},
+    )
 
 
 def get_help_text_resource(help_text_resource):
-    return f"""
-    <div title="{help_text_resource}">?⃝</div>
-    """
+    # Native title tooltip, same text as before. The mark is an inline SVG
+    # so it does not depend on a font having a particular character.
+    tip = html.escape(help_text_resource, quote=True)
+    return (
+        f'<div title="{tip}" style="display:flex;align-items:center;justify-content:center;">'
+        f"{_info_icon()}</div>"
+    )
+
+
+def _info_icon():
+    color = gt7theme.MUTED
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" '
+        f'aria-hidden="true">'
+        f'<circle cx="8" cy="8" r="6.25" fill="none" stroke="{color}" stroke-width="1.25"/>'
+        f'<circle cx="8" cy="5.15" r="0.9" fill="{color}"/>'
+        f'<path d="M8 7.4v3.8" stroke="{color}" stroke-width="1.35" stroke-linecap="round"/>'
+        f"</svg>"
+    )

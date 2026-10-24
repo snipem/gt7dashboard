@@ -5,7 +5,7 @@ from bokeh.layouts import layout
 from bokeh.models import ColumnDataSource, Label, Scatter, Column, Line, TableColumn, DataTable, Range1d
 from bokeh.plotting import figure
 
-from gt7dashboard import gt7helper
+from gt7dashboard import gt7helper, gt7theme
 from gt7dashboard.gt7lap import Lap
 
 
@@ -34,7 +34,7 @@ def get_throttle_braking_race_line_diagram():
         y="raceline_z_throttle",
         legend_label="Throttle Last Lap",
         line_width=5,
-        color="green",
+        color=gt7theme.THROTTLE,
         source=ColumnDataSource(
             data={"raceline_z_throttle": [], "raceline_x_throttle": []}
         ),
@@ -44,7 +44,7 @@ def get_throttle_braking_race_line_diagram():
         y="raceline_z_braking",
         legend_label="Braking Last Lap",
         line_width=5,
-        color="red",
+        color=gt7theme.BRAKE,
         source=ColumnDataSource(
             data={"raceline_z_braking": [], "raceline_x_braking": []}
         ),
@@ -55,7 +55,7 @@ def get_throttle_braking_race_line_diagram():
         y="raceline_z_coasting",
         legend_label="Coasting Last Lap",
         line_width=5,
-        color="blue",
+        color=gt7theme.COAST,
         source=ColumnDataSource(
             data={"raceline_z_coasting": [], "raceline_x_coasting": []}
         ),
@@ -69,7 +69,7 @@ def get_throttle_braking_race_line_diagram():
         legend_label="Throttle Reference",
         line_width=15,
         alpha=0.3,
-        color="green",
+        color=gt7theme.THROTTLE,
         source=ColumnDataSource(
             data={"raceline_z_throttle": [], "raceline_x_throttle": []}
         ),
@@ -80,7 +80,7 @@ def get_throttle_braking_race_line_diagram():
         legend_label="Braking Reference",
         line_width=15,
         alpha=0.3,
-        color="red",
+        color=gt7theme.BRAKE,
         source=ColumnDataSource(
             data={"raceline_z_braking": [], "raceline_x_braking": []}
         ),
@@ -92,7 +92,7 @@ def get_throttle_braking_race_line_diagram():
         legend_label="Coasting Reference",
         line_width=15,
         alpha=0.3,
-        color="blue",
+        color=gt7theme.COAST,
         source=ColumnDataSource(
             data={"raceline_z_coasting": [], "raceline_x_coasting": []}
         ),
@@ -224,6 +224,7 @@ class RaceDiagram(object):
         )
 
         self.f_speed_variance = figure(
+            title="Speed Deviation",
             y_axis_label="Spd.Dev.",
             x_range=self.f_speed.x_range,
             y_range=Range1d(0, 50),
@@ -244,6 +245,7 @@ class RaceDiagram(object):
         )
 
         self.f_throttle = figure(
+            title="Throttle",
             x_range=self.f_speed.x_range,
             y_axis_label="Throttle",
             width=width,
@@ -252,6 +254,7 @@ class RaceDiagram(object):
             active_drag="box_zoom",
         )
         self.f_braking = figure(
+            title="Braking",
             x_range=self.f_speed.x_range,
             y_axis_label="Braking",
             width=width,
@@ -261,6 +264,7 @@ class RaceDiagram(object):
         )
 
         self.f_coasting = figure(
+            title="Coasting",
             x_range=self.f_speed.x_range,
             y_axis_label="Coasting",
             width=width,
@@ -270,6 +274,7 @@ class RaceDiagram(object):
         )
 
         self.f_tires = figure(
+            title="Tire Speed Ratio",
             x_range=self.f_speed.x_range,
             y_axis_label="Tire Spd / Car Spd",
             width=width,
@@ -279,6 +284,7 @@ class RaceDiagram(object):
         )
 
         self.f_rpm = figure(
+            title="Engine RPM",
             x_range=self.f_speed.x_range,
             y_axis_label="RPM",
             width=width,
@@ -288,6 +294,7 @@ class RaceDiagram(object):
         )
 
         self.f_gear = figure(
+            title="Gear Selection",
             x_range=self.f_speed.x_range,
             y_axis_label="Gear",
             width=width,
@@ -297,6 +304,7 @@ class RaceDiagram(object):
         )
 
         self.f_boost = figure(
+            title="Boost Pressure",
             x_range=self.f_speed.x_range,
             y_axis_label="Boost",
             width=width,
@@ -306,6 +314,7 @@ class RaceDiagram(object):
         )
 
         self.f_yaw_rate = figure(
+            title="Yaw Rate",
             x_range=self.f_speed.x_range,
             y_axis_label="Yaw Rate / Second",
             width=width,
@@ -319,9 +328,9 @@ class RaceDiagram(object):
         span_zero_time_diff = bokeh.models.Span(
             location=0,
             dimension="width",
-            line_color="black",
+            line_color=gt7theme.ZERO_DELTA,
             line_dash="dashed",
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
         )
         self.f_time_diff.add_layout(span_zero_time_diff)
 
@@ -359,16 +368,16 @@ class RaceDiagram(object):
             x="distance",
             y="timedelta",
             source=self.source_time_diff,
-            line_width=1,
-            color="blue",
+            line_width=gt7theme.TRACE_WIDTH,
+            color=gt7theme.TIME_DIFF,
             line_alpha=1,
         )
 
-        self.source_last_lap = self.add_lap_to_race_diagram("blue", "Last Lap", True)
+        self.source_last_lap = self.add_lap_to_race_diagram(gt7theme.LAST_LAP, "Last Lap", True)
 
-        self.source_reference_lap = self.add_lap_to_race_diagram("magenta", "Reference Lap", True)
+        self.source_reference_lap = self.add_lap_to_race_diagram(gt7theme.REFERENCE_LAP, "Reference Lap", True)
 
-        self.source_median_lap = self.add_lap_to_race_diagram("green", "Median Lap", False)
+        self.source_median_lap = self.add_lap_to_race_diagram(gt7theme.MEDIAN_LAP, "Median Lap", False)
 
         self.f_speed.legend.click_policy = "hide"
         self.f_throttle.legend.click_policy = self.f_speed.legend.click_policy
@@ -402,8 +411,8 @@ class RaceDiagram(object):
             x="distance",
             y="speed_variance",
             source=self.source_speed_variance,
-            line_width=1,
-            color="gray",
+            line_width=gt7theme.TRACE_WIDTH,
+            color=gt7theme.VARIANCE,
             line_alpha=1,
             visible=True
         )
@@ -431,7 +440,7 @@ class RaceDiagram(object):
             y="speed",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -442,7 +451,7 @@ class RaceDiagram(object):
             y="throttle",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -453,7 +462,7 @@ class RaceDiagram(object):
             y="brake",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -464,7 +473,7 @@ class RaceDiagram(object):
             y="coast",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -475,7 +484,7 @@ class RaceDiagram(object):
             y="tires",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -486,7 +495,7 @@ class RaceDiagram(object):
             y="gear",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -497,7 +506,7 @@ class RaceDiagram(object):
             y="rpm",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -508,7 +517,7 @@ class RaceDiagram(object):
             y="boost",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -519,7 +528,7 @@ class RaceDiagram(object):
             y="yaw_rate",
             source=source,
             legend_label=legend,
-            line_width=1,
+            line_width=gt7theme.TRACE_WIDTH,
             color=color,
             line_alpha=1,
             visible=visible
@@ -569,12 +578,12 @@ def add_annotations_to_race_line(
     decorations = []
     decorations.extend(
         _add_peaks_and_valley_decorations_for_lap(
-            last_lap, race_line, color="blue", offset=0
+            last_lap, race_line, color=gt7theme.LAST_LAP, offset=0
         )
     )
     decorations.extend(
         _add_peaks_and_valley_decorations_for_lap(
-            reference_lap, race_line, color="magenta", offset=0
+            reference_lap, race_line, color=gt7theme.REFERENCE_LAP, offset=0
         )
     )
     add_starting_line_to_diagram(race_line, last_lap)
@@ -611,8 +620,8 @@ def _add_peaks_and_valley_decorations_for_lap(
             text_font_size="10pt",
             text_font_style="bold",
             x_offset=offset,
-            background_fill_color="white",
-            background_fill_alpha=0.75,
+            background_fill_color=gt7theme.PLOT,
+            background_fill_alpha=0.85,
         )
         mytext.text = "▴%.0f" % peak_speed_data_x[i]
 
@@ -629,8 +638,8 @@ def _add_peaks_and_valley_decorations_for_lap(
             text_font_size="10pt",
             x_offset=offset,
             text_font_style="bold",
-            background_fill_color="white",
-            background_fill_alpha=0.75,
+            background_fill_color=gt7theme.PLOT,
+            background_fill_alpha=0.85,
             text_align="right",
         )
         mytext.text = "%.0f▾" % valley_speed_data_x[i]
@@ -664,7 +673,8 @@ def get_fuel_map_html_table(last_lap: Lap) -> str:
         no_fuel_consumption = fuel_map.fuel_consumed_per_lap <= 0
         line_style = ""
         if fuel_map.mixture_setting == 0 and not no_fuel_consumption:
-            line_style = "background-color:rgba(0,255,0,0.5)"
+            # Current mixture. A muted last-lap blue stays readable on the dark surface.
+            line_style = "background-color:rgba(122,162,247,0.35)"
         table += (
                 "<tr id='fuel_map_row_%d' style='%s'>"
                 "<td style='text-align:center'>%d</td>"
@@ -705,8 +715,9 @@ def add_starting_line_to_diagram(race_line: figure, last_lap: Lap):
         y=y,
         text_font_size="10pt",
         text_font_style="bold",
-        background_fill_color="white",
-        background_fill_alpha=0.25,
+        text_color=gt7theme.INK,
+        background_fill_color=gt7theme.PLOT,
+        background_fill_alpha=0.85,
         text_align="center",
     )
     mytext.text = "===="
@@ -727,13 +738,13 @@ def get_speed_peak_and_valley_diagram(last_lap: Lap, reference_lap: Lap) -> str:
     <col style='border-left: 1px solid #cdd0d4;'/>
     <col/>
     <col/>
-    <col style="background-color: lightblue;"/>
+    <col style="background-color: %s;"/>
     <col/>
     <col/>
     <col/>
-    <col style="background-color: thistle;"/>
+    <col style="background-color: %s;"/>
     <col/>
-  </colgroup>"""
+  </colgroup>""" % (gt7theme.LAST_LAP, gt7theme.REFERENCE_LAP)
 
     ll_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(last_lap)
     rl_tuple_list = gt7helper.get_peaks_and_valleys_sorted_tuple_list(reference_lap)
