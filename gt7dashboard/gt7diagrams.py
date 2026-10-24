@@ -8,6 +8,20 @@ from bokeh.plotting import figure
 from gt7dashboard import gt7helper
 from gt7dashboard.gt7lap import Lap
 
+# Distinct from the built-in last (blue), reference (magenta), and median (green) traces.
+COMPARISON_LAP_COLORS = (
+    "orange",
+    "purple",
+    "brown",
+    "teal",
+    "goldenrod",
+    "gray",
+    "crimson",
+    "darkcyan",
+    "olive",
+    "coral",
+)
+
 
 def get_throttle_braking_race_line_diagram():
     # TODO Make this work, tooltips just show breakpoint
@@ -137,21 +151,69 @@ class RaceTimeTable(object):
         )
         self.t_lap_times: DataTable
 
+        # CheckboxEditor opens an editor and waits for a second click before it
+        # commits. The checkbox selection column toggles one row on the first
+        # click and does not follow ordinary row highlighting.
         self.t_lap_times = DataTable(
-            source=self.lap_times_source, columns=self.columns, index_position=None, css_classes=["lap_times_table"]
+            source=self.lap_times_source,
+            columns=self.columns,
+            index_position=None,
+            selectable="checkbox",
+            frozen_columns=1,
+            css_classes=["lap_times_table"],
         )
         # This will lead to not being rendered
         # self.t_lap_times.autosize_mode = "fit_columns"
         # Maybe this is related: https://github.com/bokeh/bokeh/issues/10512 ?
+        self.laps: List[Lap] = []
+        self._syncing = False
 
+    @property
+    def syncing(self) -> bool:
+        return self._syncing
 
-    def show_laps(self, laps: List[Lap]):
-        best_lap = gt7helper.get_best_lap(laps)
-        if best_lap == None:
-            return
+    def show_laps(self, laps: List[Lap], plotted_laps: List[Lap] = None):
+        """Replace the rows and check the boxes for laps that are already plotted."""
+        self.laps = list(laps)
+        if plotted_laps is None:
+            plotted_laps = []
 
-        new_df = gt7helper.pd_data_frame_from_lap(laps, best_lap_time=best_lap.lap_finish_time)
-        self.lap_times_source.data = ColumnDataSource.from_df(new_df)
+        indices = []
+        for lap in plotted_laps:
+            for index, candidate in enumerate(self.laps):
+                if candidate is lap and index not in indices:
+                    indices.append(index)
+                    break
+
+        self._syncing = True
+        try:
+            if self.laps:
+                best_lap = gt7helper.get_best_lap(self.laps)
+                new_df = gt7helper.pd_data_frame_from_lap(self.laps, best_lap_time=best_lap.lap_finish_time)
+                self.lap_times_source.data = ColumnDataSource.from_df(new_df)
+            else:
+                self.lap_times_source.data = {
+                    column.field: [] for column in self.columns
+                }
+            self.lap_times_source.selected.indices = indices
+        finally:
+            self._syncing = False
+
+    def selected_laps(self) -> List[Lap]:
+        chosen = []
+        seen = set()
+        for index in self.lap_times_source.selected.indices:
+            if not isinstance(index, int) or index < 0 or index >= len(self.laps):
+                continue
+            lap = self.laps[index]
+            if lap in seen:
+                continue
+            seen.add(lap)
+            chosen.append(lap)
+        return chosen
+
+    def apply_plot_selection(self, diagram: "RaceDiagram"):
+        diagram.sync_comparison_laps(self.selected_laps())
 
 class RaceDiagram(object):
     def __init__(self, width=400):
@@ -179,6 +241,11 @@ class RaceDiagram(object):
         self.source_reference_lap = None
         self.source_median_lap = None
         self.sources_additional_laps = []
+        # Lap object -> (ColumnDataSource, color). Identity, not table row, is the plotted state.
+        self._comparison_by_lap = {}
+        # Kept after a lap is unchecked so the same lap gets the same color again.
+        self._comparison_color_by_lap = {}
+        self._renderers_by_source = {}
 
         self.additional_laps = List[Lap]
 
@@ -408,6 +475,92 @@ class RaceDiagram(object):
             visible=True
         )
 
+    def _telemetry_series(self):
+        return (
+            (self.speed_lines, self.f_speed, "speed"),
+            (self.throttle_lines, self.f_throttle, "throttle"),
+            (self.braking_lines, self.f_braking, "brake"),
+            (self.coasting_lines, self.f_coasting, "coast"),
+            (self.tires_lines, self.f_tires, "tires"),
+            (self.gears_lines, self.f_gear, "gear"),
+            (self.rpm_lines, self.f_rpm, "rpm"),
+            (self.boost_lines, self.f_boost, "boost"),
+            (self.yaw_rate_lines, self.f_yaw_rate, "yaw_rate"),
+        )
+
+    def _comparison_color(self, lap: Lap) -> str:
+        remembered = self._comparison_color_by_lap.get(lap)
+        if remembered is not None:
+            return remembered
+        used = set(self._comparison_color_by_lap.values())
+        for color in COMPARISON_LAP_COLORS:
+            if color not in used:
+                chosen = color
+                break
+        else:
+            chosen = COMPARISON_LAP_COLORS[len(self._comparison_color_by_lap) % len(COMPARISON_LAP_COLORS)]
+        self._comparison_color_by_lap[lap] = chosen
+        return chosen
+
+    def comparison_laps(self) -> List[Lap]:
+        return list(self._comparison_by_lap.keys())
+
+    def sync_comparison_laps(self, laps: List[Lap]):
+        """Plot exactly these laps. Built-in traces are left in place."""
+        desired = []
+        seen = set()
+        for lap in laps:
+            if lap in seen:
+                continue
+            seen.add(lap)
+            desired.append(lap)
+        desired_set = set(desired)
+
+        for lap in list(self._comparison_by_lap):
+            if lap not in desired_set:
+                self._remove_comparison(lap)
+        for lap in desired:
+            if lap not in self._comparison_by_lap:
+                self._add_comparison(lap)
+
+    def retain_comparison_laps(self, laps: List[Lap]):
+        """Drop comparison traces whose lap is no longer in the session."""
+        keep = set(laps)
+        for lap in list(self._comparison_color_by_lap):
+            if lap not in keep:
+                del self._comparison_color_by_lap[lap]
+        self.sync_comparison_laps([lap for lap in self.comparison_laps() if lap in keep])
+
+    def _add_comparison(self, lap: Lap):
+        if lap in self._comparison_by_lap:
+            return self._comparison_by_lap[lap][0]
+        color = self._comparison_color(lap)
+        legend = lap.title or lap.format()
+        source = self.add_lap_to_race_diagram(color, legend, True)
+        source.data = lap.get_data_dict()
+        self.sources_additional_laps.append(source)
+        self._comparison_by_lap[lap] = (source, color)
+        return source
+
+    def _remove_comparison(self, lap: Lap):
+        entry = self._comparison_by_lap.pop(lap, None)
+        if entry is None:
+            return
+        self._detach_source(entry[0])
+
+    def _detach_source(self, source):
+        renderers = set(self._renderers_by_source.pop(source, []))
+        for lines, fig, _field in self._telemetry_series():
+            if renderers:
+                lines[:] = [renderer for renderer in lines if renderer not in renderers]
+                fig.renderers = [renderer for renderer in fig.renderers if renderer not in renderers]
+                fig.legend.items = [
+                    item for item in fig.legend.items
+                    if not any(renderer in renderers for renderer in item.renderers)
+                ]
+        if source in self.sources_additional_laps:
+            self.sources_additional_laps.remove(source)
+
     def add_additional_lap_to_race_diagram(self, color: str, lap: Lap, visible: bool = True):
         source = self.add_lap_to_race_diagram(color, lap.title, visible)
         source.data = lap.get_data_dict()
@@ -425,134 +578,34 @@ class RaceDiagram(object):
         dummy_data = Lap().get_data_dict()
 
         source = ColumnDataSource(data=dummy_data)
+        renderers = []
 
-        self.speed_lines.append(self.f_speed.line(
-            x="distance",
-            y="speed",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
+        for lines, fig, field in self._telemetry_series():
+            renderer = fig.line(
+                x="distance",
+                y=field,
+                source=source,
+                legend_label=legend,
+                line_width=1,
+                color=color,
+                line_alpha=1,
+                visible=visible
+            )
+            lines.append(renderer)
+            renderers.append(renderer)
 
-        self.throttle_lines.append(self.f_throttle.line(
-            x="distance",
-            y="throttle",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
-        self.braking_lines.append(self.f_braking.line(
-            x="distance",
-            y="brake",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
-        self.coasting_lines.append(self.f_coasting.line(
-            x="distance",
-            y="coast",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
-        self.tires_lines.append(self.f_tires.line(
-            x="distance",
-            y="tires",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
-        self.gears_lines.append(self.f_gear.line(
-            x="distance",
-            y="gear",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
-        self.rpm_lines.append(self.f_rpm.line(
-            x="distance",
-            y="rpm",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
-        self.boost_lines.append(self.f_boost.line(
-            x="distance",
-            y="boost",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
-        self.yaw_rate_lines.append(self.f_yaw_rate.line(
-            x="distance",
-            y="yaw_rate",
-            source=source,
-            legend_label=legend,
-            line_width=1,
-            color=color,
-            line_alpha=1,
-            visible=visible
-        ))
-
+        self._renderers_by_source[source] = renderers
         return source
 
     def get_layout(self) -> Column:
         return self.layout
 
     def delete_all_additional_laps(self):
-        # Delete all but first three in list
-        self.sources_additional_laps = []
-
-        for i, _ in enumerate(self.f_speed.renderers):
-            if i >= self.number_of_default_laps:
-                self.f_speed.renderers.remove(self.f_speed.renderers[i])  # remove the line renderer
-                self.f_throttle.renderers.remove(self.f_throttle.renderers[i])  # remove the line renderer
-                self.f_braking.renderers.remove(self.f_braking.renderers[i])  # remove the line renderer
-                self.f_coasting.renderers.remove(self.f_coasting.renderers[i])  # remove the line renderer
-                self.f_tires.renderers.remove(self.f_tires.renderers[i])  # remove the line renderer
-                self.f_boost.renderers.remove(self.f_boost.renderers[i])  # remove the line renderer
-                self.f_yaw_rate.renderers.remove(self.f_yaw_rate.renderers[i])  # remove the line renderer
-                # self.f_time_diff.renderers.remove(self.f_time_diff.renderers[i])  # remove the line renderer
-
-                self.f_speed.legend.items.pop(i)
-                self.f_throttle.legend.items.pop(i)
-                self.f_braking.legend.items.pop(i)
-                self.f_coasting.legend.items.pop(i)
-                self.f_tires.legend.items.pop(i)
-                self.f_yaw_rate.legend.items.pop(i)
-                self.f_boost.legend.items.pop(i)
-                # self.f_time_diff.legend.items.pop(i)
+        self._comparison_by_lap.clear()
+        self._comparison_color_by_lap.clear()
+        for source in list(self.sources_additional_laps):
+            self._detach_source(source)
+        self.sources_additional_laps.clear()
 
 
 

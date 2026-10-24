@@ -1,5 +1,4 @@
 import copy
-import itertools
 import logging
 import os
 import time
@@ -17,7 +16,6 @@ from bokeh.models import (
     Button,
     Div, CheckboxGroup, TabPanel, Tabs,
 )
-from bokeh.palettes import Plasma11 as palette
 from bokeh.plotting import curdoc
 from bokeh.plotting import figure
 
@@ -234,7 +232,8 @@ def update_time_table(laps: List[Lap]):
     global lap_times_source
     # FIXME time table is not updating
     logger.info("Adding %d laps to table" % len(laps))
-    race_time_table.show_laps(laps)
+    race_diagram.retain_comparison_laps(laps)
+    race_time_table.show_laps(laps, race_diagram.comparison_laps())
 
     # t_lap_times.trigger("source", t_lap_times.source, t_lap_times.source)
 
@@ -243,6 +242,7 @@ def reset_button_handler(event):
     global g_telemetry_update_needed
     logger.info("reset button clicked")
     race_diagram.delete_all_additional_laps()
+    race_time_table.show_laps([])
 
     app.gt7comm.load_laps([], replace_other_laps=True)
     app.gt7comm.reset()
@@ -272,6 +272,7 @@ def save_button_handler(event):
 def load_laps_handler(attr, old, new):
     logger.info("Loading %s" % new)
     race_diagram.delete_all_additional_laps()
+    race_time_table.show_laps([])
     app.gt7comm.load_laps(load_laps_from_json(new), replace_other_laps=True)
 
 
@@ -372,35 +373,16 @@ stored_lap_files = gt7helper.bokeh_tuple_for_list_of_lapfiles(
 
 race_diagram = gt7diagrams.RaceDiagram(width=1000)
 race_time_table = gt7diagrams.RaceTimeTable()
-colors = itertools.cycle(palette)
 
 
-def table_row_selection_callback(attrname, old, new):
-    global g_laps_stored
-    global race_diagram
-    global race_time_table
-    global colors
-
-    selectionIndex=race_time_table.lap_times_source.selected.indices
-    logger.info("you have selected the row nr "+str(selectionIndex))
-
-    colors = ["blue", "magenta", "green", "orange", "black", "purple"]
-    # max_additional_laps = len(palette)
-    colors_index = len(race_diagram.sources_additional_laps) + race_diagram.number_of_default_laps # which are the default colors
-
-    for index in selectionIndex:
-        if index >= len(colors):
-            colors_index = 0
-
-        # get element at index of iterator
-        color = colors[colors_index]
-        colors_index+=1
-        lap_to_add = g_laps_stored[index]
-        new_lap_data_source = race_diagram.add_lap_to_race_diagram(color, legend=g_laps_stored[index].title, visible=True)
-        new_lap_data_source.data = lap_to_add.get_data_dict()
+def table_plot_toggle_callback(attrname, old, new):
+    if race_time_table.syncing:
+        return
+    logger.info("Plot selection rows %s" % race_time_table.lap_times_source.selected.indices)
+    race_time_table.apply_plot_selection(race_diagram)
 
 
-race_time_table.lap_times_source.selected.on_change('indices', table_row_selection_callback)
+race_time_table.lap_times_source.selected.on_change('indices', table_plot_toggle_callback)
 
 # Race line
 

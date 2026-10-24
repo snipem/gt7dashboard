@@ -216,3 +216,199 @@ class TestHelper(unittest.TestCase):
         print("View file for reference at %s" % out_file)
         output_file(out_file)
         save(layout(div))
+
+
+COMPARISON_FIGURES = (
+    "f_speed",
+    "f_throttle",
+    "f_braking",
+    "f_coasting",
+    "f_tires",
+    "f_gear",
+    "f_rpm",
+    "f_boost",
+    "f_yaw_rate",
+)
+
+
+class TestLapComparison(unittest.TestCase):
+    def setUp(self) -> None:
+        self.laps = gt7helper.load_laps_from_json("test_data/broad_bean_raceway_time_trial_4laps.json")
+        self.diagram = gt7diagrams.RaceDiagram(600)
+        self.table = gt7diagrams.RaceTimeTable()
+        self.default_sources = {
+            name: [renderer.data_source for renderer in getattr(self.diagram, name).renderers]
+            for name in COMPARISON_FIGURES
+        }
+        self.default_renderers = {
+            name: list(getattr(self.diagram, name).renderers)
+            for name in COMPARISON_FIGURES
+        }
+
+    def _wire_table(self):
+        def on_select(attr, old, new):
+            if self.table.syncing:
+                return
+            self.table.apply_plot_selection(self.diagram)
+
+        self.table.lap_times_source.selected.on_change("indices", on_select)
+
+    def _assert_defaults_preserved(self):
+        for name in COMPARISON_FIGURES:
+            renderers = list(getattr(self.diagram, name).renderers)
+            self.assertEqual(renderers[:3], self.default_renderers[name])
+            self.assertIn(self.diagram.source_last_lap, self.default_sources[name])
+            self.assertIn(self.diagram.source_reference_lap, self.default_sources[name])
+            self.assertIn(self.diagram.source_median_lap, self.default_sources[name])
+        self.assertEqual(len(self.diagram.f_time_diff.renderers), 1)
+        self.assertIs(self.diagram.f_time_diff.renderers[0].data_source, self.diagram.source_time_diff)
+        self.assertEqual(len(self.diagram.f_speed_variance.renderers), 1)
+
+    def _assert_no_duplicate_sources(self):
+        for name in COMPARISON_FIGURES:
+            sources = [renderer.data_source for renderer in getattr(self.diagram, name).renderers]
+            self.assertEqual(len(sources), len({id(source) for source in sources}))
+
+    def test_plot_checkbox_is_independent_of_row_highlight(self):
+        self.assertEqual(self.table.t_lap_times.selectable, "checkbox")
+        self.assertIsNone(self.table.t_lap_times.index_position)
+        self.assertEqual(self.table.t_lap_times.frozen_columns, 1)
+
+    def test_toggle_on_adds_one_comparison(self):
+        self._wire_table()
+        self.table.show_laps(self.laps)
+        self.table.lap_times_source.selected.indices = [1]
+
+        self.assertEqual(self.diagram.comparison_laps(), [self.laps[1]])
+        self.assertEqual(len(self.diagram.sources_additional_laps), 1)
+        for name in COMPARISON_FIGURES:
+            self.assertEqual(len(getattr(self.diagram, name).renderers), 4)
+        self._assert_defaults_preserved()
+        self._assert_no_duplicate_sources()
+
+    def test_toggle_off_removes_only_that_lap(self):
+        self._wire_table()
+        self.table.show_laps(self.laps)
+        self.table.lap_times_source.selected.indices = [0, 2]
+        self.table.lap_times_source.selected.indices = [2]
+
+        self.assertEqual(self.diagram.comparison_laps(), [self.laps[2]])
+        self.assertEqual(len(self.diagram.sources_additional_laps), 1)
+        extra = [
+            renderer.data_source for renderer in self.diagram.f_speed.renderers
+            if renderer.data_source not in (
+                self.diagram.source_last_lap,
+                self.diagram.source_reference_lap,
+                self.diagram.source_median_lap,
+            )
+        ]
+        self.assertEqual(list(extra[0].data["speed"]), list(self.laps[2].data_speed))
+        self._assert_defaults_preserved()
+        for name in ("f_gear", "f_rpm"):
+            self.assertEqual(len(getattr(self.diagram, name).renderers), 4)
+
+    def test_repeated_toggle_does_not_duplicate_traces(self):
+        self.diagram.sync_comparison_laps([self.laps[0], self.laps[0]])
+        self.diagram.sync_comparison_laps([self.laps[0]])
+        self.assertEqual(len(self.diagram.sources_additional_laps), 1)
+        self.assertEqual(len(self.diagram.f_speed.renderers), 4)
+        self._assert_no_duplicate_sources()
+
+        self.diagram.sync_comparison_laps([])
+        self.assertEqual(self.diagram.comparison_laps(), [])
+        self.assertEqual(len(self.diagram.sources_additional_laps), 0)
+        for name in COMPARISON_FIGURES:
+            self.assertEqual(list(getattr(self.diagram, name).renderers), self.default_renderers[name])
+
+    def test_reference_lap_stays_independent(self):
+        reference = self.laps[0]
+        original_reference = self.diagram.source_reference_lap
+        original_last = self.diagram.source_last_lap
+        original_median = self.diagram.source_median_lap
+        self.diagram.source_reference_lap.data = reference.get_data_dict()
+        reference_speed = list(self.diagram.source_reference_lap.data["speed"])
+
+        self.diagram.sync_comparison_laps([self.laps[1], self.laps[2]])
+        self.diagram.sync_comparison_laps([self.laps[2]])
+
+        self.assertIs(self.diagram.source_reference_lap, original_reference)
+        self.assertIs(self.diagram.source_last_lap, original_last)
+        self.assertIs(self.diagram.source_median_lap, original_median)
+        self.assertEqual(list(self.diagram.source_reference_lap.data["speed"]), reference_speed)
+        self.assertNotIn(original_reference, self.diagram.sources_additional_laps)
+        self.assertNotIn(original_last, self.diagram.sources_additional_laps)
+        self.assertNotIn(original_median, self.diagram.sources_additional_laps)
+        self._assert_defaults_preserved()
+
+    def test_session_change_syncs_checks_with_plotted_laps(self):
+        self._wire_table()
+        self.table.show_laps(self.laps)
+        self.table.lap_times_source.selected.indices = [0, 2]
+
+        remaining = self.laps[1:]
+        self.diagram.retain_comparison_laps(remaining)
+        self.table.show_laps(remaining, self.diagram.comparison_laps())
+
+        self.assertEqual(self.diagram.comparison_laps(), [self.laps[2]])
+        self.assertEqual(list(self.table.lap_times_source.selected.indices), [1])
+        self.assertEqual(len(self.diagram.sources_additional_laps), 1)
+        self._assert_defaults_preserved()
+        self._assert_no_duplicate_sources()
+
+        self.diagram.delete_all_additional_laps()
+        self.table.show_laps([])
+        self.assertEqual(list(self.table.lap_times_source.selected.indices), [])
+        self.assertEqual(self.diagram.comparison_laps(), [])
+        self.assertEqual(self.table.laps, [])
+        for name in COMPARISON_FIGURES:
+            self.assertEqual(list(getattr(self.diagram, name).renderers), self.default_renderers[name])
+
+        self.table.show_laps(self.laps, self.diagram.comparison_laps())
+        self.assertEqual(list(self.table.lap_times_source.selected.indices), [])
+        self.assertEqual(len(self.diagram.sources_additional_laps), 0)
+
+    def _plotted_colors(self):
+        colors = {}
+        for lap, (source, color) in self.diagram._comparison_by_lap.items():
+            for name in COMPARISON_FIGURES:
+                matches = [
+                    renderer.glyph.line_color
+                    for renderer in getattr(self.diagram, name).renderers
+                    if renderer.data_source is source
+                ]
+                self.assertEqual(matches, [color])
+            colors[lap] = color
+        return colors
+
+    def test_select_all_adds_and_removes_every_comparison(self):
+        self._wire_table()
+        self.table.show_laps(self.laps)
+        all_rows = list(range(len(self.laps)))
+
+        self.table.lap_times_source.selected.indices = all_rows
+        self.assertEqual(self.diagram.comparison_laps(), self.laps)
+        self.assertEqual(list(self.table.lap_times_source.selected.indices), all_rows)
+        self.table.show_laps(self.laps, self.diagram.comparison_laps())
+        self.assertEqual(list(self.table.lap_times_source.selected.indices), all_rows)
+        self._assert_no_duplicate_sources()
+        self._assert_defaults_preserved()
+
+        self.table.lap_times_source.selected.indices = []
+        self.assertEqual(self.diagram.comparison_laps(), [])
+        self.assertEqual(list(self.table.lap_times_source.selected.indices), [])
+        for name in COMPARISON_FIGURES:
+            self.assertEqual(list(getattr(self.diagram, name).renderers), self.default_renderers[name])
+
+    def test_recheck_keeps_the_same_comparison_color(self):
+        plotted = [self.laps[0], self.laps[1], self.laps[2]]
+        self.diagram.sync_comparison_laps(plotted)
+        original = self._plotted_colors()
+
+        self.diagram.sync_comparison_laps([self.laps[0], self.laps[2]])
+        self.diagram.sync_comparison_laps(plotted)
+        self.assertEqual(self._plotted_colors(), original)
+
+        self.diagram.sync_comparison_laps([])
+        self.diagram.sync_comparison_laps([self.laps[2], self.laps[0], self.laps[1]])
+        self.assertEqual(self._plotted_colors(), original)
+        self._assert_no_duplicate_sources()

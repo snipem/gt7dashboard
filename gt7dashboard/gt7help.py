@@ -51,7 +51,7 @@ Fuel Consumed is the amount of fuel consumed in the lap.
 What follows now are simple metrics for the characteristics of the lap. This is counted as ticks, which means instances when the game reported a state. For example Full Throttle = 500 means that you were on full throttle during 500 instances when the game sent its telemetry.
 The same goes for Full Brake, Coast and Tire Spin. Use this to easily compare your laps.
 
-You can click on one of these laps to add them to the diagrams above. These laps will be deleted if you reset the view or reload the page.
+The checkbox in the first column plots that lap on the speed, throttle, braking, coasting, gear, RPM, boost, yaw rate, and tire charts. Check several laps to compare them. Uncheck a lap to remove only that comparison. Last lap, reference lap, and median lap stay on the charts, and the reference lap dropdown is separate from these checkboxes. The header checkbox plots or clears every row. Reset Laps or loading a file clears the plotted comparisons.
 
 Car will hold the car name. You will have to have the `db/cars.csv` file downloaded for this to work.
 """
